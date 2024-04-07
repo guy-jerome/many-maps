@@ -12,6 +12,7 @@ import { Icon, Style } from "ol/style";
 
 const MapComponent: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const vectorLayerRef = useRef<VectorLayer>();
 
   useEffect(() => {
     if (mapRef.current) {
@@ -33,11 +34,13 @@ const MapComponent: React.FC = () => {
         style: new Style({
           image: new Icon({
             anchor: [0.5, 1], // Center the icon at its base
-            src: "src/assets/pin.jpg", // Path to your pin icon
-            scale: 0.3,
+            src: "src/assets/pin.png", // Path to your pin icon
+            scale: 0.1,
           }),
         }),
       });
+
+      vectorLayerRef.current = vectorLayer;
 
       // Sample features with points at desired locations
       const features = [
@@ -50,7 +53,7 @@ const MapComponent: React.FC = () => {
       ];
       vectorSource.addFeatures(features);
 
-      new Map({
+      const map = new Map({
         target: mapRef.current,
         layers: [
           new ImageLayer({
@@ -68,6 +71,20 @@ const MapComponent: React.FC = () => {
           zoom: 2,
           extent: imageExtent,
         }),
+      });
+
+      map.on("movestart", () => {
+        const resolution = map.getView().getResolution();
+        const scale = 0.1 / resolution; // Adjust 0.1 to the base scale of your icon
+        vectorLayer.setStyle(
+          new Style({
+            image: new Icon({
+              anchor: [0.5, 1],
+              src: "src/assets/pin.png",
+              scale: scale,
+            }),
+          })
+        );
       });
     }
   }, []);
