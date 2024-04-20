@@ -1,6 +1,13 @@
+.many-maps {
+  display: flex;
+  flex-direction: row;
+  border: 5px solid black;
+}
+
 .map-container {
   height: 80vh;
-  width: 100%;
+  width: 80%;
+  border-right: 5px solid black;
 }
 .map-pin-label {
   background-color: rgba(0, 60, 136, 0.8);
