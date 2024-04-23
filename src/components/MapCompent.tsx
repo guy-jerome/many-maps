@@ -9,12 +9,33 @@ import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { Icon, Style } from "ol/style";
+import { add } from "ol/coordinate";
 
 const MapComponent: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const vectorLayerRef = useRef<VectorLayer>();
   const [loc, setLoc] = useState("");
+  const [desc, setDesc] = useState("");
   const [scale, setScale] = useState(0.05);
+  const [addIcon, setAddIcon] = useState(false);
+  const [locName, setLocName] = useState("");
+  const [locDesc, setLocDesc] = useState("");
+
+  const locRef = useRef<string>(loc);
+  const descRef = useRef<string>(desc);
+  const locNameRef = useRef<string>(locName);
+  const locDescRef = useRef<string>(locDesc);
+  const addIconRef = useRef<boolean>(addIcon);
+
+  useEffect(() => {
+    // Update the refs when the state changes
+    locRef.current = loc;
+    descRef.current = desc;
+    addIconRef.current = addIcon;
+    locNameRef.current = locName;
+    locDescRef.current = locDesc;
+  }, [loc, desc, addIcon, locName, locDesc]);
+
   useEffect(() => {
     if (mapRef.current) {
       // Specify your image details
@@ -48,10 +69,12 @@ const MapComponent: React.FC = () => {
         new Feature({
           geometry: new Point([2000, 5000]),
           name: "Undertow", // Coordinates in image projection
+          description: "People here live under the sea.",
         }),
         new Feature({
           geometry: new Point([7000, 2000]),
           name: "City of Stars",
+          description: "Lots of stars are here",
         }),
       ];
       vectorSource.addFeatures(features);
@@ -79,21 +102,30 @@ const MapComponent: React.FC = () => {
 
       map.on("click", (e) => {
         let featureFound = false;
-        map.forEachFeatureAtPixel(e.pixel, (feature) => {
-          // Feature found at the clicked pixel
-          featureFound = true;
+        map.forEachFeatureAtPixel(
+          e.pixel,
+          (feature: any) => {
+            // Feature found at the clicked pixel
+            featureFound = true;
 
-          // Do something with the feature, such as getting its properties
-          const name = feature.get("name");
-          setLoc(name);
-        });
-        if (!featureFound) {
+            // Do something with the feature, such as getting its properties
+            const name = feature.get("name");
+            const feature_desc = feature.get("description");
+            setLoc(name);
+            setDesc(feature_desc);
+          },
+          {
+            hitTolerance: 10, // Pass the hit tolerance option
+          }
+        );
+        if (!featureFound && addIconRef.current) {
           const coordinates = map.getCoordinateFromPixel(e.pixel);
-          const name = "New Location"; // You can set a default name for the new location
-
+          const name = locNameRef.current; // You can set a default name for the new location
+          const description = locDescRef.current;
           const newFeature = new Feature({
             geometry: new Point(coordinates),
             name: name,
+            description: description,
           });
           vectorSource.addFeature(newFeature);
         }
@@ -140,10 +172,46 @@ const MapComponent: React.FC = () => {
     }
   }, []);
 
+  function toggleMode() {
+    setAddIcon((prevAddIcon) => !prevAddIcon);
+  }
   return (
     <div className="many-maps">
       <div ref={mapRef} className="map-container" />
-      <div className="side-bar">{loc}</div>
+      <div className="side-bar">
+        <h3>Selected Location:</h3>
+        {loc}
+        <h4>Description:</h4>
+        {desc}
+        <button onClick={toggleMode}>
+          {addIcon ? "Create Mode On" : "Create Mode Off"}
+        </button>
+        <br></br>
+        {addIcon && (
+          <div>
+            <label>Location Name: </label>
+            <br></br>
+            <input
+              type="text"
+              value={locName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setLocName(e.target.value);
+              }}
+              placeholder="Enter the Location's Name"
+            ></input>
+            <br></br>
+            <label>Location Description: </label>
+            <br></br>
+            <input
+              type="text"
+              value={locDesc}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setLocDesc(e.target.value);
+              }}
+            ></input>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
