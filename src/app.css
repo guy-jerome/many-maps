@@ -1,3 +1,64 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.side-bar {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  padding: 20px;
+  min-width: 20%;
+  background-color: #333; /* Dark background color */
+  color: white; /* Text color */
+}
+
+.side-bar h3,
+.side-bar h4 {
+  margin-bottom: 5px;
+}
+.side-bar button,
+.side-bar input {
+  margin-bottom: 5px;
+  margin-top: 20px;
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  background-color: #555; /* Darker button background color */
+  color: white; /* Button text color */
+  cursor: pointer;
+}
+
+.side-bar button:hover,
+.side-bar input:hover {
+  background-color: #777; /* Darker hover background color */
+}
+
+.side-bar input {
+  width: calc(100% - 16px); /* Adjust input width */
+}
+
+.side-bar label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.side-bar .toggle-mode {
+  background-color: #007bff; /* Button color */
+}
+
+.side-bar .toggle-mode:hover {
+  background-color: #0056b3; /* Darker hover color */
+}
+
+.side-bar .toggle-remove {
+  background-color: firebrick;
+}
+
+.side-bar .toggle-remove:hover {
+  background-color: rgb(141, 21, 21);
+}
+
 .many-maps {
   display: flex;
   flex-direction: row;

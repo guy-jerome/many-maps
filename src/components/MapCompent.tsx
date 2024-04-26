@@ -9,7 +9,6 @@ import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { Icon, Style } from "ol/style";
-import { add } from "ol/coordinate";
 
 const MapComponent: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -20,7 +19,9 @@ const MapComponent: React.FC = () => {
   const [addIcon, setAddIcon] = useState(false);
   const [locName, setLocName] = useState("");
   const [locDesc, setLocDesc] = useState("");
+  const [remove, setRemove] = useState(false);
 
+  const removeRef = useRef<boolean>(remove);
   const locRef = useRef<string>(loc);
   const descRef = useRef<string>(desc);
   const locNameRef = useRef<string>(locName);
@@ -34,7 +35,8 @@ const MapComponent: React.FC = () => {
     addIconRef.current = addIcon;
     locNameRef.current = locName;
     locDescRef.current = locDesc;
-  }, [loc, desc, addIcon, locName, locDesc]);
+    removeRef.current = remove;
+  }, [loc, desc, addIcon, locName, locDesc, remove]);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -108,11 +110,16 @@ const MapComponent: React.FC = () => {
             // Feature found at the clicked pixel
             featureFound = true;
 
-            // Do something with the feature, such as getting its properties
             const name = feature.get("name");
             const feature_desc = feature.get("description");
             setLoc(name);
             setDesc(feature_desc);
+
+            if (removeRef) {
+              vectorSource.removeFeature(feature);
+              setLoc("");
+              setDesc("");
+            }
           },
           {
             hitTolerance: 10, // Pass the hit tolerance option
@@ -174,6 +181,11 @@ const MapComponent: React.FC = () => {
 
   function toggleMode() {
     setAddIcon((prevAddIcon) => !prevAddIcon);
+    setRemove(false);
+  }
+  function toggleRemove() {
+    setRemove((prevRemove) => !prevRemove);
+    setAddIcon(false);
   }
   return (
     <div className="many-maps">
@@ -183,14 +195,16 @@ const MapComponent: React.FC = () => {
         {loc}
         <h4>Description:</h4>
         {desc}
-        <button onClick={toggleMode}>
+        <button className="toggle-mode" onClick={toggleMode}>
           {addIcon ? "Create Mode On" : "Create Mode Off"}
         </button>
-        <br></br>
+        <button className="toggle-remove" onClick={toggleRemove}>
+          {remove ? "Remove Mode On" : "Remove Mode Off"}
+        </button>
+        <br />
         {addIcon && (
-          <div>
+          <div className="">
             <label>Location Name: </label>
-            <br></br>
             <input
               type="text"
               value={locName}
@@ -198,17 +212,16 @@ const MapComponent: React.FC = () => {
                 setLocName(e.target.value);
               }}
               placeholder="Enter the Location's Name"
-            ></input>
-            <br></br>
+            />
             <label>Location Description: </label>
-            <br></br>
             <input
               type="text"
               value={locDesc}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setLocDesc(e.target.value);
               }}
-            ></input>
+              placeholder="Enter the Location's Description"
+            />
           </div>
         )}
       </div>
