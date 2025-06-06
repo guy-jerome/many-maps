@@ -43,10 +43,12 @@ const MapWithPins: React.FC = () => {
 
   // 2) Keep an array of pins (label, info, x, y)
   const [pins, setPins] = useState<
-    Array<{ label: string; info: string; x: number; y: number }>
+    Array<{
+        area: any; label: string; info: string; x: number; y: number 
+}>
   >([
-    { label: '1', info: 'This is basic info', x: 1500, y: 1500 },
-    { label: '2', info: 'More information', x: 3000, y: 3000 },
+    { label: '1', area:'Basic Area', info: 'This is basic info', x: 1500, y: 1500 },
+    { label: '2', area:'Basic Area 2', info: 'More information', x: 3000, y: 3000 },
   ]);
 
   // 3) Keep a strictly-increasing label counter for new pins
@@ -72,13 +74,15 @@ const MapWithPins: React.FC = () => {
   // Move‐Pin mode is now implied by “selectedPinLabel !== null”
 
   // 6) When the user “Saves” in the sidebar, update that pin’s info
-  const updateInfo = (label: string, newInfo: string) => {
-    setPins((prev) =>
-      prev.map((pin) =>
-        pin.label === label ? { ...pin, info: newInfo } : pin
-      )
-    );
-  };
+const updateInfo = (label: string, newInfo: string, newArea?: string) => {
+  setPins((prev) =>
+    prev.map((pin) =>
+      pin.label === label
+        ? { ...pin, info: newInfo, area: newArea ?? pin.area }
+        : pin
+    )
+  );
+};
 
   //
   // ─── INITIALIZE THE MAP (only once) ───────────────────────────────────────────────
@@ -171,7 +175,7 @@ const MapWithPins: React.FC = () => {
 
         setPins((prev) => [
           ...prev,
-          { label: newLabel, info: '', x: newX, y: newY },
+          { label: newLabel, info: '', area: '', x: newX, y: newY },
         ]);
         setNextLabel((n) => n + 1);
         return;
@@ -193,6 +197,7 @@ const MapWithPins: React.FC = () => {
           const relabeled = filtered.map((pin, idx) => ({
             label: String(idx + 1),
             info: pin.info,
+            area: pin.area,
             x: pin.x,
             y: pin.y,
           }));
@@ -340,7 +345,7 @@ const MapWithPins: React.FC = () => {
           source={vectorSource}
           x={pin.x}
           y={pin.y}
-          pin={{ label: pin.label, info: pin.info }}
+          pin={{ label: pin.label, info: pin.info, area: pin.area }}
         />
       ))}
     </div>

@@ -8,7 +8,7 @@ interface PinFeatureProps {
   source: VectorSource;
   x: number;
   y: number;
-  pin: { label: string; info: string };
+  pin: { label: string; info: string, area: string};
 }
 
 /**

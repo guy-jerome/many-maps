@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 interface SideBarProps {
-  selectedLabel: { label: string; info: string } | null;
-  /**
-   * Called to update a pin’s info.
-   * @param label   the pin’s label to identify which one to update
-   * @param newInfo the new info string to set
-   */
-  updateInfo: (label: string, newInfo: string) => void;
+  selectedLabel: { label: string; info: string; area?: string } | null;
+  updateInfo: (label: string, newInfo: string, newArea?: string) => void;
 }
 
 const sidebarStyle: React.CSSProperties = {
@@ -43,17 +38,19 @@ const emptyStyle: React.CSSProperties = {
 export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
+  const [editArea, setEditArea] = useState('');
 
   useEffect(() => {
     if (selectedLabel) {
       setEditText(selectedLabel.info);
+      setEditArea(selectedLabel.area || '');
       setIsEditing(false);
     }
   }, [selectedLabel]);
 
   const handleSave = () => {
     if (selectedLabel) {
-      updateInfo(selectedLabel.label, editText);
+      updateInfo(selectedLabel.label, editText, editArea);
     }
     setIsEditing(false);
   };
@@ -64,6 +61,21 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
       {selectedLabel ? (
         <div style={infoStyle}>
           <p><strong>Pin:</strong> {selectedLabel.label}</p>
+
+          <h3>Area Name:</h3>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editArea}
+              onChange={e => setEditArea(e.target.value)}
+              style={{ width: '100%', padding: '8px', fontSize: '14px', marginBottom: '12px' }}
+            />
+          ) : (
+            <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
+              {selectedLabel.area || <em>Click to add area name</em>}
+            </p>
+          )}
+
           <h3>Description:</h3>
           {isEditing ? (
             <>
