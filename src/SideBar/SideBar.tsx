@@ -1,9 +1,32 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+// src/SideBar/SideBar.tsx
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from 'react';
+import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
+
+interface ExtraSection {
+  title: string;
+  content: string;
+}
+
+interface SelectedLabelType {
+  label: string;
+  info: string;
+  areaName?: string;
+  extraSections: ExtraSection[];
+}
 
 interface SideBarProps {
-  selectedLabel: { label: string; info: string; areaName?: string } | null;
-  updateInfo: (label: string, newInfo: string, newArea?: string) => void;
+  selectedLabel: SelectedLabelType | null;
+  updateInfo: (
+    label: string,
+    newInfo: string,
+    newArea?: string,
+    newExtraSections?: ExtraSection[]
+  ) => void;
 }
 
 const resizerStyle: React.CSSProperties = {
@@ -42,10 +65,14 @@ const emptyStyle: React.CSSProperties = {
   color: '#adb5bd',
 };
 
-export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) => {
+export const SideBar: React.FC<SideBarProps> = ({
+  selectedLabel,
+  updateInfo,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [editArea, setEditArea] = useState('');
+  const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -56,11 +83,24 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
   const startX = useRef(0);
   const startWidth = useRef(0);
 
-  // Reset input fields when a new pin is selected
+  // Whenever a new pin is selected, pull its data into local state
   useEffect(() => {
     if (selectedLabel) {
       setEditText(selectedLabel.info);
       setEditArea(selectedLabel.areaName || '');
+      // Copy over existing extraSections
+      setExtraSections(
+        selectedLabel.extraSections.map((sec) => ({
+          title: sec.title,
+          content: sec.content,
+        }))
+      );
+      setIsEditing(false);
+    } else {
+      // If no pin is selected, clear everything
+      setEditText('');
+      setEditArea('');
+      setExtraSections([]);
       setIsEditing(false);
     }
   }, [selectedLabel]);
@@ -97,16 +137,45 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
     startWidth.current = width;
   };
 
+  // When you click "Save", update everything—including extraSections—and exit editing mode.
   const handleSave = () => {
     if (selectedLabel) {
-      updateInfo(selectedLabel.label, editText, editArea);
+      updateInfo(
+        selectedLabel.label,
+        editText,
+        editArea,
+        extraSections
+      );
     }
     setIsEditing(false);
+  };
+
+  // Add a new (empty) extra section and switch to edit mode
+  const addSection = () => {
+    setExtraSections((prev) => [
+      ...prev,
+      { title: '', content: '' },
+    ]);
+    setIsEditing(true);
+  };
+
+  // Update a particular extra section’s title or content
+  const updateSection = (
+    idx: number,
+    field: 'title' | 'content',
+    value: string
+  ) => {
+    setExtraSections((prev) =>
+      prev.map((sec, i) =>
+        i === idx ? { ...sec, [field]: value } : sec
+      )
+    );
   };
 
   return (
     <div
       ref={sidebarRef}
+      className="sidebar" // for scrollbar styling in App.css
       style={{
         position: 'relative',
         width,
@@ -114,15 +183,16 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
         color: '#fff',
         borderLeft: '1px solid #495057',
         boxSizing: 'border-box',
-        padding: '16px',             // <-- 16px top & bottom padding
+        padding: '16px', // 16px top & bottom
         display: 'flex',
         flexDirection: 'column',
 
-        // Collapse/expand via maxHeight + overflow
+        // Collapse/expand via maxHeight + overflowY
         maxHeight: isCollapsed
-          ? `${headerHeight + 32}px` // headerHeight + (16px top padding) + (16px bottom padding)
+          ? `${headerHeight + 32}px` // headerHeight + (16px top) + (16px bottom)
           : '100%',
-        overflow: 'hidden',
+        overflowX: 'hidden',
+        overflowY: isCollapsed ? 'hidden' : 'auto',
         transition: 'max-height 0.2s ease',
       }}
     >
@@ -133,7 +203,7 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
       <div ref={headerRef} style={headerContainerStyle}>
         <h2 style={headerStyle}>Pin Details</h2>
         <button
-          onClick={() => setIsCollapsed(prev => !prev)}
+          onClick={() => setIsCollapsed((prev) => !prev)}
           style={{
             background: 'none',
             border: 'none',
@@ -143,9 +213,15 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
             display: 'flex',
             alignItems: 'center',
           }}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={
+            isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
+          }
         >
-          {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          {isCollapsed ? (
+            <ChevronDown size={20} />
+          ) : (
+            <ChevronUp size={20} />
+          )}
         </button>
       </div>
 
@@ -163,12 +239,26 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
                 <input
                   type="text"
                   value={editArea}
-                  onChange={e => setEditArea(e.target.value)}
-                  style={{ width: '100%', padding: '8px', fontSize: '14px', marginBottom: '12px' }}
+                  onChange={(e) => setEditArea(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    fontSize: '14px',
+                    marginBottom: '12px',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                  }}
                 />
               ) : (
-                <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
-                  {selectedLabel.areaName || <em>Click to add area name</em>}
+                <p
+                  onClick={() => setIsEditing(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {selectedLabel.areaName || (
+                    <em>Click to add area name</em>
+                  )}
                 </p>
               )}
 
@@ -177,21 +267,186 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
                 <>
                   <textarea
                     value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                    style={{ width: '100%', minHeight: '100px', padding: '8px', fontSize: '14px' }}
+                    onChange={(e) =>
+                      setEditText(e.target.value)
+                    }
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '8px',
+                      fontSize: '14px',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      boxSizing: 'border-box',
+                    }}
                   />
                   <div style={{ marginTop: '8px' }}>
-                    <button onClick={handleSave} style={{ marginRight: '8px' }}>
+                    <button
+                      onClick={handleSave}
+                      style={{ marginRight: '8px' }}
+                    >
                       Save
                     </button>
-                    <button onClick={() => setIsEditing(false)}>Cancel</button>
+                    <button onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </button>
                   </div>
                 </>
               ) : (
-                <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
-                  {selectedLabel.info || <em>Click to add description</em>}
+                <p
+                  onClick={() => setIsEditing(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {selectedLabel.info || (
+                    <em>Click to add description</em>
+                  )}
                 </p>
               )}
+
+              {/* ─── Extra Sections ─────────────────────────────────────────────── */}
+              <div style={{ marginTop: '20px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <h3 style={{ margin: 0 }}>Extra Sections:</h3>
+                  {/* Always‐visible “＋ Add Section” */}
+                  <button
+                    onClick={addSection}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0d6efd',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                    aria-label="Add new extra section"
+                  >
+                    <Plus size={16} style={{ marginRight: '4px' }} /> Add
+                    Section
+                  </button>
+                </div>
+
+                {/* If no extra sections and not editing, show placeholder */}
+                {extraSections.length === 0 && !isEditing && (
+                  <p
+                    style={{
+                      fontStyle: 'italic',
+                      color: '#adb5bd',
+                      marginTop: '8px',
+                    }}
+                  >
+                    No extra sections yet.
+                  </p>
+                )}
+
+                {/* Static view: show each saved section when not editing */}
+                {!isEditing &&
+                  extraSections.map((sec, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        marginTop: '12px',
+                        padding: '8px',
+                        backgroundColor: '#495057',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <h4 style={{ margin: '0 0 4px 0' }}>
+                        {sec.title || <em>(No title)</em>}
+                      </h4>
+                      <p style={{ margin: 0 }}>
+                        {sec.content || <em>(No content)</em>}
+                      </p>
+                    </div>
+                  ))}
+
+                {/* Edit mode: show inputs + “Add Section” */}
+                {isEditing &&
+                  extraSections.map((sec, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        marginTop: '12px',
+                        padding: '8px',
+                        backgroundColor: '#495057',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: 'block',
+                          marginBottom: '4px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          color: '#e9ecef',
+                        }}
+                      >
+                        Title:
+                      </label>
+                      <input
+                        type="text"
+                        value={sec.title}
+                        onChange={(e) =>
+                          updateSection(
+                            idx,
+                            'title',
+                            e.target.value
+                          )
+                        }
+                        style={{
+                          width: '100%',
+                          padding: '6px',
+                          marginBottom: '8px',
+                          fontSize: '14px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+
+                      <label
+                        style={{
+                          display: 'block',
+                          marginBottom: '4px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          color: '#e9ecef',
+                        }}
+                      >
+                        Content:
+                      </label>
+                      <textarea
+                        value={sec.content}
+                        onChange={(e) =>
+                          updateSection(
+                            idx,
+                            'content',
+                            e.target.value
+                          )
+                        }
+                        style={{
+                          width: '100%',
+                          minHeight: '80px',
+                          padding: '6px',
+                          fontSize: '14px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
             </div>
           ) : (
             <p style={emptyStyle}>Click a pin to see details</p>

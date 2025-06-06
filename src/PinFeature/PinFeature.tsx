@@ -4,11 +4,21 @@ import { Feature } from 'ol';
 import Point from 'ol/geom/Point';
 import VectorSource from 'ol/source/Vector';
 
+interface ExtraSection {
+  title: string;
+  content: string;
+}
+
 interface PinFeatureProps {
   source: VectorSource;
   x: number;
   y: number;
-  pin: { label: string; info: string, areaName: string};
+  pin: {
+    label: string;
+    info: string;
+    areaName: string;
+    extraSections: ExtraSection[];
+  };
 }
 
 /**

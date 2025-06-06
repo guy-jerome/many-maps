@@ -1,5 +1,4 @@
 // src/CenteredImage/CenteredImage.tsx
-
 import React, { useEffect, useRef, useState } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -33,6 +32,21 @@ const PIXEL_PROJ = new Projection({
   extent: EXTENT,
 });
 
+// We’ve added an `extraSections` field to each pin.
+type ExtraSection = {
+  title: string;
+  content: string;
+};
+
+type PinData = {
+  label: string;
+  areaName: string;
+  info: string;
+  x: number;
+  y: number;
+  extraSections: ExtraSection[];
+};
+
 const CenteredImage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapObject = useRef<Map | null>(null);
@@ -41,14 +55,24 @@ const CenteredImage: React.FC = () => {
   const [vectorSource] = useState(() => new VectorSource());
   const vectorLayerRef = useRef<VectorLayer<any> | null>(null);
 
-  // 2) Keep an array of pins (label, info, x, y)
-  const [pins, setPins] = useState<
-    Array<{
-        areaName: any; label: string; info: string; x: number; y: number 
-}>
-  >([
-    { label: '1', areaName:'Basic Area', info: 'This is basic info', x: 1500, y: 1500 },
-    { label: '2', areaName:'Basic Area 2', info: 'More information', x: 3000, y: 3000 },
+  // 2) Keep an array of pins (label, info, x, y, areaName, extraSections)
+  const [pins, setPins] = useState<PinData[]>([
+    {
+      label: '1',
+      areaName: 'Basic Area',
+      info: 'This is basic info',
+      x: 1500,
+      y: 1500,
+      extraSections: [], // no extra sections yet
+    },
+    {
+      label: '2',
+      areaName: 'Basic Area 2',
+      info: 'More information',
+      x: 3000,
+      y: 3000,
+      extraSections: [],
+    },
   ]);
 
   // 3) Keep a strictly-increasing label counter for new pins
@@ -73,16 +97,26 @@ const CenteredImage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   // Move‐Pin mode is now implied by “selectedPinLabel !== null”
 
-  // 6) When the user “Saves” in the sidebar, update that pin’s info
-const updateInfo = (label: string, newInfo: string, newArea?: string) => {
-  setPins((prev) =>
-    prev.map((pin) =>
-      pin.label === label
-        ? { ...pin, info: newInfo, areaName: newArea ?? pin.areaName }
-        : pin
-    )
-  );
-};
+  // 6) When the user “Saves” in the sidebar, update that pin’s info (including extraSections)
+  const updateInfo = (
+    label: string,
+    newInfo: string,
+    newArea?: string,
+    newExtraSections?: ExtraSection[]
+  ) => {
+    setPins((prev) =>
+      prev.map((pin) =>
+        pin.label === label
+          ? {
+              ...pin,
+              info: newInfo,
+              areaName: newArea ?? pin.areaName,
+              extraSections: newExtraSections ?? pin.extraSections,
+            }
+          : pin
+      )
+    );
+  };
 
   //
   // ─── INITIALIZE THE MAP (only once) ───────────────────────────────────────────────
@@ -175,7 +209,14 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
 
         setPins((prev) => [
           ...prev,
-          { label: newLabel, info: '', areaName: '', x: newX, y: newY },
+          {
+            label: newLabel,
+            info: '',
+            areaName: '',
+            x: newX,
+            y: newY,
+            extraSections: [], // start with no extra sections
+          },
         ]);
         setNextLabel((n) => n + 1);
         return;
@@ -200,6 +241,7 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
             areaName: pin.areaName,
             x: pin.x,
             y: pin.y,
+            extraSections: pin.extraSections,
           }));
 
           setPins(relabeled);
@@ -336,7 +378,10 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
       <div ref={mapRef} style={mapStyle} />
 
       {/* ─── SIDEBAR ───────────────────────────────────────────────────────── */}
-      <SideBar selectedLabel={selectedPinObj} updateInfo={updateInfo} />
+      <SideBar
+        selectedLabel={selectedPinObj}
+        updateInfo={updateInfo}
+      />
 
       {/* ─── DRAW ALL PINS ─────────────────────────────────────────────────── */}
       {pins.map((pin) => (
@@ -345,7 +390,13 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
           source={vectorSource}
           x={pin.x}
           y={pin.y}
-          pin={{ label: pin.label, info: pin.info, areaName: pin.areaName }}
+          // Pass the entire pin, including extraSections
+          pin={{
+            label: pin.label,
+            info: pin.info,
+            areaName: pin.areaName,
+            extraSections: pin.extraSections,
+          }}
         />
       ))}
     </div>
