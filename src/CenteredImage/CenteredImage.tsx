@@ -33,7 +33,7 @@ const PIXEL_PROJ = new Projection({
   extent: EXTENT,
 });
 
-const MapWithPins: React.FC = () => {
+const CenteredImage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapObject = useRef<Map | null>(null);
 
@@ -386,4 +386,4 @@ const toggleButtonStyle: React.CSSProperties = {
   textAlign: 'center',
 };
 
-export default MapWithPins;
+export default CenteredImage;
