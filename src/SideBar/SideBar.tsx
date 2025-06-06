@@ -172,6 +172,13 @@ export const SideBar: React.FC<SideBarProps> = ({
     );
   };
 
+  // DELETE functionality for extra sections
+  const deleteSection = (idx: number) => {
+    setExtraSections((prev) =>
+      prev.filter((_, i) => i !== idx)
+    );
+  };
+
   return (
     <div
       ref={sidebarRef}
@@ -367,12 +374,13 @@ export const SideBar: React.FC<SideBarProps> = ({
                     </div>
                   ))}
 
-                {/* Edit mode: show inputs + “Add Section” */}
+                {/* Edit mode: show inputs + delete button for each section */}
                 {isEditing &&
                   extraSections.map((sec, idx) => (
                     <div
                       key={idx}
                       style={{
+                        position: 'relative',
                         marginTop: '12px',
                         padding: '8px',
                         backgroundColor: '#495057',
@@ -380,6 +388,24 @@ export const SideBar: React.FC<SideBarProps> = ({
                         boxSizing: 'border-box',
                       }}
                     >
+                      {/* Delete button in top‐right corner */}
+                      <button
+                        onClick={() => deleteSection(idx)}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: 'none',
+                          border: 'none',
+                          color: '#e55353',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                        }}
+                        aria-label={`Delete section ${idx + 1}`}
+                      >
+                        ×
+                      </button>
+
                       <label
                         style={{
                           display: 'block',
