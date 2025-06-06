@@ -1,4 +1,5 @@
 import CenteredImage from './CenteredImage/CenteredImage'
+import './App.css'
 function App() {
 
 
