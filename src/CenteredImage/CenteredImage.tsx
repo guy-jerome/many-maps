@@ -44,11 +44,11 @@ const MapWithPins: React.FC = () => {
   // 2) Keep an array of pins (label, info, x, y)
   const [pins, setPins] = useState<
     Array<{
-        area: any; label: string; info: string; x: number; y: number 
+        areaName: any; label: string; info: string; x: number; y: number 
 }>
   >([
-    { label: '1', area:'Basic Area', info: 'This is basic info', x: 1500, y: 1500 },
-    { label: '2', area:'Basic Area 2', info: 'More information', x: 3000, y: 3000 },
+    { label: '1', areaName:'Basic Area', info: 'This is basic info', x: 1500, y: 1500 },
+    { label: '2', areaName:'Basic Area 2', info: 'More information', x: 3000, y: 3000 },
   ]);
 
   // 3) Keep a strictly-increasing label counter for new pins
@@ -78,7 +78,7 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
   setPins((prev) =>
     prev.map((pin) =>
       pin.label === label
-        ? { ...pin, info: newInfo, area: newArea ?? pin.area }
+        ? { ...pin, info: newInfo, areaName: newArea ?? pin.areaName }
         : pin
     )
   );
@@ -175,7 +175,7 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
 
         setPins((prev) => [
           ...prev,
-          { label: newLabel, info: '', area: '', x: newX, y: newY },
+          { label: newLabel, info: '', areaName: '', x: newX, y: newY },
         ]);
         setNextLabel((n) => n + 1);
         return;
@@ -197,7 +197,7 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
           const relabeled = filtered.map((pin, idx) => ({
             label: String(idx + 1),
             info: pin.info,
-            area: pin.area,
+            areaName: pin.areaName,
             x: pin.x,
             y: pin.y,
           }));
@@ -345,7 +345,7 @@ const updateInfo = (label: string, newInfo: string, newArea?: string) => {
           source={vectorSource}
           x={pin.x}
           y={pin.y}
-          pin={{ label: pin.label, info: pin.info, area: pin.area }}
+          pin={{ label: pin.label, info: pin.info, areaName: pin.areaName }}
         />
       ))}
     </div>

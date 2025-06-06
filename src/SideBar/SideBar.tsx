@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 interface SideBarProps {
-  selectedLabel: { label: string; info: string; area?: string } | null;
+  selectedLabel: { label: string; info: string; areaName?: string } | null;
   updateInfo: (label: string, newInfo: string, newArea?: string) => void;
 }
 
@@ -43,7 +43,7 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
   useEffect(() => {
     if (selectedLabel) {
       setEditText(selectedLabel.info);
-      setEditArea(selectedLabel.area || '');
+      setEditArea(selectedLabel.areaName || '');
       setIsEditing(false);
     }
   }, [selectedLabel]);
@@ -72,7 +72,7 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
             />
           ) : (
             <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
-              {selectedLabel.area || <em>Click to add area name</em>}
+              {selectedLabel.areaName || <em>Click to add area name</em>}
             </p>
           )}
 
