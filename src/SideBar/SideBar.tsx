@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface SideBarProps {
   selectedLabel: { label: string; info: string; areaName?: string } | null;
   updateInfo: (label: string, newInfo: string, newArea?: string) => void;
 }
 
-const sidebarStyle: React.CSSProperties = {
-  width: '300px',
-  padding: '16px',
-  backgroundColor: '#343a40',
-  color: '#fff',
-  borderLeft: '1px solid #495057',
-  boxSizing: 'border-box',
-  display: 'flex',
-  flexDirection: 'column',
+const resizerStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  bottom: 0,
+  width: '5px',
+  cursor: 'col-resize',
+  backgroundColor: '#6c757d',
+  zIndex: 10,
 };
 
 const headerStyle: React.CSSProperties = {
@@ -39,6 +39,11 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [editArea, setEditArea] = useState('');
+  const [width, setWidth] = useState(300); // default sidebar width
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
 
   useEffect(() => {
     if (selectedLabel) {
@@ -48,6 +53,33 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
     }
   }, [selectedLabel]);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const dx = startX.current - e.clientX;
+      const newWidth = Math.max(200, startWidth.current + dx); // Min width = 200px
+      setWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    isResizing.current = true;
+    startX.current = e.clientX;
+    startWidth.current = width;
+  };
+
   const handleSave = () => {
     if (selectedLabel) {
       updateInfo(selectedLabel.label, editText, editArea);
@@ -56,7 +88,22 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
   };
 
   return (
-    <div style={sidebarStyle}>
+    <div
+      ref={sidebarRef}
+      style={{
+        position: 'relative',
+        width,
+        padding: '16px',
+        backgroundColor: '#343a40',
+        color: '#fff',
+        borderLeft: '1px solid #495057',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      <div style={resizerStyle} onMouseDown={handleMouseDown} />
       <h2 style={headerStyle}>Pin Details</h2>
       {selectedLabel ? (
         <div style={infoStyle}>
@@ -88,9 +135,7 @@ export const SideBar: React.FC<SideBarProps> = ({ selectedLabel, updateInfo }) =
                 <button onClick={handleSave} style={{ marginRight: '8px' }}>
                   Save
                 </button>
-                <button onClick={() => setIsEditing(false)}>
-                  Cancel
-                </button>
+                <button onClick={() => setIsEditing(false)}>Cancel</button>
               </div>
             </>
           ) : (
