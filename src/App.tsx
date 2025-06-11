@@ -1,22 +1,16 @@
-import CenteredImage from './CenteredImage/CenteredImage'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import MapGallery from './MapGallery/MapGallery'
+import CenteredImage from './CenteredImage/CenteredImage';
+
 function App() {
-
-
   return (
-    <>
-    <div
-    style={{
-        width:"1000px",
-        height:"1000px"
-    }}
-    >
-        <CenteredImage>
-        </CenteredImage>
-
-    </div>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<MapGallery />} />
+        <Route path="/map/:mapId" element={<CenteredImage />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
