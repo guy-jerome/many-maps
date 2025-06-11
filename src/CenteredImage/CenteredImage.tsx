@@ -131,7 +131,6 @@ const CenteredImage: React.FC = () => {
         zIndex: 1,
         renderMode: 'vector',
         updateWhileAnimating: true,
-        updateWhileInteracting: true,
         style: (feature: any, resolution: number) => {
           // Convert a fixed “map‐unit” radius into px
           const MAP_RADIUS_IN_MAP_UNITS = 100;
