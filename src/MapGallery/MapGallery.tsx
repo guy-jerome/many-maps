@@ -12,12 +12,7 @@ const maps: MapEntry[] = [
   {
     id: 'mentzer-dungeon',
     title: 'Mentzer Dungeon',
-    thumbnail: '/images/mentzer-dungeon-thumb.png',
-  },
-  {
-    id: 'other-map',
-    title: 'Other Map',
-    thumbnail: '/images/other-map-thumb.png',
+    thumbnail: '/images/mentzer-dungeon.png',
   },
   // Add more entries for each image in public/images
 ];
