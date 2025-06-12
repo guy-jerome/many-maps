@@ -313,10 +313,11 @@ export const SideBar: React.FC<SideBarProps> = ({
                     }”
                   </button>
                 ) : (
-                  <p style={{ fontStyle: 'italic', color: '#adb5bd' }}>
+                  <p onClick={() => setIsEditing(true)} style={{ fontStyle: 'italic', color: '#adb5bd', cursor: 'pointer' }}>
                     No linked map.
                   </p>
-                )}
+                )
+                }
               </div>
 
               {/* ─── Extra Sections ───────────────────────────────────── */}
