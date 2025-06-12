@@ -54,34 +54,35 @@ const CenteredImage: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // keep label-ref in sync
+  // Keep selection-ref & style in sync
   useEffect(() => {
     selectedPinLabelRef.current = selectedPinLabel;
     if (vectorLayerRef.current) vectorLayerRef.current.changed();
   }, [selectedPinLabel]);
 
-  // sidebar callback
+  // Sidebar “save” callback: now also handles linkedMapId
   const updateInfo = (
     label: string,
     newInfo: string,
     newArea?: string,
-    newExtraSections?: PinData['extraSections']
+    newExtraSections?: PinData['extraSections'],
+    newLinkedMapId?: string
   ) => {
-    setPins((prev) =>
-      prev.map((p) =>
-        p.label === label
-          ? {
-              ...p,
-              info: newInfo,
-              areaName: newArea ?? p.areaName,
-              extraSections: newExtraSections ?? p.extraSections,
-            }
-          : p
-      )
+    const updated = pins.map((pin) =>
+      pin.label === label
+        ? {
+            ...pin,
+            info: newInfo,
+            areaName: newArea ?? pin.areaName,
+            extraSections: newExtraSections ?? pin.extraSections,
+            linkedMapId: newLinkedMapId,
+          }
+        : pin
     );
+    setPins(updated);
   };
 
-  // ─── load map + pins ─────────────────────────────────────────────
+  // ─── load map + pins on mount ──────────────────────────────────────
   useEffect(() => {
     if (!mapId) return;
     let objectUrl: string;
@@ -97,12 +98,12 @@ const CenteredImage: React.FC = () => {
     };
   }, [mapId]);
 
-  // ─── persist pins on change ──────────────────────────────────────
+  // ─── persist pins whenever they change ────────────────────────────
   useEffect(() => {
     if (mapId) updateMapPins(mapId, pins).catch(console.error);
   }, [mapId, pins]);
 
-  // ─── initialize OL when mapUrl ready ─────────────────────────────
+  // ─── initialize OL when image is ready ────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapUrl) return;
 
@@ -112,8 +113,6 @@ const CenteredImage: React.FC = () => {
       projection: PIXEL_PROJ,
       imageExtent: EXTENT,
     });
-
-    // spinner control
     staticSrc.on('imageloadstart', () => setLoading(true));
     staticSrc.on('imageloadend', () => setLoading(false));
     staticSrc.on('imageloaderror', () => setLoading(false));
@@ -164,16 +163,18 @@ const CenteredImage: React.FC = () => {
     };
   }, [vectorSource, mapUrl]);
 
-  // ─── click handlers ──────────────────────────────────────────────
+  // ─── click to add / delete / select pins ─────────────────────────
   useEffect(() => {
     const map = mapObject.current;
     if (!map) return;
-
     const onClick = (evt: any) => {
       if (isAdding) {
         const [x, y] = evt.coordinate;
         const label = `${nextLabel}`;
-        setPins((p) => [...p, { label, info: '', areaName: '', x, y, extraSections: [] }]);
+        setPins((p) => [
+          ...p,
+          { label, info: '', areaName: '', x, y, extraSections: [] },
+        ]);
         setNextLabel((n) => n + 1);
         return;
       }
@@ -197,18 +198,19 @@ const CenteredImage: React.FC = () => {
       });
       setSelectedPinLabel(hit);
     };
-
     map.on('singleclick', onClick);
     return () => map.un('singleclick', onClick);
   }, [isAdding, isDeleting, nextLabel, pins]);
 
-  // ─── drag interaction ────────────────────────────────────────────
+  // ─── drag‐to‐move pins ───────────────────────────────────────────
   useEffect(() => {
     const map = mapObject.current;
     if (!map) return;
     let trans: Translate | null = null;
     if (selectedPinLabel) {
-      const feat = vectorSource.getFeatures().find((f) => f.get('pin') === selectedPinLabel);
+      const feat = vectorSource
+        .getFeatures()
+        .find((f) => f.get('pin') === selectedPinLabel);
       if (feat) {
         trans = new Translate({ features: new Collection([feat]) });
         map.addInteraction(trans);
@@ -218,15 +220,21 @@ const CenteredImage: React.FC = () => {
           const geom = f?.getGeometry() as Point;
           if (typeof lbl === 'string' && geom) {
             const [x, y] = geom.getCoordinates();
-            setPins((prev) => prev.map((p) => (p.label === lbl ? { ...p, x, y } : p)));
+            setPins((prev) =>
+              prev.map((p) => (p.label === lbl ? { ...p, x, y } : p))
+            );
           }
         });
       }
     }
-    return () => { if (trans) map.removeInteraction(trans); };
+    return () => {
+      if (trans) map.removeInteraction(trans);
+    };
   }, [selectedPinLabel, vectorSource, pins]);
 
-  const selectedPin = selectedPinLabel ? pins.find((p) => p.label === selectedPinLabel) || null : null;
+  const selectedPin = selectedPinLabel
+    ? pins.find((p) => p.label === selectedPinLabel) || null
+    : null;
 
   return (
     <div className="ci-container">
@@ -251,7 +259,7 @@ const CenteredImage: React.FC = () => {
 
       <div ref={mapRef} className="ci-map" />
       <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
-      {pins.map(p => (
+      {pins.map((p) => (
         <PinFeature key={p.label} source={vectorSource} x={p.x} y={p.y} pin={p} />
       ))}
     </div>

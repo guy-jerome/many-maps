@@ -13,6 +13,7 @@ export interface PinData {
   x: number;
   y: number;
   extraSections: ExtraSection[];
+  linkedMapId?: string;        // ← new
 }
 
 export interface MapRecord {
@@ -42,7 +43,7 @@ async function getDB() {
   });
 }
 
-/** Create or overwrite a map record. */
+/** Create or overwrite a full map record (image + metadata + pins). */
 export async function saveMap(
   id: string,
   blob: Blob,
@@ -60,7 +61,7 @@ export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
   return db.get(STORE, id);
 }
 
-/** List all maps (without exposing their pins here). */
+/** List all maps (excluding their pin arrays). */
 export async function getAllMaps(): Promise<
   { id: string; blob: Blob; name: string; description?: string }[]
 > {
@@ -68,8 +69,7 @@ export async function getAllMaps(): Promise<
   const tx = db.transaction(STORE, 'readonly');
   const store = tx.objectStore(STORE);
   const keys = await store.getAllKeys();
-  const out: { id: string; blob: Blob; name: string; description?: string }[] =
-    [];
+  const out: { id: string; blob: Blob; name: string; description?: string }[] = [];
   for (const key of keys) {
     const rec = await store.get(key as string);
     if (rec) {
@@ -90,7 +90,7 @@ export async function deleteMap(id: string) {
   await db.delete(STORE, id);
 }
 
-/** Update only the pins array for a given map. */
+/** Overwrite just the pins array on a map record. */
 export async function updateMapPins(id: string, pins: PinData[]) {
   const db = await getDB();
   const rec = await db.get(STORE, id);

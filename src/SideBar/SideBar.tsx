@@ -6,17 +6,15 @@ import React, {
   useLayoutEffect,
 } from 'react';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-
-interface ExtraSection {
-  title: string;
-  content: string;
-}
+import { useNavigate } from 'react-router-dom';
+import { ExtraSection, getAllMaps } from '../idbService';
 
 interface SelectedLabelType {
   label: string;
   info: string;
   areaName?: string;
   extraSections: ExtraSection[];
+  linkedMapId?: string;
 }
 
 interface SideBarProps {
@@ -25,7 +23,8 @@ interface SideBarProps {
     label: string,
     newInfo: string,
     newArea?: string,
-    newExtraSections?: ExtraSection[]
+    newExtraSections?: ExtraSection[],
+    newLinkedMapId?: string
   ) => void;
 }
 
@@ -69,10 +68,15 @@ export const SideBar: React.FC<SideBarProps> = ({
   selectedLabel,
   updateInfo,
 }) => {
+  const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [editArea, setEditArea] = useState('');
   const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
+  const [editLinkedMapId, setEditLinkedMapId] = useState<string>('');
+  const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
+
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -83,51 +87,57 @@ export const SideBar: React.FC<SideBarProps> = ({
   const startX = useRef(0);
   const startWidth = useRef(0);
 
-  // Whenever a new pin is selected, pull its data into local state
+  // Load map names for linking
+  useEffect(() => {
+    getAllMaps().then((all) =>
+      setMapList(all.map((m) => ({ id: m.id, name: m.name })))
+    );
+  }, []);
+
+  // Pull selected pin data into local state
   useEffect(() => {
     if (selectedLabel) {
       setEditText(selectedLabel.info);
       setEditArea(selectedLabel.areaName || '');
-      // Copy over existing extraSections
       setExtraSections(
         selectedLabel.extraSections.map((sec) => ({
           title: sec.title,
           content: sec.content,
         }))
       );
+      setEditLinkedMapId(selectedLabel.linkedMapId || '');
       setIsEditing(false);
     } else {
-      // If no pin is selected, clear everything
       setEditText('');
       setEditArea('');
       setExtraSections([]);
+      setEditLinkedMapId('');
       setIsEditing(false);
     }
   }, [selectedLabel]);
 
-  // Measure the header’s height (including its border and padding bottom)
+  // Measure header height
   useLayoutEffect(() => {
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.clientHeight);
     }
   });
 
-  // Horizontal‐resize logic (unchanged)
+  // Resizing logic
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
       const dx = startX.current - e.clientX;
-      const newWidth = Math.max(200, startWidth.current + dx); // Min width = 200px
-      setWidth(newWidth);
+      setWidth(Math.max(200, startWidth.current + dx));
     };
-    const handleMouseUp = () => {
+    const onUp = () => {
       isResizing.current = false;
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
     };
   }, []);
 
@@ -137,52 +147,41 @@ export const SideBar: React.FC<SideBarProps> = ({
     startWidth.current = width;
   };
 
-  // When you click "Save", update everything—including extraSections—and exit editing mode.
   const handleSave = () => {
     if (selectedLabel) {
       updateInfo(
         selectedLabel.label,
         editText,
         editArea,
-        extraSections
+        extraSections,
+        editLinkedMapId || undefined
       );
     }
     setIsEditing(false);
   };
 
-  // Add a new (empty) extra section and switch to edit mode
   const addSection = () => {
-    setExtraSections((prev) => [
-      ...prev,
-      { title: '', content: '' },
-    ]);
+    setExtraSections((prev) => [...prev, { title: '', content: '' }]);
     setIsEditing(true);
   };
 
-  // Update a particular extra section’s title or content
   const updateSection = (
     idx: number,
     field: 'title' | 'content',
     value: string
   ) => {
     setExtraSections((prev) =>
-      prev.map((sec, i) =>
-        i === idx ? { ...sec, [field]: value } : sec
-      )
+      prev.map((sec, i) => (i === idx ? { ...sec, [field]: value } : sec))
     );
   };
 
-  // DELETE functionality for extra sections
   const deleteSection = (idx: number) => {
-    setExtraSections((prev) =>
-      prev.filter((_, i) => i !== idx)
-    );
+    setExtraSections((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
     <div
       ref={sidebarRef}
-      className="sidebar" // for scrollbar styling in App.css
       style={{
         position: 'relative',
         width,
@@ -190,27 +189,23 @@ export const SideBar: React.FC<SideBarProps> = ({
         color: '#fff',
         borderLeft: '1px solid #495057',
         boxSizing: 'border-box',
-        padding: '16px', // 16px top & bottom
+        padding: '16px',
         display: 'flex',
         flexDirection: 'column',
-
-        // Collapse/expand via maxHeight + overflowY
         maxHeight: isCollapsed
-          ? `${headerHeight + 32}px` // headerHeight + (16px top) + (16px bottom)
+          ? `${headerHeight + 32}px`
           : '100%',
         overflowX: 'hidden',
         overflowY: isCollapsed ? 'hidden' : 'auto',
         transition: 'max-height 0.2s ease',
       }}
     >
-      {/* Left‐edge resizer handle */}
       <div style={resizerStyle} onMouseDown={handleMouseDown} />
 
-      {/* Header row (title + chevron) */}
       <div ref={headerRef} style={headerContainerStyle}>
         <h2 style={headerStyle}>Pin Details</h2>
         <button
-          onClick={() => setIsCollapsed((prev) => !prev)}
+          onClick={() => setIsCollapsed((p) => !p)}
           style={{
             background: 'none',
             border: 'none',
@@ -220,19 +215,12 @@ export const SideBar: React.FC<SideBarProps> = ({
             display: 'flex',
             alignItems: 'center',
           }}
-          aria-label={
-            isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
-          }
+          aria-label={isCollapsed ? 'Expand' : 'Collapse'}
         >
-          {isCollapsed ? (
-            <ChevronDown size={20} />
-          ) : (
-            <ChevronUp size={20} />
-          )}
+          {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
         </button>
       </div>
 
-      {/* Only show the rest when not collapsed */}
       {!isCollapsed && (
         <>
           {selectedLabel ? (
@@ -250,22 +238,13 @@ export const SideBar: React.FC<SideBarProps> = ({
                   style={{
                     width: '100%',
                     padding: '8px',
-                    fontSize: '14px',
                     marginBottom: '12px',
-                    backgroundColor: '#fff',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
                     boxSizing: 'border-box',
                   }}
                 />
               ) : (
-                <p
-                  onClick={() => setIsEditing(true)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {selectedLabel.areaName || (
-                    <em>Click to add area name</em>
-                  )}
+                <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
+                  {selectedLabel.areaName || <em>Click to add area name</em>}
                 </p>
               )}
 
@@ -274,44 +253,73 @@ export const SideBar: React.FC<SideBarProps> = ({
                 <>
                   <textarea
                     value={editText}
-                    onChange={(e) =>
-                      setEditText(e.target.value)
-                    }
+                    onChange={(e) => setEditText(e.target.value)}
                     style={{
                       width: '100%',
                       minHeight: '100px',
                       padding: '8px',
-                      fontSize: '14px',
-                      backgroundColor: '#fff',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
                       boxSizing: 'border-box',
                     }}
                   />
                   <div style={{ marginTop: '8px' }}>
-                    <button
-                      onClick={handleSave}
-                      style={{ marginRight: '8px' }}
-                    >
+                    <button onClick={handleSave} style={{ marginRight: 8 }}>
                       Save
                     </button>
-                    <button onClick={() => setIsEditing(false)}>
-                      Cancel
-                    </button>
+                    <button onClick={() => setIsEditing(false)}>Cancel</button>
                   </div>
                 </>
               ) : (
-                <p
-                  onClick={() => setIsEditing(true)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {selectedLabel.info || (
-                    <em>Click to add description</em>
-                  )}
+                <p onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
+                  {selectedLabel.info || <em>Click to add description</em>}
                 </p>
               )}
 
-              {/* ─── Extra Sections ─────────────────────────────────────────────── */}
+              {/* ─── Linked Map ─────────────────────────────────────────── */}
+              <div style={{ marginTop: '20px' }}>
+                <h3>Linked Map:</h3>
+                {isEditing ? (
+                  <select
+                    value={editLinkedMapId}
+                    onChange={(e) => setEditLinkedMapId(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      boxSizing: 'border-box',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <option value="">— No link —</option>
+                    {mapList.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : selectedLabel.linkedMapId ? (
+                  <button
+                    onClick={() => navigate(`/map/${selectedLabel.linkedMapId}`)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0d6efd',
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontSize: '14px',
+                    }}
+                  >
+                    Go to “{
+                      mapList.find((m) => m.id === selectedLabel.linkedMapId)
+                        ?.name || selectedLabel.linkedMapId
+                    }”
+                  </button>
+                ) : (
+                  <p style={{ fontStyle: 'italic', color: '#adb5bd' }}>
+                    No linked map.
+                  </p>
+                )}
+              </div>
+
+              {/* ─── Extra Sections ───────────────────────────────────── */}
               <div style={{ marginTop: '20px' }}>
                 <div
                   style={{
@@ -321,7 +329,6 @@ export const SideBar: React.FC<SideBarProps> = ({
                   }}
                 >
                   <h3 style={{ margin: 0 }}>Extra Sections:</h3>
-                  {/* Always‐visible “＋ Add Section” */}
                   <button
                     onClick={addSection}
                     style={{
@@ -332,27 +339,18 @@ export const SideBar: React.FC<SideBarProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                     }}
-                    aria-label="Add new extra section"
                   >
-                    <Plus size={16} style={{ marginRight: '4px' }} /> Add
-                    Section
+                    <Plus size={16} style={{ marginRight: '4px' }} /> Add Section
                   </button>
                 </div>
 
-                {/* If no extra sections and not editing, show placeholder */}
                 {extraSections.length === 0 && !isEditing && (
-                  <p
-                    style={{
-                      fontStyle: 'italic',
-                      color: '#adb5bd',
-                      marginTop: '8px',
-                    }}
-                  >
+                  <p style={{ fontStyle: 'italic', color: '#adb5bd' }}>
                     No extra sections yet.
                   </p>
                 )}
 
-                {/* Static view: show each saved section when not editing */}
+                {/* Static view */}
                 {!isEditing &&
                   extraSections.map((sec, idx) => (
                     <div
@@ -362,10 +360,9 @@ export const SideBar: React.FC<SideBarProps> = ({
                         padding: '8px',
                         backgroundColor: '#495057',
                         borderRadius: '4px',
-                        boxSizing: 'border-box',
                       }}
                     >
-                      <h4 style={{ margin: '0 0 4px 0' }}>
+                      <h4 style={{ margin: '0 0 4px' }}>
                         {sec.title || <em>(No title)</em>}
                       </h4>
                       <p style={{ margin: 0 }}>
@@ -374,7 +371,7 @@ export const SideBar: React.FC<SideBarProps> = ({
                     </div>
                   ))}
 
-                {/* Edit mode: show inputs + delete button for each section */}
+                {/* Edit view */}
                 {isEditing &&
                   extraSections.map((sec, idx) => (
                     <div
@@ -385,10 +382,8 @@ export const SideBar: React.FC<SideBarProps> = ({
                         padding: '8px',
                         backgroundColor: '#495057',
                         borderRadius: '4px',
-                        boxSizing: 'border-box',
                       }}
                     >
-                      {/* Delete button in top‐right corner */}
                       <button
                         onClick={() => deleteSection(idx)}
                         style={{
@@ -410,9 +405,7 @@ export const SideBar: React.FC<SideBarProps> = ({
                         style={{
                           display: 'block',
                           marginBottom: '4px',
-                          fontSize: '14px',
                           fontWeight: 'bold',
-                          color: '#e9ecef',
                         }}
                       >
                         Title:
@@ -421,20 +414,12 @@ export const SideBar: React.FC<SideBarProps> = ({
                         type="text"
                         value={sec.title}
                         onChange={(e) =>
-                          updateSection(
-                            idx,
-                            'title',
-                            e.target.value
-                          )
+                          updateSection(idx, 'title', e.target.value)
                         }
                         style={{
                           width: '100%',
                           padding: '6px',
                           marginBottom: '8px',
-                          fontSize: '14px',
-                          backgroundColor: '#fff',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
                           boxSizing: 'border-box',
                         }}
                       />
@@ -443,9 +428,7 @@ export const SideBar: React.FC<SideBarProps> = ({
                         style={{
                           display: 'block',
                           marginBottom: '4px',
-                          fontSize: '14px',
                           fontWeight: 'bold',
-                          color: '#e9ecef',
                         }}
                       >
                         Content:
@@ -453,20 +436,12 @@ export const SideBar: React.FC<SideBarProps> = ({
                       <textarea
                         value={sec.content}
                         onChange={(e) =>
-                          updateSection(
-                            idx,
-                            'content',
-                            e.target.value
-                          )
+                          updateSection(idx, 'content', e.target.value)
                         }
                         style={{
                           width: '100%',
                           minHeight: '80px',
                           padding: '6px',
-                          fontSize: '14px',
-                          backgroundColor: '#fff',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
                           boxSizing: 'border-box',
                         }}
                       />
