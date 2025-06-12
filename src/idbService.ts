@@ -1,15 +1,30 @@
 // src/idbService.ts
 import { openDB, DBSchema } from 'idb';
 
-interface MapRecord {
+export interface ExtraSection {
+  title: string;
+  content: string;
+}
+
+export interface PinData {
+  label: string;
+  areaName: string;
+  info: string;
+  x: number;
+  y: number;
+  extraSections: ExtraSection[];
+}
+
+export interface MapRecord {
   blob: Blob;
   name: string;
   description?: string;
+  pins: PinData[];
 }
 
 interface MapGalleryDB extends DBSchema {
   maps: {
-    key: string;      // internal UUID
+    key: string;
     value: MapRecord;
   };
 }
@@ -27,22 +42,25 @@ async function getDB() {
   });
 }
 
+/** Create or overwrite a map record. */
 export async function saveMap(
   id: string,
   blob: Blob,
   name: string,
-  description?: string
+  description?: string,
+  pins: PinData[] = []
 ) {
   const db = await getDB();
-  await db.put(STORE, { blob, name, description }, id);
+  await db.put(STORE, { blob, name, description, pins }, id);
 }
 
-export async function getMapBlob(id: string): Promise<Blob | undefined> {
+/** Get the full record (image + metadata + pins). */
+export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
   const db = await getDB();
-  const rec = await db.get(STORE, id);
-  return rec?.blob;
+  return db.get(STORE, id);
 }
 
+/** List all maps (without exposing their pins here). */
 export async function getAllMaps(): Promise<
   { id: string; blob: Blob; name: string; description?: string }[]
 > {
@@ -55,13 +73,28 @@ export async function getAllMaps(): Promise<
   for (const key of keys) {
     const rec = await store.get(key as string);
     if (rec) {
-      out.push({ id: key as string, blob: rec.blob, name: rec.name, description: rec.description });
+      out.push({
+        id: key as string,
+        blob: rec.blob,
+        name: rec.name,
+        description: rec.description,
+      });
     }
   }
   return out;
 }
 
+/** Delete a map entirely. */
 export async function deleteMap(id: string) {
   const db = await getDB();
   await db.delete(STORE, id);
+}
+
+/** Update only the pins array for a given map. */
+export async function updateMapPins(id: string, pins: PinData[]) {
+  const db = await getDB();
+  const rec = await db.get(STORE, id);
+  if (!rec) throw new Error(`No map record found for id=${id}`);
+  rec.pins = pins;
+  await db.put(STORE, rec, id);
 }
