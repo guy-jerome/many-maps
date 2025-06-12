@@ -1,21 +1,13 @@
 // src/MapGallery/MapGallery.tsx
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAllMaps, saveMap } from '../idbService';
+import { v4 as uuidv4 } from 'uuid';
 
 interface MapEntry {
   id: string;
-  title: string;
-  thumbnail: string;
+  blob: Blob;
 }
-
-const maps: MapEntry[] = [
-  {
-    id: 'mentzer-dungeon',
-    title: 'Mentzer Dungeon',
-    thumbnail: '/images/mentzer-dungeon.png',
-  },
-  // Add more entries for each image in public/images
-];
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
@@ -32,39 +24,68 @@ const cardStyle: React.CSSProperties = {
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 };
 
-const thumbnailStyle: React.CSSProperties = {
-  width: '100%',
-  height: '150px',
-  objectFit: 'cover',
-};
-
 const titleStyle: React.CSSProperties = {
   padding: '8px',
-  fontSize: '16px',
+  fontSize: '14px',
   textAlign: 'center',
 };
 
 const MapGallery: React.FC = () => {
   const navigate = useNavigate();
+  const [maps, setMaps] = useState<MapEntry[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load saved maps on mount
+  useEffect(() => {
+    getAllMaps().then(setMaps);
+  }, []);
+
+  // Handler to open file picker
+  const handleAddClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // When user selects a file, save it to IDB and refresh list
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const id = uuidv4();
+    await saveMap(id, file);
+    setMaps(await getAllMaps());
+    e.target.value = '';
+  };
 
   return (
     <div>
       <h1 style={{ textAlign: 'center', margin: '16px 0' }}>Select a Map</h1>
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <button onClick={handleAddClick}>＋ Add New Map</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      </div>
       <div style={gridStyle}>
-        {maps.map((map) => (
-          <div
-            key={map.id}
-            style={cardStyle}
-            onClick={() => navigate(`/map/${map.id}`)}
-          >
-            <img
-              src={map.thumbnail}
-              alt={map.title}
-              style={thumbnailStyle}
-            />
-            <div style={titleStyle}>{map.title}</div>
-          </div>
-        ))}
+        {maps.map(({ id, blob }) => {
+          const url = URL.createObjectURL(blob);
+          return (
+            <div
+              key={id}
+              style={cardStyle}
+              onClick={() => navigate(`/map/${id}`)}
+            >
+              <img
+                src={url}
+                alt={`Map ${id}`}
+                style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+              />
+              <div style={titleStyle}>{id}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
