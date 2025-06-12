@@ -13,7 +13,7 @@ export interface PinData {
   x: number;
   y: number;
   extraSections: ExtraSection[];
-  linkedMapId?: string;        // ← new
+  linkedMapId?: string;
 }
 
 export interface MapRecord {
@@ -43,7 +43,6 @@ async function getDB() {
   });
 }
 
-/** Create or overwrite a full map record (image + metadata + pins). */
 export async function saveMap(
   id: string,
   blob: Blob,
@@ -55,13 +54,11 @@ export async function saveMap(
   await db.put(STORE, { blob, name, description, pins }, id);
 }
 
-/** Get the full record (image + metadata + pins). */
 export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
   const db = await getDB();
   return db.get(STORE, id);
 }
 
-/** List all maps (excluding their pin arrays). */
 export async function getAllMaps(): Promise<
   { id: string; blob: Blob; name: string; description?: string }[]
 > {
@@ -84,17 +81,47 @@ export async function getAllMaps(): Promise<
   return out;
 }
 
-/** Delete a map entirely. */
-export async function deleteMap(id: string) {
-  const db = await getDB();
-  await db.delete(STORE, id);
-}
-
-/** Overwrite just the pins array on a map record. */
 export async function updateMapPins(id: string, pins: PinData[]) {
   const db = await getDB();
   const rec = await db.get(STORE, id);
   if (!rec) throw new Error(`No map record found for id=${id}`);
   rec.pins = pins;
   await db.put(STORE, rec, id);
+}
+
+/**
+ * Delete a map *and* clear any references to it from other maps’ pins.
+ */
+export async function deleteMap(id: string) {
+  const db = await getDB();
+  // 1) Remove the map itself
+  await db.delete(STORE, id);
+
+  // 2) Fetch all remaining records
+  const tx = db.transaction(STORE, 'readwrite');
+  const store = tx.objectStore(STORE);
+  const keys = await store.getAllKeys();
+
+  for (const key of keys as string[]) {
+    const rec = await store.get(key);
+    if (!rec) continue;
+
+    // Filter out any linkedMapId references to the deleted id
+    let dirty = false;
+    const newPins = rec.pins.map((pin) => {
+      if (pin.linkedMapId === id) {
+        dirty = true;
+        const { linkedMapId, ...rest } = pin;
+        return rest;  // drop the property
+      }
+      return pin;
+    });
+
+    if (dirty) {
+      rec.pins = newPins;
+      await store.put(rec, key);
+    }
+  }
+
+  await tx.done;
 }
