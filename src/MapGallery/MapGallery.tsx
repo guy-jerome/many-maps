@@ -1,6 +1,5 @@
 // src/MapGallery/MapGallery.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getAllMaps, deleteMap } from '../idbService';
 import { NewMapForm } from './NewMapForm';
 import { MapCard } from './MapCard';
@@ -19,7 +18,6 @@ interface MapEntry extends RawMapEntry {
 }
 
 export const MapGallery: React.FC = () => {
-  const navigate = useNavigate();
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
 
