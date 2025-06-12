@@ -20,10 +20,9 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.1s ease;
 }
 .mg-card:hover {
-  transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0,0,5,5);
 }
 
 /* thumbnail */
@@ -122,38 +121,6 @@
 .mg-add-icon {
   margin-right: 8px;
   font-weight: bold;
-}
-
-/* src/MapGallery/MapGallery.css */
-.mg-form-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.mg-form {
-  background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-}
-.mg-form label {
-  margin-bottom: 12px;
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-}
-.mg-form-buttons {
-  margin-top: 16px;
-  text-align: right;
-}
-.mg-form-buttons button {
-  margin-left: 8px;
 }
 
 
