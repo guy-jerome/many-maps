@@ -3,8 +3,8 @@ import { openDB, DBSchema } from 'idb';
 
 interface MapGalleryDB extends DBSchema {
   maps: {
-    key: string;           // our map ID
-    value: Blob;           // the map image
+    key: string;
+    value: Blob;
   };
 }
 
@@ -40,4 +40,10 @@ export async function getAllMaps(): Promise<{ id: string; blob: Blob }[]> {
     if (blob) result.push({ id: key as string, blob });
   }
   return result;
+}
+
+// ─── new: delete a map by id ─────────────────────────────────────
+export async function deleteMap(id: string) {
+  const db = await getDB();
+  await db.delete(STORE, id);
 }

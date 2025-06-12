@@ -1,7 +1,7 @@
 // src/MapGallery/MapGallery.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllMaps, saveMap } from '../idbService';
+import { getAllMaps, saveMap, deleteMap } from '../idbService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MapEntry {
@@ -17,11 +17,29 @@ const gridStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
+  position: 'relative',
   cursor: 'pointer',
   border: '1px solid #ccc',
   borderRadius: '8px',
   overflow: 'hidden',
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+};
+
+const deleteBtnStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '8px',
+  right: '8px',
+  background: 'rgba(0,0,0,0.6)',
+  border: 'none',
+  color: '#fff',
+  borderRadius: '50%',
+  width: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  zIndex: 10,
 };
 
 const titleStyle: React.CSSProperties = {
@@ -40,12 +58,12 @@ const MapGallery: React.FC = () => {
     getAllMaps().then(setMaps);
   }, []);
 
-  // Handler to open file picker
+  // Trigger file picker
   const handleAddClick = () => {
     fileInputRef.current?.click();
   };
 
-  // When user selects a file, save it to IDB and refresh list
+  // Save new map
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -53,6 +71,15 @@ const MapGallery: React.FC = () => {
     await saveMap(id, file);
     setMaps(await getAllMaps());
     e.target.value = '';
+  };
+
+  // Delete an existing map
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();           // prevent navigating to map
+    if (window.confirm('Delete this map forever?')) {
+      await deleteMap(id);
+      setMaps(await getAllMaps());
+    }
   };
 
   return (
@@ -77,6 +104,13 @@ const MapGallery: React.FC = () => {
               style={cardStyle}
               onClick={() => navigate(`/map/${id}`)}
             >
+              <button
+                style={deleteBtnStyle}
+                onClick={(e) => handleDelete(id, e)}
+                title="Delete map"
+              >
+                ×
+              </button>
               <img
                 src={url}
                 alt={`Map ${id}`}
