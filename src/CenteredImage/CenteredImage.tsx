@@ -17,7 +17,7 @@ import { Point } from 'ol/geom';
 import PinFeature from '../PinFeature/PinFeature';
 import SideBar from '../SideBar/SideBar';
 
-import { getMap } from '../idbService';
+import { getMapBlob } from '../idbService';
 
 // Image dimensions & projection
 const IMAGE_W = 10200;
@@ -43,36 +43,34 @@ const CenteredImage: React.FC = () => {
   const navigate = useNavigate();
   const { mapId } = useParams<{ mapId: string }>();
 
-  // URL.createObjectURL of the blob loaded from IDB
+  // URL to feed into OL Static source
   const [mapUrl, setMapUrl] = useState<string | null>(null);
 
-  // Refs for OpenLayers map
+  // OL refs
   const mapRef = useRef<HTMLDivElement>(null);
   const mapObject = useRef<Map | null>(null);
 
-  // Vector source & layer ref
+  // Vector source & style
   const [vectorSource] = useState(() => new VectorSource());
   const vectorLayerRef = useRef<VectorLayer<any> | null>(null);
 
-  // Pin state
+  // Pin management
   const [pins, setPins] = useState<PinData[]>([]);
   const [nextLabel, setNextLabel] = useState(1);
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
   const selectedPinLabelRef = useRef<string | null>(null);
 
-  // Mode toggles
+  // Modes
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Sync ref + trigger rerender for style update
+  // Keep ref in sync for style fn
   useEffect(() => {
     selectedPinLabelRef.current = selectedPinLabel;
-    if (vectorLayerRef.current) {
-      vectorLayerRef.current.changed();
-    }
+    if (vectorLayerRef.current) vectorLayerRef.current.changed();
   }, [selectedPinLabel]);
 
-  // Update pin info from sidebar
+  // Sidebar update callback
   const updateInfo = (
     label: string,
     newInfo: string,
@@ -80,46 +78,41 @@ const CenteredImage: React.FC = () => {
     newExtraSections?: ExtraSection[]
   ) => {
     setPins((prev) =>
-      prev.map((pin) =>
-        pin.label === label
+      prev.map((p) =>
+        p.label === label
           ? {
-              ...pin,
+              ...p,
               info: newInfo,
-              areaName: newArea ?? pin.areaName,
-              extraSections: newExtraSections ?? pin.extraSections,
+              areaName: newArea ?? p.areaName,
+              extraSections: newExtraSections ?? p.extraSections,
             }
-          : pin
+          : p
       )
     );
   };
 
-  //
-  // ─── Load MAP BLOB from IndexedDB ─────────────────────────────────────────────
-  //
+  // ─── Load the image blob from IndexedDB ────────────────────────────
   useEffect(() => {
     if (!mapId) return;
     let objectUrl: string;
-    getMap(mapId).then((blob) => {
+    getMapBlob(mapId).then((blob) => {
       if (blob) {
         objectUrl = URL.createObjectURL(blob);
         setMapUrl(objectUrl);
+      } else {
+        console.error(`No map found in IDB for id=${mapId}`);
       }
     });
-    // cleanup old object URL on unmount or mapId change
     return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [mapId]);
 
-  //
-  // ─── Initialize OpenLayers ────────────────────────────────────────────────────
-  //
+  // ─── Initialize OpenLayers when we have mapUrl ──────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapUrl) return;
 
-    // Create vector layer with dynamic styling based on zoom & selection
+    // Vector layer with dynamic style
     const vectorLayer = new VectorLayer({
       source: vectorSource,
       zIndex: 1,
@@ -147,7 +140,6 @@ const CenteredImage: React.FC = () => {
     });
     vectorLayerRef.current = vectorLayer;
 
-    // Instantiate the map
     const map = new Map({
       target: mapRef.current,
       layers: [
@@ -172,23 +164,19 @@ const CenteredImage: React.FC = () => {
     });
 
     mapObject.current = map;
-
     return () => {
       map.setTarget(undefined);
       map.dispose?.();
     };
   }, [vectorSource, mapUrl]);
 
-  //
-  // ─── Click handler: add, delete, select ────────────────────────────────────────
-  //
+  // ─── Click to add / delete / select pins ────────────────────────────
   useEffect(() => {
     const map = mapObject.current;
     if (!map) return;
 
     const onClick = (evt: any) => {
       if (isAdding) {
-        // Add mode
         const [x, y] = evt.coordinate;
         const label = `${nextLabel}`;
         setPins((prev) => [
@@ -198,14 +186,10 @@ const CenteredImage: React.FC = () => {
         setNextLabel((n) => n + 1);
         return;
       }
-
       if (isDeleting) {
-        // Delete mode
         let clicked: string | null = null;
         map.forEachFeatureAtPixel(evt.pixel, (feat) => {
-          if (typeof feat.get('pin') === 'string') {
-            clicked = feat.get('pin');
-          }
+          if (typeof feat.get('pin') === 'string') clicked = feat.get('pin');
         });
         if (clicked) {
           const remaining = pins.filter((p) => p.label !== clicked);
@@ -219,26 +203,18 @@ const CenteredImage: React.FC = () => {
         }
         return;
       }
-
-      // Selection mode
       let clicked: string | null = null;
       map.forEachFeatureAtPixel(evt.pixel, (feat) => {
-        if (typeof feat.get('pin') === 'string') {
-          clicked = feat.get('pin');
-        }
+        if (typeof feat.get('pin') === 'string') clicked = feat.get('pin');
       });
       setSelectedPinLabel(clicked);
     };
 
     map.on('singleclick', onClick);
-    return () => {
-      map.un('singleclick', onClick);
-    };
+    return () => map.un('singleclick', onClick);
   }, [isAdding, isDeleting, nextLabel, pins]);
 
-  //
-  // ─── Drag-to-move interaction ────────────────────────────────────────────────
-  //
+  // ─── Drag / translate selected pin ──────────────────────────────────
   useEffect(() => {
     const map = mapObject.current;
     if (!map) return;
@@ -272,7 +248,6 @@ const CenteredImage: React.FC = () => {
     };
   }, [selectedPinLabel, vectorSource, pins]);
 
-  // Find the currently selected pin object for the sidebar
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) ?? null
     : null;
@@ -371,7 +346,7 @@ const CenteredImage: React.FC = () => {
       {/* Sidebar */}
       <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
 
-      {/* Render pin features */}
+      {/* PinFeature components */}
       {pins.map((pin) => (
         <PinFeature
           key={pin.label}

@@ -1,10 +1,16 @@
 // src/idbService.ts
 import { openDB, DBSchema } from 'idb';
 
+interface MapRecord {
+  blob: Blob;
+  name: string;
+  description?: string;
+}
+
 interface MapGalleryDB extends DBSchema {
   maps: {
-    key: string;
-    value: Blob;
+    key: string;      // internal UUID
+    value: MapRecord;
   };
 }
 
@@ -14,35 +20,47 @@ const STORE = 'maps';
 async function getDB() {
   return openDB<MapGalleryDB>(DB_NAME, 1, {
     upgrade(db) {
-      db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE);
+      }
     },
   });
 }
 
-export async function saveMap(id: string, blob: Blob) {
+export async function saveMap(
+  id: string,
+  blob: Blob,
+  name: string,
+  description?: string
+) {
   const db = await getDB();
-  await db.put(STORE, blob, id);
+  await db.put(STORE, { blob, name, description }, id);
 }
 
-export async function getMap(id: string): Promise<Blob | undefined> {
+export async function getMapBlob(id: string): Promise<Blob | undefined> {
   const db = await getDB();
-  return db.get(STORE, id);
+  const rec = await db.get(STORE, id);
+  return rec?.blob;
 }
 
-export async function getAllMaps(): Promise<{ id: string; blob: Blob }[]> {
+export async function getAllMaps(): Promise<
+  { id: string; blob: Blob; name: string; description?: string }[]
+> {
   const db = await getDB();
   const tx = db.transaction(STORE, 'readonly');
   const store = tx.objectStore(STORE);
-  const allKeys = await store.getAllKeys();
-  const result: { id: string; blob: Blob }[] = [];
-  for (const key of allKeys) {
-    const blob = await store.get(key as string);
-    if (blob) result.push({ id: key as string, blob });
+  const keys = await store.getAllKeys();
+  const out: { id: string; blob: Blob; name: string; description?: string }[] =
+    [];
+  for (const key of keys) {
+    const rec = await store.get(key as string);
+    if (rec) {
+      out.push({ id: key as string, blob: rec.blob, name: rec.name, description: rec.description });
+    }
   }
-  return result;
+  return out;
 }
 
-// ─── new: delete a map by id ─────────────────────────────────────
 export async function deleteMap(id: string) {
   const db = await getDB();
   await db.delete(STORE, id);
