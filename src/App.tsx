@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MapGallery from './MapGallery/MapGallery'
 import CenteredImage from './CenteredImage/CenteredImage';
-
+import './App.css';
 function App() {
   return (
     <Router>

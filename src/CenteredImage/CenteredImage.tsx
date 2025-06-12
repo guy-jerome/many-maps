@@ -1,6 +1,6 @@
 // src/CenteredImage/CenteredImage.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import ImageLayer from 'ol/layer/Image';
@@ -27,6 +27,8 @@ type ExtraSection = { title: string; content: string };
 type PinData = { label: string; areaName: string; info: string; x: number; y: number; extraSections: ExtraSection[] };
 
 const CenteredImage: React.FC = () => {
+
+  const navigate = useNavigate();
   // Grab the mapId from the URL and construct the image URL
   const { mapId } = useParams<{ mapId: string }>();
   const mapUrl = `/images/${mapId}.png`;
@@ -164,6 +166,25 @@ const CenteredImage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', position: 'relative' }}>
+    {/* Back to Maps button */}
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 50,
+          padding: '8px 12px',
+          color: '#fff',
+          backgroundColor: '#343a40',
+          border: '1px solid #495057',
+          borderRadius: 4,
+          cursor: 'pointer',
+          fontSize: 14,
+          zIndex: 2000
+        }}
+      >
+        ← Back to Maps
+      </button>
       {/* Mode buttons */}
       <div style={{ position: 'absolute', bottom: 50, left: 10, zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
         <button onClick={() => { setIsAdding(a => !a); if (!isAdding) { setIsDeleting(false); setSelectedPinLabel(null); } }}
