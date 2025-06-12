@@ -91,9 +91,12 @@ export const MapGallery: React.FC = () => {
     <div>
       <h1 style={{ textAlign: 'center', margin: '16px 0' }}>Select a Map</h1>
 
-      <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <button onClick={openForm}>＋ Add New Map</button>
-      </div>
+    <div className="mg-add-container">
+        <button className="mg-add-btn" onClick={openForm}>
+        <span className="mg-add-icon">＋</span>
+        Add New Map
+        </button>
+    </div>
 
       {showForm && (
         <div

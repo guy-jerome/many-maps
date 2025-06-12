@@ -86,3 +86,41 @@
 @keyframes mg-spin {
   to { transform: rotate(360deg); }
 }
+
+/* container for the add button */
+.mg-add-container {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* the pill-like Add New Map button */
+.mg-add-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.mg-add-btn:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+}
+
+.mg-add-btn:active {
+  background-color: #0a58ca;
+  transform: translateY(0);
+}
+
+/* the “+” icon spacing */
+.mg-add-icon {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
