@@ -1,17 +1,9 @@
 // src/MapGallery/MapGallery.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getAllMaps, deleteMap } from '../idbService';
 import { NewMapForm } from './NewMapForm';
 import { MapCard } from './MapCard';
 import './MapGallery.css';
-
-interface RawMapEntry {
-  id: string;
-  blob: Blob;
-  name: string;
-  description?: string;
-}
 
 interface MapEntry {
   id: string;
@@ -51,7 +43,7 @@ async function makeThumbnail(
         0.7
       );
     };
-    img.onerror = (e) => {
+    img.onerror = () => {
       URL.revokeObjectURL(url);
       reject(new Error('Image load error'));
     };
@@ -60,7 +52,6 @@ async function makeThumbnail(
 }
 
 export const MapGallery: React.FC = () => {
-  const navigate = useNavigate();
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
 
