@@ -6,8 +6,8 @@ import React, {
   useLayoutEffect,
 } from 'react';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { ExtraSection, getAllMaps } from '../idbService';
+import { useNavigate, useParams  } from 'react-router-dom';
+import { ExtraSection, getAllMaps, getMapRecord, PinData } from '../idbService';
 
 interface SelectedLabelType {
   label: string;
@@ -69,13 +69,16 @@ export const SideBar: React.FC<SideBarProps> = ({
   updateInfo,
 }) => {
   const navigate = useNavigate();
-
+  const { mapId } = useParams<{ mapId: string }>();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [editArea, setEditArea] = useState('');
   const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
   const [editLinkedMapId, setEditLinkedMapId] = useState<string>('');
   const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
+  const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>(
+    []
+  );
 
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -93,6 +96,26 @@ export const SideBar: React.FC<SideBarProps> = ({
       setMapList(all.map((m) => ({ id: m.id, name: m.name })))
     );
   }, []);
+
+    // Compute parent maps when mapId or mapList change
+  useEffect(() => {
+    if (!mapId) {
+      setParentMaps([]);
+      return;
+    }
+    (async () => {
+      const parents: { id: string; name: string }[] = [];
+      for (const { id, name } of mapList) {
+        if (id === mapId) continue;
+        const rec = await getMapRecord(id);
+        if (rec?.pins.some((p: PinData) => p.linkedMapId === mapId)) {
+          parents.push({ id, name });
+        }
+      }
+      setParentMaps(parents);
+    })();
+  }, [mapId, mapList]);
+
 
   // Pull selected pin data into local state
   useEffect(() => {
@@ -223,6 +246,32 @@ export const SideBar: React.FC<SideBarProps> = ({
 
       {!isCollapsed && (
         <>
+
+            {/* Parent Maps - always shown */}
+          <div style={{ marginTop: '12px', color: '#e9ecef' }}>
+            <h3>Parent Maps</h3>
+            {parentMaps.length > 0 ? (
+              parentMaps.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => navigate(`/map/${m.id}`)}
+                  style={{
+                    display: 'block',
+                    background: 'none',
+                    border: 'none',
+                    color: '#0d6efd',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                    textAlign: 'left',
+                  }}
+                >
+                  {m.name}
+                </button>
+              ))
+            ) : (
+              <p style={emptyStyle}>No parent maps.</p>
+            )}
+          </div>
           {selectedLabel ? (
             <div style={infoStyle}>
               <p>
