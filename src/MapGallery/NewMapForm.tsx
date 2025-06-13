@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { saveMap } from '../idbService';
+import './NewMapForm.css';
 
 interface Props {
   onSaved: () => void;

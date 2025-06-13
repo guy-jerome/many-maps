@@ -1,0 +1,67 @@
+/* src/MapGallery/NewMapForm.css */
+
+/* full‐screen semi-opaque backdrop */
+.mg-form-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* the white dialog box */
+.mg-form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* labels stack their input below */
+.mg-form label {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+/* give the text inputs a bit of breathing room */
+.mg-form input[type="text"],
+.mg-form textarea,
+.mg-form input[type="file"] {
+  margin-top: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* buttons row at the bottom, right-aligned */
+.mg-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* small spacing between Cancel and Save */
+.mg-form-buttons button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+/* style the Save button distinctively */
+.mg-form-buttons button:last-child {
+  background-color: #0d6efd;
+  color: #fff;
+}
