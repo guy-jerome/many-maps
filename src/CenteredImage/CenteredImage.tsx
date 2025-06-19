@@ -146,14 +146,19 @@ const CenteredImage: React.FC = () => {
         new ImageLayer({ source: staticSrc, zIndex: 0 }),
         vectorLayer,
       ],
-      view: new View({
-        projection: PIXEL_PROJ,
-        center: getCenter(EXTENT),
-        zoom: 2,
-        minZoom: 1,
-        maxZoom: 8,
-        extent: EXTENT,
-      }),
+    view: new View({
+    projection: PIXEL_PROJ,
+    center: getCenter(EXTENT),
+    zoom: 3,
+    minZoom: 0.1, // allow zooming far out
+    maxZoom: 8,
+    extent: [
+        EXTENT[0] - IMAGE_W,
+        EXTENT[1] - IMAGE_H,
+        EXTENT[2] + IMAGE_W,
+        EXTENT[3] + IMAGE_H,
+    ], // expand viewable extent
+    }),
     });
 
     mapObject.current = map;
