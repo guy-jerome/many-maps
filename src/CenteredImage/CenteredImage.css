@@ -12,7 +12,16 @@
   flex: 1;
   background-color: #14181c;
 }
-
+/* Map Name */
+.ci-map-name {
+position: absolute;
+  top: 10px;
+  left: 60%;
+  color: #ffffff94;
+  border-radius: 4px;
+  font-size: 40px;
+  z-index: 2000;
+}
 /* Back button */
 .ci-back-btn {
   position: absolute;

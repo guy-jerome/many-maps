@@ -47,6 +47,7 @@ const CenteredImage: React.FC = () => {
   const vectorLayerRef = useRef<VectorLayer<any> | null>(null);
 
   const [pins, setPins] = useState<PinData[]>([]);
+  const [mapName, setMapName] = useState<string | null>("")
   const [nextLabel, setNextLabel] = useState(1);
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
   const selectedPinLabelRef = useRef<string | null>(null);
@@ -92,6 +93,7 @@ const CenteredImage: React.FC = () => {
       setMapUrl(objectUrl);
       setPins(rec.pins || []);
       setNextLabel((rec.pins?.length ?? 0) + 1);
+      setMapName(rec.name)
     });
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -249,6 +251,9 @@ const CenteredImage: React.FC = () => {
         </div>
       )}
 
+      <div className="ci-map-name">
+        Map Name: {mapName}
+      </div>
       <button className="ci-back-btn" onClick={() => navigate('/')}>
         ← Back to Maps
       </button>
