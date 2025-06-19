@@ -1,75 +1,67 @@
 // src/MapGallery/MapGallery.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getAllMaps, deleteMap } from '../idbService';
 import { NewMapForm } from './NewMapForm';
 import { MapCard } from './MapCard';
-import { makeThumbnail } from '../utils/makeThumbnail';
 import './MapGallery.css';
 
 interface MapEntry {
   id: string;
-  fullUrl: string;   // object URL for full-res
-  thumbUrl: string;  // object URL for thumbnail
+  fullUrl: string;
+  thumbUrl: string;
   name: string;
   description?: string;
   loading: boolean;
 }
 
-
 export const MapGallery: React.FC = () => {
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
 
-  // On mount: load all maps, build full- and thumb-URLs
+  // Load maps (full + thumb URLs) from IndexedDB
+  const loadMaps = useCallback(async () => {
+    // Clean up old object URLs
+    maps.forEach(({ fullUrl, thumbUrl }) => {
+      URL.revokeObjectURL(fullUrl);
+      URL.revokeObjectURL(thumbUrl);
+    });
+
+    const raws = await getAllMaps();
+    const entries: MapEntry[] = raws.map((r) => {
+      const fullUrl = URL.createObjectURL(r.blob);
+      const thumbBlob = (r as any).thumb ?? r.blob;
+      const thumbUrl = URL.createObjectURL(thumbBlob);
+      return {
+        id: r.id,
+        fullUrl,
+        thumbUrl,
+        name: r.name,
+        description: r.description,
+        loading: true,
+      };
+    });
+    setMaps(entries);
+  }, [maps]);
+
+  // On mount, load maps once
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const raws = await getAllMaps();
-      const entries: MapEntry[] = await Promise.all(
-        raws.map(async (r) => {
-          const fullUrl = URL.createObjectURL(r.blob);
-          // make a 200×200 thumbnail
-          let thumbBlob: Blob;
-          try {
-            thumbBlob = await makeThumbnail(r.blob, 200, 200);
-          } catch {
-            thumbBlob = r.blob; // fallback to original
-          }
-          const thumbUrl = URL.createObjectURL(thumbBlob);
-          return {
-            id: r.id,
-            fullUrl,
-            thumbUrl,
-            name: r.name,
-            description: r.description,
-            loading: true,
-          };
-        })
-      );
-      if (!cancelled) setMaps(entries);
-    })();
+    loadMaps();
     return () => {
-      cancelled = true;
-      maps.forEach((m) => {
-        URL.revokeObjectURL(m.fullUrl);
-        URL.revokeObjectURL(m.thumbUrl);
+      // cleanup when unmounting
+      maps.forEach(({ fullUrl, thumbUrl }) => {
+        URL.revokeObjectURL(fullUrl);
+        URL.revokeObjectURL(thumbUrl);
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleImageEvent = (id: string) => {
     setMaps((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, loading: false } : m
-      )
+      prev.map((m) => (m.id === id ? { ...m, loading: false } : m))
     );
   };
 
-  const handleDelete = async (
-    id: string,
-    e: React.MouseEvent
-  ) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm('Delete this map?')) return;
     await deleteMap(id);
@@ -83,46 +75,11 @@ export const MapGallery: React.FC = () => {
     });
   };
 
-  const reload = async () => {
-    // revoke old
-    maps.forEach((m) => {
-      URL.revokeObjectURL(m.fullUrl);
-      URL.revokeObjectURL(m.thumbUrl);
-    });
-    // repeat the load logic
-    const raws = await getAllMaps();
-    const entries: MapEntry[] = await Promise.all(
-      raws.map(async (r) => {
-        const fullUrl = URL.createObjectURL(r.blob);
-        let thumbBlob: Blob;
-        try {
-          thumbBlob = await makeThumbnail(r.blob, 200, 200);
-        } catch {
-          thumbBlob = r.blob;
-        }
-        const thumbUrl = URL.createObjectURL(thumbBlob);
-        return {
-          id: r.id,
-          fullUrl,
-          thumbUrl,
-          name: r.name,
-          description: r.description,
-          loading: true,
-        };
-      })
-    );
-    setMaps(entries);
-  };
-
   return (
     <div className="mg-container">
       <h1>Select a Map</h1>
-
       <div className="mg-add-container">
-        <button
-          className="mg-add-btn"
-          onClick={() => setShowForm(true)}
-        >
+        <button className="mg-add-btn" onClick={() => setShowForm(true)}>
           <span className="mg-add-icon">＋</span>
           Add New Map
         </button>
@@ -133,7 +90,7 @@ export const MapGallery: React.FC = () => {
           onCancel={() => setShowForm(false)}
           onSaved={async () => {
             setShowForm(false);
-            await reload();
+            await loadMaps();
           }}
         />
       )}
@@ -143,7 +100,7 @@ export const MapGallery: React.FC = () => {
           <MapCard
             key={m.id}
             id={m.id}
-            url={m.thumbUrl}         // use the low-res thumb
+            url={m.thumbUrl}
             name={m.name}
             description={m.description}
             loading={m.loading}
