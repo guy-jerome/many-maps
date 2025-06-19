@@ -206,7 +206,10 @@ export const SideBar: React.FC<SideBarProps> = ({
     <div
       ref={sidebarRef}
       style={{
-        position: 'relative',
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        height: '100%',
         width,
         backgroundColor: '#343a40',
         color: '#fff',
