@@ -62,7 +62,28 @@ text-shadow:
   width: 160px;
   text-align: center;
 }
+.ci-btn {
+  background-color: #444;
+  color: white;
+  border: 1px solid #666;
+  padding: 8px 12px;
+  margin-right: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
 
+.ci-btn:hover,
+.ci-back-btn:hover {
+  background-color: #555;
+}
+
+.ci-btn.active {
+  background-color: #51769a;
+  border-color: #647b9c;
+  color: white;
+  font-weight: bold;
+}
 /* Spinner overlay */
 .ci-spinner-overlay {
   position: absolute;

@@ -258,14 +258,33 @@ const CenteredImage: React.FC = () => {
         ← Back to Maps
       </button>
 
-      <div className="ci-mode-btns">
-        <button onClick={() => { setIsAdding(a => !a); if (!isAdding) { setIsDeleting(false); setSelectedPinLabel(null); } }}>
-          {isAdding ? 'Exit Add-Pin Mode' : 'Enter Add-Pin Mode'}
-        </button>
-        <button onClick={() => { setIsDeleting(d => !d); if (!isDeleting) { setIsAdding(false); setSelectedPinLabel(null); } }}>
-          {isDeleting ? 'Exit Delete-Pin Mode' : 'Enter Delete-Pin Mode'}
-        </button>
-      </div>
+    <div className="ci-mode-btns">
+    <button
+        className={isAdding ? 'ci-btn active' : 'ci-btn'}
+        onClick={() => {
+        setIsAdding((a) => !a);
+        if (!isAdding) {
+            setIsDeleting(false);
+            setSelectedPinLabel(null);
+        }
+        }}
+    >
+        {isAdding ? 'Exit Add-Pin Mode' : 'Enter Add-Pin Mode'}
+    </button>
+
+    <button
+        className={isDeleting ? 'ci-btn active' : 'ci-btn'}
+        onClick={() => {
+        setIsDeleting((d) => !d);
+        if (!isDeleting) {
+            setIsAdding(false);
+            setSelectedPinLabel(null);
+        }
+        }}
+    >
+        {isDeleting ? 'Exit Delete-Pin Mode' : 'Enter Delete-Pin Mode'}
+    </button>
+    </div>
 
       <div ref={mapRef} className="ci-map" />
       <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
