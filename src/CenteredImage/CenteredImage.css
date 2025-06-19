@@ -18,9 +18,13 @@ position: absolute;
   top: 10px;
   left: 60%;
   color: #ffffff94;
+text-shadow:
+-1px -1px 0 black,
+    1px -1px 0 black;
   border-radius: 4px;
   font-size: 40px;
   z-index: 2000;
+  
 }
 /* Back button */
 .ci-back-btn {
