@@ -1,6 +1,6 @@
 // src/idbService.ts
 import { openDB, DBSchema } from 'idb';
-
+import { makeThumbnail } from './utils/makeThumbnail';
 export interface ExtraSection {
   title: string;
   content: string;
@@ -18,6 +18,7 @@ export interface PinData {
 
 export interface MapRecord {
   blob: Blob;
+  thumb?: Blob;
   name: string;
   description?: string;
   pins: PinData[];
@@ -50,8 +51,9 @@ export async function saveMap(
   description?: string,
   pins: PinData[] = []
 ) {
+  const thumb = await makeThumbnail(blob, 200, 200); // create thumbnail once here
   const db = await getDB();
-  await db.put(STORE, { blob, name, description, pins }, id);
+  await db.put(STORE, { blob, name, description, pins, thumb }, id);
 }
 
 export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
@@ -60,19 +62,20 @@ export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
 }
 
 export async function getAllMaps(): Promise<
-  { id: string; blob: Blob; name: string; description?: string }[]
+  { id: string; blob: Blob; thumb?: Blob; name: string; description?: string }[]
 > {
   const db = await getDB();
   const tx = db.transaction(STORE, 'readonly');
   const store = tx.objectStore(STORE);
   const keys = await store.getAllKeys();
-  const out: { id: string; blob: Blob; name: string; description?: string }[] = [];
+  const out: { id: string; blob: Blob; thumb?: Blob; name: string; description?: string }[] = [];
   for (const key of keys) {
     const rec = await store.get(key as string);
     if (rec) {
       out.push({
         id: key as string,
         blob: rec.blob,
+        thumb: rec.thumb,
         name: rec.name,
         description: rec.description,
       });
