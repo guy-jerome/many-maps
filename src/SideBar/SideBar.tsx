@@ -334,10 +334,10 @@ export const SideBar: React.FC<SideBarProps> = ({
                     }}
                   />
                   <div style={{ marginTop: '8px' }}>
-                    <button onClick={handleSave} style={{ marginRight: 8 }}>
+                    <button onClick={handleSave} style={{ marginRight: 8, cursor: 'pointer'}}>
                       Save
                     </button>
-                    <button onClick={() => setIsEditing(false)}>Cancel</button>
+                    <button onClick={() => setIsEditing(false) } style={{ cursor: 'pointer'}}>Cancel</button>
                   </div>
                 </>
               ) : (
