@@ -67,7 +67,8 @@ const CenteredImage: React.FC = () => {
     newInfo: string,
     newArea?: string,
     newExtraSections?: PinData['extraSections'],
-    newLinkedMapId?: string
+    newLinkedMapId?: string,
+    newTags?: string[]
   ) => {
     const updated = pins.map((pin) =>
       pin.label === label
@@ -77,6 +78,7 @@ const CenteredImage: React.FC = () => {
             areaName: newArea ?? pin.areaName,
             extraSections: newExtraSections ?? pin.extraSections,
             linkedMapId: newLinkedMapId,
+            tags: newTags ?? pin.tags
           }
         : pin
     );
@@ -180,7 +182,7 @@ const CenteredImage: React.FC = () => {
         const label = `${nextLabel}`;
         setPins((p) => [
           ...p,
-          { label, info: '', areaName: '', x, y, extraSections: [] },
+          { label, info: '', areaName: '', x, y, extraSections: [], tags: [] },
         ]);
         setNextLabel((n) => n + 1);
         return;

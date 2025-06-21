@@ -14,6 +14,7 @@ export interface PinData {
   y: number;
   extraSections: ExtraSection[];
   linkedMapId?: string;
+  tags: string[];
 }
 
 export interface MapRecord {

@@ -5,7 +5,7 @@ import React, {
   useRef,
   useLayoutEffect,
 } from 'react';
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Tag } from 'lucide-react';
 import { useNavigate, useParams  } from 'react-router-dom';
 import { ExtraSection, getAllMaps, getMapRecord, PinData } from '../idbService';
 
@@ -15,6 +15,7 @@ interface SelectedLabelType {
   areaName?: string;
   extraSections: ExtraSection[];
   linkedMapId?: string;
+  tags?: string[];
 }
 
 interface SideBarProps {
@@ -24,7 +25,8 @@ interface SideBarProps {
     newInfo: string,
     newArea?: string,
     newExtraSections?: ExtraSection[],
-    newLinkedMapId?: string
+    newLinkedMapId?: string,
+    newTags?: string[],
   ) => void;
 }
 
@@ -70,9 +72,12 @@ export const SideBar: React.FC<SideBarProps> = ({
 }) => {
   const navigate = useNavigate();
   const { mapId } = useParams<{ mapId: string }>();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [editArea, setEditArea] = useState('');
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState('');
   const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
   const [editLinkedMapId, setEditLinkedMapId] = useState<string>('');
   const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
@@ -122,6 +127,7 @@ export const SideBar: React.FC<SideBarProps> = ({
     if (selectedLabel) {
       setEditText(selectedLabel.info);
       setEditArea(selectedLabel.areaName || '');
+      setEditTags(selectedLabel.tags || [])
       setExtraSections(
         selectedLabel.extraSections.map((sec) => ({
           title: sec.title,
@@ -133,6 +139,7 @@ export const SideBar: React.FC<SideBarProps> = ({
     } else {
       setEditText('');
       setEditArea('');
+      setEditTags([]);
       setExtraSections([]);
       setEditLinkedMapId('');
       setIsEditing(false);
@@ -177,7 +184,8 @@ export const SideBar: React.FC<SideBarProps> = ({
         editText,
         editArea,
         extraSections,
-        editLinkedMapId || undefined
+        editLinkedMapId || undefined,
+        editTags,
       );
     }
     setIsEditing(false);
@@ -200,6 +208,18 @@ export const SideBar: React.FC<SideBarProps> = ({
 
   const deleteSection = (idx: number) => {
     setExtraSections((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // tag helpers
+  const addTag = () => {
+    const t = newTagInput.trim();
+    if (t && !editTags.includes(t)) {
+      setEditTags(prev => [...prev, t]);
+    }
+    setNewTagInput('');
+  };
+  const removeTag = (tag: string) => {
+    setEditTags(prev => prev.filter(t => t !== tag));
   };
 
   return (
@@ -371,7 +391,65 @@ export const SideBar: React.FC<SideBarProps> = ({
                 )
                 }
               </div>
-
+                          {/* ─── Tags Section ─────────────────────────── */}
+          <div style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+              <h3 style={{ margin: 0 }}>Tags: </h3>
+              {isEditing && (
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={e => setNewTagInput(e.target.value)}
+                    placeholder="New tag"
+                    style={{ padding: '4px', marginRight: 4 }}
+                  />
+                  <button onClick={addTag} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <Plus size={16} />
+                  </button>
+                </div>
+              )}
+              {/* display tags */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {(isEditing ? editTags : selectedLabel?.tags || []).map(tag => (
+                <span
+                  key={tag}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: '#495057',
+                    color: '#e9ecef',
+                    padding: '4px 8px',
+                    borderRadius: 12,
+                    cursor: isEditing ? 'default' : 'pointer',
+                  }}
+                >
+                  <Tag size={12} style={{ marginRight: 4 }} />
+                  <span>{tag}</span>
+                  {isEditing && (
+                    <button
+                      onClick={() => removeTag(tag)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#e55353',
+                        marginLeft: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              ))}
+              {!isEditing && (!selectedLabel?.tags || selectedLabel.tags.length === 0) && (
+                <span style={{ fontStyle: 'italic', color: '#adb5bd' }}>
+                   No tags.
+                </span>
+              )}
+            </div>
+            </div>
+            </div>
               {/* ─── Extra Sections ───────────────────────────────────── */}
               <div style={{ marginTop: '20px' }}>
                 <div
