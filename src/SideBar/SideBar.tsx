@@ -391,63 +391,74 @@ export const SideBar: React.FC<SideBarProps> = ({
                 )
                 }
               </div>
-                          {/* ─── Tags Section ─────────────────────────── */}
-          <div style={{ marginTop: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-              <h3 style={{ margin: 0 }}>Tags: </h3>
-              {isEditing && (
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                  <input
+            {/* ─── Tags Section ─────────────────────────── */}
+            <div style={{ marginTop: 20 }}>
+            <h3 style={{ margin: 0, marginBottom: 8 }}>Tags:</h3>
+
+            {/* Add Tag Input - only when editing */}
+            {isEditing && (
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                <input
                     type="text"
                     value={newTagInput}
                     onChange={e => setNewTagInput(e.target.value)}
                     placeholder="New tag"
-                    style={{ padding: '4px', marginRight: 4 }}
-                  />
-                  <button onClick={addTag} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    style={{ padding: '4px 8px', flexGrow: 1, marginRight: 6 }}
+                />
+                <button
+                    onClick={addTag}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                >
                     <Plus size={16} />
-                  </button>
+                </button>
                 </div>
-              )}
-              {/* display tags */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-              {(isEditing ? editTags : selectedLabel?.tags || []).map(tag => (
+            )}
+
+            {/* Tag Chips */}
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '6px',
+                paddingBottom: 8
+            }}>
+                {(isEditing ? editTags : selectedLabel?.tags || []).map(tag => (
                 <span
-                  key={tag}
-                  style={{
+                    key={tag}
+                    style={{
                     display: 'flex',
                     alignItems: 'center',
                     backgroundColor: '#495057',
                     color: '#e9ecef',
                     padding: '4px 8px',
                     borderRadius: 12,
-                    cursor: isEditing ? 'default' : 'pointer',
-                  }}
+                    maxWidth: '100%',
+                    wordBreak: 'break-word'
+                    }}
                 >
-                  <Tag size={12} style={{ marginRight: 4 }} />
-                  <span>{tag}</span>
-                  {isEditing && (
+                    <Tag size={12} style={{ marginRight: 4 }} />
+                    <span>{tag}</span>
+                    {isEditing && (
                     <button
-                      onClick={() => removeTag(tag)}
-                      style={{
+                        onClick={() => removeTag(tag)}
+                        style={{
                         background: 'none',
                         border: 'none',
                         color: '#e55353',
                         marginLeft: 4,
                         cursor: 'pointer',
-                      }}
+                        }}
                     >
-                      ×
+                        ×
                     </button>
-                  )}
+                    )}
                 </span>
-              ))}
-              {!isEditing && (!selectedLabel?.tags || selectedLabel.tags.length === 0) && (
+                ))}
+
+                {!isEditing && (!selectedLabel?.tags || selectedLabel.tags.length === 0) && (
                 <span style={{ fontStyle: 'italic', color: '#adb5bd' }}>
-                   No tags.
+                    No tags.
                 </span>
-              )}
-            </div>
+                )}
             </div>
             </div>
               {/* ─── Extra Sections ───────────────────────────────────── */}
