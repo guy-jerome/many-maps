@@ -401,9 +401,12 @@ export const SideBar: React.FC<SideBarProps> = ({
                 <input
                     type="text"
                     value={newTagInput}
-                    onChange={e => setNewTagInput(e.target.value)}
+                    onChange={(e) => setNewTagInput(e.target.value)}
                     placeholder="New tag"
                     style={{ padding: '4px 8px', flexGrow: 1, marginRight: 6 }}
+                    onKeyDown={(e) => {
+                    if (e.key === 'Enter') addTag();
+                    }}
                 />
                 <button
                     onClick={addTag}
@@ -414,51 +417,65 @@ export const SideBar: React.FC<SideBarProps> = ({
                 </div>
             )}
 
-            {/* Tag Chips */}
-            <div style={{
+            {/* Tag Chips or "No tags" */}
+            <div
+                style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '6px',
-                paddingBottom: 8
-            }}>
-                {(isEditing ? editTags : selectedLabel?.tags || []).map(tag => (
-                <span
+                paddingBottom: 8,
+                cursor: !isEditing ? 'pointer' : 'default',
+                }}
+                onClick={() => {
+                if (!isEditing) setIsEditing(true);
+                }}
+            >
+                {(isEditing ? editTags : selectedLabel?.tags || []).length > 0 ? (
+                (isEditing ? editTags : selectedLabel?.tags || []).map((tag) => (
+                    <span
                     key={tag}
                     style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    backgroundColor: '#495057',
-                    color: '#e9ecef',
-                    padding: '4px 8px',
-                    borderRadius: 12,
-                    maxWidth: '100%',
-                    wordBreak: 'break-word'
+                        display: 'flex',
+                        alignItems: 'center',
+                        backgroundColor: '#495057',
+                        color: '#e9ecef',
+                        padding: '4px 8px',
+                        borderRadius: 12,
+                        maxWidth: '100%',
+                        wordBreak: 'break-word',
                     }}
-                >
+                    >
                     <Tag size={12} style={{ marginRight: 4 }} />
                     <span>{tag}</span>
                     {isEditing && (
-                    <button
-                        onClick={() => removeTag(tag)}
-                        style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#e55353',
-                        marginLeft: 4,
-                        cursor: 'pointer',
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering setIsEditing again
+                            removeTag(tag);
                         }}
-                    >
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#e55353',
+                            marginLeft: 4,
+                            cursor: 'pointer',
+                        }}
+                        >
                         ×
-                    </button>
+                        </button>
                     )}
+                    </span>
+                ))
+                ) : !isEditing ? (
+                <span
+                    style={{
+                    fontStyle: 'italic',
+                    color: '#adb5bd',
+                    }}
+                >
+                    No tags. Click to add.
                 </span>
-                ))}
-
-                {!isEditing && (!selectedLabel?.tags || selectedLabel.tags.length === 0) && (
-                <span style={{ fontStyle: 'italic', color: '#adb5bd' }}>
-                    No tags.
-                </span>
-                )}
+                ) : null}
             </div>
             </div>
               {/* ─── Extra Sections ───────────────────────────────────── */}
