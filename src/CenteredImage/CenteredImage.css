@@ -15,8 +15,8 @@
 /* Map Name */
 .ci-map-name {
 position: absolute;
-  top: 10px;
-  left: 60%;
+  bottom:50px;
+  left: 200px;
   color: #ffffff94;
 text-shadow:
 -1px -1px 0 black,
