@@ -79,6 +79,7 @@ export const SideBar: React.FC<SideBarProps> = ({
   const [editTags, setEditTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
+  const [collapsedSections, setCollapsedSections] = useState<boolean[]>([]); 
   const [editLinkedMapId, setEditLinkedMapId] = useState<string>('');
   const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
   const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>(
@@ -171,6 +172,12 @@ export const SideBar: React.FC<SideBarProps> = ({
     };
   }, []);
 
+
+  // Reset collapse state whenever sections change or edit mode toggles
+  useEffect(() => {
+    setCollapsedSections(extraSections.map(() => false));
+  }, [extraSections, isEditing])
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     isResizing.current = true;
     startX.current = e.clientX;
@@ -208,6 +215,12 @@ export const SideBar: React.FC<SideBarProps> = ({
 
   const deleteSection = (idx: number) => {
     setExtraSections((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const toggleSection = (idx: number) => {
+    setCollapsedSections((prev) =>
+      prev.map((c, i) => (i === idx ? !c : c))
+    );
   };
 
   // tag helpers
@@ -477,140 +490,159 @@ export const SideBar: React.FC<SideBarProps> = ({
                         ) : null}
                     </div>
                     </div>
-                    {/* ─── Extra Sections ───────────────────────────────────── */}
-                    <div style={{ marginTop: '20px' }}>
-                        <div
+                {/* ─── Extra Sections ───────────────────────────────────── */}
+                <div style={{ marginTop: '20px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <h3 style={{ margin: 0 }}>Extra Sections:</h3>
+                    <button
+                      onClick={addSection}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#0d6efd',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Plus size={16} style={{ marginRight: '4px' }} /> Add Section
+                    </button>
+                  </div>
+
+                  {extraSections.length === 0 && !isEditing && (
+                    <p style={{ fontStyle: 'italic', color: '#adb5bd' }}>
+                      No extra sections yet.
+                    </p>
+                  )}
+
+                  {/* VIEW MODE: collapsible details */}
+                  {!isEditing &&
+                    extraSections.map((sec, idx) => (
+                      <div
+                        key={idx}
                         style={{
+                          marginTop: '12px',
+                          padding: '8px',
+                          backgroundColor: '#495057',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        <div
+                          onClick={() => toggleSection(idx)}
+                          style={{
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                        }}
+                            cursor: 'pointer',
+                          }}
                         >
-                        <h3 style={{ margin: 0 }}>Extra Sections:</h3>
+                          <h4 style={{ margin: 0, color: '#e9ecef' }}>
+                            {sec.title || <em>(No title)</em>}
+                          </h4>
+                          {collapsedSections[idx] ? (
+                            <ChevronDown size={16} />
+                          ) : (
+                            <ChevronUp size={16} />
+                          )}
+                        </div>
+                        {!collapsedSections[idx] && (
+                          <p style={{ marginTop: '8px', color: '#e9ecef' }}>
+                            {sec.content || <em>(No content)</em>}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+
+                  {/* EDIT MODE: fully expanded with delete buttons */}
+                  {isEditing &&
+                    extraSections.map((sec, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: 'relative',
+                          marginTop: '12px',
+                          padding: '8px',
+                          backgroundColor: '#495057',
+                          borderRadius: '4px',
+                        }}
+                      >
                         <button
-                            onClick={addSection}
-                            style={{
+                          onClick={() => deleteSection(idx)}
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
                             background: 'none',
                             border: 'none',
-                            color: '#0d6efd',
+                            color: '#e55353',
                             cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            }}
+                            fontWeight: 'bold',
+                          }}
+                          aria-label={`Delete section ${idx + 1}`}
                         >
-                            <Plus size={16} style={{ marginRight: '4px' }} /> Add Section
+                          ×
                         </button>
-                        </div>
 
-                        {extraSections.length === 0 && !isEditing && (
-                        <p style={{ fontStyle: 'italic', color: '#adb5bd' }}>
-                            No extra sections yet.
-                        </p>
-                        )}
+                        <label
+                          style={{
+                            display: 'block',
+                            marginBottom: '4px',
+                            fontWeight: 'bold',
+                            color: '#e9ecef',
+                          }}
+                        >
+                          Title:
+                        </label>
+                        <input
+                          type="text"
+                          value={sec.title}
+                          onChange={(e) =>
+                            updateSection(idx, 'title', e.target.value)
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '6px',
+                            marginBottom: '8px',
+                            boxSizing: 'border-box',
+                          }}
+                        />
 
-                        {/* Static view */}
-                        {!isEditing &&
-                        extraSections.map((sec, idx) => (
-                            <div
-                            key={idx}
-                            style={{
-                                marginTop: '12px',
-                                padding: '8px',
-                                backgroundColor: '#495057',
-                                borderRadius: '4px',
-                            }}
-                            >
-                            <h4 style={{ margin: '0 0 4px' }}>
-                                {sec.title || <em>(No title)</em>}
-                            </h4>
-                            <p style={{ margin: 0 }}>
-                                {sec.content || <em>(No content)</em>}
-                            </p>
-                            </div>
-                        ))}
-
-                        {/* Edit view */}
-                        {isEditing &&
-                        extraSections.map((sec, idx) => (
-                            <div
-                            key={idx}
-                            style={{
-                                position: 'relative',
-                                marginTop: '12px',
-                                padding: '8px',
-                                backgroundColor: '#495057',
-                                borderRadius: '4px',
-                            }}
-                            >
-                            <button
-                                onClick={() => deleteSection(idx)}
-                                style={{
-                                position: 'absolute',
-                                top: '8px',
-                                right: '8px',
-                                background: 'none',
-                                border: 'none',
-                                color: '#e55353',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                }}
-                                aria-label={`Delete section ${idx + 1}`}
-                            >
-                                ×
-                            </button>
-
-                            <label
-                                style={{
-                                display: 'block',
-                                marginBottom: '4px',
-                                fontWeight: 'bold',
-                                }}
-                            >
-                                Title:
-                            </label>
-                            <input
-                                type="text"
-                                value={sec.title}
-                                onChange={(e) =>
-                                updateSection(idx, 'title', e.target.value)
-                                }
-                                style={{
-                                width: '100%',
-                                padding: '6px',
-                                marginBottom: '8px',
-                                boxSizing: 'border-box',
-                                }}
-                            />
-
-                            <label
-                                style={{
-                                display: 'block',
-                                marginBottom: '4px',
-                                fontWeight: 'bold',
-                                }}
-                            >
-                                Content:
-                            </label>
-                            <textarea
-                                value={sec.content}
-                                onChange={(e) =>
-                                updateSection(idx, 'content', e.target.value)
-                                }
-                                style={{
-                                width: '100%',
-                                minHeight: '80px',
-                                padding: '6px',
-                                boxSizing: 'border-box',
-                                }}
-                            />
-                            </div>
-                        ))}
-                    </div>
-                    </div>
-                ) : (
-                    <p style={emptyStyle}>Click a pin to see details</p>
-                )}
-                </>
+                        <label
+                          style={{
+                            display: 'block',
+                            marginBottom: '4px',
+                            fontWeight: 'bold',
+                            color: '#e9ecef',
+                          }}
+                        >
+                          Content:
+                        </label>
+                        <textarea
+                          value={sec.content}
+                          onChange={(e) =>
+                            updateSection(idx, 'content', e.target.value)
+                          }
+                          style={{
+                            width: '100%',
+                            minHeight: '80px',
+                            padding: '6px',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <p style={emptyStyle}>Click a pin to see details</p>
+            )}
+          </>
             )}
         </div>
     </div>
