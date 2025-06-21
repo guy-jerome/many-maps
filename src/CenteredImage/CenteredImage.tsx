@@ -208,7 +208,12 @@ const CenteredImage: React.FC = () => {
       setSelectedPinLabel(hit);
     };
     map.on('singleclick', onClick);
+    map.on('pointermove', (evt) => {
+        const hit = map.hasFeatureAtPixel(evt.pixel);
+        map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+    });
     return () => map.un('singleclick', onClick);
+    
   }, [isAdding, isDeleting, nextLabel, pins]);
 
   // ─── drag‐to‐move pins ───────────────────────────────────────────
