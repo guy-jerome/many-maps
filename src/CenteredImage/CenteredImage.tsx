@@ -292,7 +292,6 @@ const CenteredImage: React.FC = () => {
         {isDeleting ? 'Exit Delete-Pin Mode' : 'Enter Delete-Pin Mode'}
     </button>
     </div>
-
       <div ref={mapRef} className="ci-map" />
       <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
       {pins.map((p) => (
