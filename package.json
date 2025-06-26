@@ -14,8 +14,11 @@
     "lucide-react": "^0.513.0",
     "ol": "^10.5.0",
     "react": "^19.0.0",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.0.0",
+    "react-konva": "^19.0.6",
     "react-router-dom": "^7.6.2",
+    "use-undo": "^1.1.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
