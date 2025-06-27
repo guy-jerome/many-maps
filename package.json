@@ -18,6 +18,7 @@
     "react-dom": "^19.0.0",
     "react-konva": "^19.0.6",
     "react-router-dom": "^7.6.2",
+    "use-image": "^1.1.4",
     "use-undo": "^1.1.1",
     "uuid": "^11.1.0"
   },

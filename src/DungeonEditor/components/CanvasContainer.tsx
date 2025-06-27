@@ -1,29 +1,11 @@
+// src/components/CanvasContainer.tsx
 import React from 'react';
 import { Stage } from 'react-konva';
 
-interface CanvasContainerProps {
-  stageRef: React.RefObject<any>;
-  width: number;
-  height: number;
-  draggable: boolean;
-  children: React.ReactNode;
-  onMouseDown: (e: any) => void;
-  onMouseMove: (e: any) => void;
-  onMouseUp: (e: any) => void;
-}
-
-const CanvasContainer: React.FC<CanvasContainerProps> = ({
-  stageRef,
-  width,
-  height,
-  draggable,
-  children,
-  onMouseDown,
-  onMouseMove,
-  onMouseUp,
-}) => {
+interface Props { stageRef:any; width:number; height:number; draggable:boolean; children:React.ReactNode; onMouseDown:any; onMouseMove:any; onMouseUp:any; }
+export default function CanvasContainer({ stageRef,width,height,draggable,children,onMouseDown,onMouseMove,onMouseUp }:Props) {
   return (
-    <div style={{ border: '1px solid #000', width, height }}>
+    <div style={{ border:'1px solid #000', width, height }}>
       <Stage
         ref={stageRef}
         width={width}
@@ -37,6 +19,4 @@ const CanvasContainer: React.FC<CanvasContainerProps> = ({
       </Stage>
     </div>
   );
-};
-
-export default CanvasContainer;
+}

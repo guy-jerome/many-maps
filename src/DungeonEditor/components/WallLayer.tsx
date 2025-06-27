@@ -1,37 +1,11 @@
-import React from 'react';
+// src/components/WallLayer.tsx
 import { Layer, Line } from 'react-konva';
-
-interface WallShape {
-  points: number[];
-  id: string;
-}
-
-interface WallLayerProps {
-  walls: WallShape[];
-  currentLinePoints: number[] | null;
-}
-
-const WallLayer: React.FC<WallLayerProps> = ({ walls, currentLinePoints }) => {
+interface Wall { points:number[]; id:string; stroke:string; strokeWidth:number; }
+interface Props { walls:Wall[]; }
+export default function WallLayer({walls}:Props){
   return (
     <Layer>
-      {walls.map((wall) => (
-        <Line
-          key={wall.id}
-          points={wall.points}
-          stroke="#000"
-          strokeWidth={5}
-        />
-      ))}
-      {currentLinePoints && currentLinePoints.length > 0 && (
-        <Line
-          points={currentLinePoints}
-          stroke="#000"
-          strokeWidth={5}
-          dash={[4, 4]}
-        />
-      )}
+      {walls.map(w=><Line key={w.id} id={w.id} points={w.points} stroke={w.stroke} strokeWidth={w.strokeWidth} lineCap="round" />)}
     </Layer>
   );
-};
-
-export default WallLayer;
+}

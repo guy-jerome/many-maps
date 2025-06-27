@@ -1,10 +1,5 @@
+// src/hooks/useSnapToGrid.ts
 import { useCallback } from 'react';
-
-// Rounds a coordinate value to the nearest multiple of cellSize
-const useSnapToGrid = (cellSize: number) => {
-  return useCallback((value: number) => {
-    return Math.round(value / cellSize) * cellSize;
-  }, [cellSize]);
-};
-
-export default useSnapToGrid;
+export default function useSnapToGrid(cellSize:number, snapOn:boolean) {
+  return useCallback((v:number) => snapOn ? Math.round(v/cellSize)*cellSize : v, [cellSize,snapOn]);
+}

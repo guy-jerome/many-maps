@@ -1,46 +1,12 @@
-import React from 'react';
+// src/components/RoomLayer.tsx
 import { Layer, Rect } from 'react-konva';
-
-interface RoomShape {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  id: string;
-}
-
-interface RoomLayerProps {
-  rooms: RoomShape[];
-  currentRect: { x: number; y: number; width: number; height: number } | null;
-}
-
-const RoomLayer: React.FC<RoomLayerProps> = ({ rooms, currentRect }) => {
+interface Room { x:number; y:number; width:number; height:number; id:string; stroke:string; fill:string; strokeWidth:number; }
+interface Props { rooms:Room[]; }
+export default function RoomLayer({rooms}:Props){
   return (
     <Layer>
-      {rooms.map((room) => (
-        <Rect
-          key={room.id}
-          x={room.x}
-          y={room.y}
-          width={room.width}
-          height={room.height}
-          stroke="#000"
-          strokeWidth={5}
-        />
-      ))}
-      {currentRect && currentRect.width !== 0 && currentRect.height !== 0 && (
-        <Rect
-          x={currentRect.x}
-          y={currentRect.y}
-          width={currentRect.width}
-          height={currentRect.height}
-          stroke="#000"
-          strokeWidth={5}
-          dash={[4, 4]}
-        />
-      )}
+      {rooms.map(r=><Rect key={r.id} id={r.id} x={r.x} y={r.y} width={r.width} height={r.height}
+        stroke={r.stroke} fill={r.fill} strokeWidth={r.strokeWidth} />)}
     </Layer>
   );
-};
-
-export default RoomLayer;
+}
