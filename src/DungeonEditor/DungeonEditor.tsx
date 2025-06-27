@@ -10,6 +10,7 @@ import GridLayer from './components/GridLayer';
 import WallLayer from './components/WallLayer';
 import RoomLayer from './components/RoomLayer';
 import DoorLayer from './components/DoorLayer';
+import CircleLayer from './components/CircleLayer';
 import FreehandLayer from './components/FreehandLayer';
 import TokenLayer from './components/TokenLayer';
 import TextLayer from './components/TextLayer';
@@ -19,16 +20,19 @@ type Shape =
   | { type: 'wall'; points: number[]; id: string; stroke: string; strokeWidth: number }
   | { type: 'room'; x: number; y: number; width: number; height: number; id: string; stroke: string; fill: string; strokeWidth: number }
   | { type: 'door'; points: number[]; id: string; stroke: string; strokeWidth: number; open: boolean }
+  | { type: 'circle'; x: number; y: number; radius: number; id: string; stroke: string; fill: string; strokeWidth: number }
   | { type: 'freehand'; points: number[]; id: string; stroke: string; strokeWidth: number }
   | { type: 'text'; x: number; y: number; text: string; id: string; fontSize: number; fill: string }
   | { type: 'token'; x: number; y: number; id: string; src: string; width: number; height: number; rotation: number };
+
+type MapState = { shapes: Shape[]; history: any; bgColor: string; gridOn: boolean; snapOn: boolean; cellSize: number };
 
 const DungeonEditor: React.FC = () => {
   const { mapId } = useParams<{ mapId: string }>();
   const stageRef = useRef<any>(null);
 
   /** Tool and UI state **/
-  const [mode, setMode] = useState<'wall'|'room'|'door'|'freehand'|'text'|'select'|'token'|'eraser'|'pan'>('select');
+  const [mode, setMode] = useState<'select'|'wall'|'room'|'door'|'circle'|'freehand'|'text'|'token'|'eraser'|'pan'>('select');
   const [strokeColor, setStrokeColor] = useState('#000000');
   const [fillColor, setFillColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(4);
@@ -42,13 +46,14 @@ const DungeonEditor: React.FC = () => {
   const snap = useSnapToGrid(cellSize, snapOn);
 
   /** Shapes and History **/
-  const { state: shapes, setState: setShapes, undo, redo} = useHistory<Shape[]>({ initial: [] });
+  const { state: shapes, setState: setShapes, undo, redo, clearHistory } = useHistory<Shape[]>({ initial: [] });
 
   /** Draft drawing state **/
   const [drawing, setDrawing] = useState(false);
   const [startPos, setStartPos] = useState<{x:number,y:number}|null>(null);
   const [draftPoints, setDraftPoints] = useState<number[] | null>(null);
   const [draftRect, setDraftRect] = useState<{x:number,y:number,width:number,height:number}|null>(null);
+  const [draftCircle, setDraftCircle] = useState<{x:number,y:number,radius:number}|null>(null);
 
   /** Load saved state on mount **/
   useEffect(() => {
@@ -62,7 +67,7 @@ const DungeonEditor: React.FC = () => {
   }, [mapId]);
 
   /** Mouse handlers **/
-  const handleMouseDown = () => {
+  const handleMouseDown = (e:any) => {
     const stage = stageRef.current;
     if (!stage) return;
     const pos = stage.getPointerPosition(); if (!pos) return;
@@ -74,6 +79,9 @@ const DungeonEditor: React.FC = () => {
     } else if (mode === 'room') {
       setDrawing(true);
       setStartPos({x,y}); setDraftRect({x,y,width:0,height:0});
+    } else if (mode === 'circle') {
+      setDrawing(true);
+      setStartPos({x,y}); setDraftCircle({x,y,radius:0});
     } else if (mode === 'text') {
       const text = prompt('Enter label text');
       if (text) {
@@ -94,7 +102,7 @@ const DungeonEditor: React.FC = () => {
     }
   };
 
-  const handleMouseMove = () => {
+  const handleMouseMove = (e:any) => {
     if (!drawing) return;
     const stage = stageRef.current; if (!stage) return;
     const pos = stage.getPointerPosition(); if (!pos) return;
@@ -108,6 +116,11 @@ const DungeonEditor: React.FC = () => {
       const newX = Math.min(startPos.x,x), newY = Math.min(startPos.y,y);
       const w = Math.abs(x-startPos.x), h= Math.abs(y-startPos.y);
       setDraftRect({ x:newX, y:newY, width:w, height:h });
+    } else if (mode === 'circle' && startPos) {
+      const dx = x - startPos.x;
+      const dy = y - startPos.y;
+      const r = Math.sqrt(dx*dx + dy*dy);
+      setDraftCircle({ x: startPos.x, y: startPos.y, radius: r });
     }
   };
 
@@ -128,11 +141,14 @@ const DungeonEditor: React.FC = () => {
     } else if (mode==='room' && draftRect) {
       const id = `room-${Date.now()}`;
       newShape = { type:'room', x:draftRect.x, y:draftRect.y, width:draftRect.width, height:draftRect.height, id, stroke:strokeColor, fill:fillColor, strokeWidth };
+    } else if (mode==='circle' && draftCircle) {
+      const id = `circle-${Date.now()}`;
+      newShape = { type:'circle', x:draftCircle.x, y:draftCircle.y, radius: draftCircle.radius, id, stroke:strokeColor, fill:fillColor, strokeWidth };
     }
     if (newShape) {
       setShapes([...shapes, newShape]);
     }
-    setDrawing(false); setDraftPoints(null); setDraftRect(null); setStartPos(null);
+    setDrawing(false); setDraftPoints(null); setDraftRect(null); setDraftCircle(null); setStartPos(null);
   };
 
   /** Toolbar actions **/
@@ -183,6 +199,7 @@ const DungeonEditor: React.FC = () => {
         <RoomLayer rooms={shapes.filter(s=>s.type==='room') as any} />
         <WallLayer walls={shapes.filter(s=>s.type==='wall') as any} />
         <DoorLayer doors={shapes.filter(s=>s.type==='door') as any} />
+        <CircleLayer circles={shapes.filter(s=>s.type==='circle') as any} draft={draftCircle} />
         <FreehandLayer lines={shapes.filter(s=>s.type==='freehand') as any} current={draftPoints} />
         <TextLayer texts={shapes.filter(s=>s.type==='text') as any} />
         <TokenLayer tokens={shapes.filter(s=>s.type==='token') as any} />

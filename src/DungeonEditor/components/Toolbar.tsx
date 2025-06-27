@@ -22,7 +22,7 @@ export default function Toolbar(props:Props){
 
   return (
     <div style={{ marginBottom: 10, display: 'flex', flexWrap:'wrap', gap:8 }}>
-      {['select','wall','room','door','freehand','text','token','eraser','pan'].map(m=>
+      {['select','wall','room','circle','door','freehand','text','token','eraser','pan'].map(m=>
         <button key={m} onClick={()=>setMode(m)} style={{ background: mode===m?'#ddd':undefined }}>{m}</button>
       )}
       <label>Stroke: <input type="color" value={strokeColor} onChange={e=>setStrokeColor(e.target.value)}/></label>
