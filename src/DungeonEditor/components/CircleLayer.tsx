@@ -13,7 +13,7 @@ interface CircleShape {
 
 interface CircleLayerProps {
   circles: CircleShape[];
-  draft: { x: number; y: number; radius: number; stroke: string } | null;
+  draft: { x: number; y: number; radius: number} | null;
 }
 
 const CircleLayer: React.FC<CircleLayerProps> = ({ circles, draft }) => {

@@ -66,11 +66,23 @@ const DungeonEditor: React.FC = () => {
     }
   }, [mapId]);
 
+  /** Transform pointer to stage coordinates accounting for pan/zoom **/
+  const getStageCoords = (evt: any) => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    // Get pointer position relative to container
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return null;
+    // Invert the stage transform to map to untransformed coords
+    const transform = stage.getAbsoluteTransform().copy().invert();
+    const pos = transform.point(pointer);
+    return { x: pos.x, y: pos.y };
+  };
+
   /** Mouse handlers **/
   const handleMouseDown = (e:any) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const pos = stage.getPointerPosition(); if (!pos) return;
+    const pos = getStageCoords(e);
+    if (!pos) return;
     const x = snap(pos.x); const y = snap(pos.y);
 
     if (mode === 'wall' || mode === 'door' || mode === 'freehand') {
@@ -95,7 +107,8 @@ const DungeonEditor: React.FC = () => {
         setShapes([...shapes, { type:'token', x, y, id, src:url, width:50, height:50, rotation:0 }]);
       }
     } else if (mode === 'eraser') {
-      const shape = stage.getIntersection(pos);
+      const stage = stageRef.current;
+      const shape = stage.getIntersection(stage.getPointerPosition());
       if (shape && shape.getAttr('id')) {
         setShapes(shapes.filter(s => s.id !== shape.getAttr('id')));
       }
@@ -104,23 +117,21 @@ const DungeonEditor: React.FC = () => {
 
   const handleMouseMove = (e:any) => {
     if (!drawing) return;
-    const stage = stageRef.current; if (!stage) return;
-    const pos = stage.getPointerPosition(); if (!pos) return;
+    const pos = getStageCoords(e);
+    if (!pos) return;
     const x = snap(pos.x), y = snap(pos.y);
 
     if (mode === 'freehand' && draftPoints) {
       setDraftPoints([...draftPoints, x, y]);
     } else if ((mode === 'wall' || mode==='door') && draftPoints) {
-      if (draftPoints.length>=2) setDraftPoints([draftPoints[0],draftPoints[1], x, y]);
+      setDraftPoints([draftPoints[0],draftPoints[1], x, y]);
     } else if (mode === 'room' && startPos) {
       const newX = Math.min(startPos.x,x), newY = Math.min(startPos.y,y);
-      const w = Math.abs(x-startPos.x), h= Math.abs(y-startPos.y);
-      setDraftRect({ x:newX, y:newY, width:w, height:h });
+      setDraftRect({ x:newX, y:newY, width:Math.abs(x-startPos.x), height:Math.abs(y-startPos.y) });
     } else if (mode === 'circle' && startPos) {
       const dx = x - startPos.x;
       const dy = y - startPos.y;
-      const r = Math.sqrt(dx*dx + dy*dy);
-      setDraftCircle({ x: startPos.x, y: startPos.y, radius: r });
+      setDraftCircle({ x: startPos.x, y: startPos.y, radius: Math.sqrt(dx*dx + dy*dy) });
     }
   };
 
@@ -128,26 +139,17 @@ const DungeonEditor: React.FC = () => {
     if (!drawing) return;
     let newShape:Shape|undefined;
     if (mode==='freehand' && draftPoints) {
-      const id = `freehand-${Date.now()}`;
-      newShape = { type:'freehand', points:draftPoints, id, stroke:strokeColor, strokeWidth };
-    } else if (mode==='wall' && draftPoints && draftPoints.length===4) {
-      const [x1,y1,x2,y2] = draftPoints;
-      const id = `wall-${Date.now()}`;
-      newShape = { type:'wall', points:[x1,y1,x2,y2], id, stroke:strokeColor, strokeWidth };
-    } else if (mode==='door' && draftPoints && draftPoints.length===4) {
-      const [x1,y1,x2,y2] = draftPoints;
-      const id = `door-${Date.now()}`;
-      newShape = { type:'door', points:[x1,y1,x2,y2], id, stroke:strokeColor, strokeWidth, open:false };
+      newShape = { type:'freehand', points:draftPoints, id:`freehand-${Date.now()}`, stroke:strokeColor, strokeWidth };
+    } else if (mode==='wall' && draftPoints?.length===4) {
+      newShape = { type:'wall', points:draftPoints, id:`wall-${Date.now()}`, stroke:strokeColor, strokeWidth };
+    } else if (mode==='door' && draftPoints?.length===4) {
+      newShape = { type:'door', points:draftPoints, id:`door-${Date.now()}`, stroke:strokeColor, strokeWidth, open:false };
     } else if (mode==='room' && draftRect) {
-      const id = `room-${Date.now()}`;
-      newShape = { type:'room', x:draftRect.x, y:draftRect.y, width:draftRect.width, height:draftRect.height, id, stroke:strokeColor, fill:fillColor, strokeWidth };
+      newShape = { type:'room', x:draftRect.x, y:draftRect.y, width:draftRect.width, height:draftRect.height, id:`room-${Date.now()}`, stroke:strokeColor, fill:fillColor, strokeWidth };
     } else if (mode==='circle' && draftCircle) {
-      const id = `circle-${Date.now()}`;
-      newShape = { type:'circle', x:draftCircle.x, y:draftCircle.y, radius: draftCircle.radius, id, stroke:strokeColor, fill:fillColor, strokeWidth };
+      newShape = { type:'circle', x:draftCircle.x, y:draftCircle.y, radius:draftCircle.radius, id:`circle-${Date.now()}`, stroke:strokeColor, fill:fillColor, strokeWidth };
     }
-    if (newShape) {
-      setShapes([...shapes, newShape]);
-    }
+    if (newShape) setShapes([...shapes, newShape]);
     setDrawing(false); setDraftPoints(null); setDraftRect(null); setDraftCircle(null); setStartPos(null);
   };
 
