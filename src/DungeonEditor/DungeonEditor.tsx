@@ -198,7 +198,10 @@ const DungeonEditor: React.FC = () => {
         onMouseUp={handleMouseUp}
       >
         {gridOn && <GridLayer width={1000} height={800} cellSize={cellSize} />}
-        <RoomLayer rooms={shapes.filter(s=>s.type==='room') as any} />
+        <RoomLayer
+        rooms={shapes.filter(s => s.type === 'room') as any}
+        draftRect={draftRect}
+        />
         <WallLayer walls={shapes.filter(s=>s.type==='wall') as any} />
         <DoorLayer doors={shapes.filter(s=>s.type==='door') as any} />
         <CircleLayer circles={shapes.filter(s=>s.type==='circle') as any} draft={draftCircle} />

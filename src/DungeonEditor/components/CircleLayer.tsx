@@ -28,7 +28,7 @@ const CircleLayer: React.FC<CircleLayerProps> = ({ circles, draft }) => {
           y={c.y}
           radius={c.radius}
           stroke={c.stroke}
-          fill={c.fill}
+          fill="transparent"
           strokeWidth={c.strokeWidth}
         />
       ))}
