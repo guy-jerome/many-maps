@@ -349,7 +349,7 @@ const CenteredImage: React.FC = () => {
           </div>
         </div>
       )}
-      <button className="ci-back-btn" onClick={() => navigate("/")}>
+      <button className="ci-back-btn" onClick={() => navigate("/gallery")}>
         ← Back to Maps
       </button>
 
