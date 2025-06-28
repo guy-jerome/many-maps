@@ -25,8 +25,6 @@ type Shape =
   | { type: 'text'; x: number; y: number; text: string; id: string; fontSize: number; fill: string }
   | { type: 'token'; x: number; y: number; id: string; src: string; width: number; height: number; rotation: number };
 
-type MapState = { shapes: Shape[]; history: any; bgColor: string; gridOn: boolean; snapOn: boolean; cellSize: number };
-
 const DungeonEditor: React.FC = () => {
   const { mapId } = useParams<{ mapId: string }>();
   const stageRef = useRef<any>(null);
@@ -46,7 +44,7 @@ const DungeonEditor: React.FC = () => {
   const snap = useSnapToGrid(cellSize, snapOn);
 
   /** Shapes and History **/
-  const { state: shapes, setState: setShapes, undo, redo, clearHistory } = useHistory<Shape[]>({ initial: [] });
+  const { state: shapes, setState: setShapes, undo, redo} = useHistory<Shape[]>({ initial: [] });
 
   /** Draft drawing state **/
   const [drawing, setDrawing] = useState(false);
@@ -67,7 +65,7 @@ const DungeonEditor: React.FC = () => {
   }, [mapId]);
 
   /** Transform pointer to stage coordinates accounting for pan/zoom **/
-  const getStageCoords = (evt: any) => {
+  const getStageCoords = () => {
     const stage = stageRef.current;
     if (!stage) return null;
     // Get pointer position relative to container
@@ -80,8 +78,8 @@ const DungeonEditor: React.FC = () => {
   };
 
   /** Mouse handlers **/
-  const handleMouseDown = (e:any) => {
-    const pos = getStageCoords(e);
+  const handleMouseDown = () => {
+    const pos = getStageCoords();
     if (!pos) return;
     const x = snap(pos.x); const y = snap(pos.y);
 
@@ -115,9 +113,9 @@ const DungeonEditor: React.FC = () => {
     }
   };
 
-  const handleMouseMove = (e:any) => {
+  const handleMouseMove = () => {
     if (!drawing) return;
-    const pos = getStageCoords(e);
+    const pos = getStageCoords();
     if (!pos) return;
     const x = snap(pos.x), y = snap(pos.y);
 
