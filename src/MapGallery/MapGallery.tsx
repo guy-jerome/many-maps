@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { getAllMaps, deleteMap } from "../idbService";
 import { NewMapForm } from "./NewMapForm";
 import { MapCard } from "./MapCard";
+import { useNavigate } from "react-router-dom";
 import "./MapGallery.css";
 
 interface MapEntry {
@@ -17,6 +18,7 @@ interface MapEntry {
 export const MapGallery: React.FC = () => {
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   // Load maps (full + thumb URLs) from IndexedDB
   const loadMaps = useCallback(async () => {
@@ -77,6 +79,9 @@ export const MapGallery: React.FC = () => {
 
   return (
     <div className="mg-container">
+      <button className="mg-back-btn" onClick={() => navigate("/")}>
+        ⟵ Back to Home
+      </button>
       <h1>Select a Map</h1>
       <div className="mg-add-container">
         <button className="mg-add-btn" onClick={() => setShowForm(true)}>
