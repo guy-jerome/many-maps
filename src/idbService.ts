@@ -99,6 +99,15 @@ export async function updateMapPins(id: string, pins: PinData[]) {
   await db.put(STORE, rec, id);
 }
 
+export async function updateMapMeta(id: string, name: string, description?: string) {
+  const db = await getDB();
+  const rec = await db.get(STORE, id);
+  if (!rec) throw new Error(`No map record found for id=${id}`);
+  rec.name = name;
+  rec.description = description;
+  await db.put(STORE, rec, id);
+}
+
 /**
  * Delete a map *and* clear any references to it from other maps’ pins.
  */

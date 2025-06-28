@@ -5,7 +5,6 @@ import "./LandingPage.css";
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   // Auto-login with default username
-  const [loggedIn] = React.useState(true);
   const [username] = React.useState("DM");
 
   return (

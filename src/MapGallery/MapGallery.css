@@ -125,3 +125,66 @@
   margin-right: 8px;
   font-weight: bold;
 }
+
+/* edit button and inline edit form styles */
+.mg-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 36px;
+  background: #232a34;
+  color: #b0b8c9;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 2px 8px;
+  z-index: 2;
+  transition: background 0.2s;
+}
+.mg-edit-btn:hover {
+  background: #3a7bd5;
+  color: #fff;
+}
+.mg-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mg-edit-input {
+  font-size: 1em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #181c24;
+  color: #f3f3f3;
+}
+.mg-edit-textarea {
+  font-size: 0.95em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #181c24;
+  color: #f3f3f3;
+  resize: vertical;
+}
+.mg-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.mg-edit-save {
+  background: #3a7bd5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 12px;
+  cursor: pointer;
+}
+.mg-edit-cancel {
+  background: #232a34;
+  color: #b0b8c9;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 12px;
+  cursor: pointer;
+}
