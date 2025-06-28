@@ -1,36 +1,32 @@
 // src/CenteredImage/CenteredImage.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import ImageLayer from 'ol/layer/Image';
-import Static from 'ol/source/ImageStatic';
-import VectorSource from 'ol/source/Vector';
-import VectorLayer from 'ol/layer/Vector';
-import Projection from 'ol/proj/Projection';
-import { getCenter } from 'ol/extent';
-import Translate from 'ol/interaction/Translate';
-import Collection from 'ol/Collection';
-import { Style, Circle as CircleStyle, Fill, Stroke, Text } from 'ol/style';
-import { Point } from 'ol/geom';
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Map from "ol/Map";
+import View from "ol/View";
+import ImageLayer from "ol/layer/Image";
+import Static from "ol/source/ImageStatic";
+import VectorSource from "ol/source/Vector";
+import VectorLayer from "ol/layer/Vector";
+import Projection from "ol/proj/Projection";
+import { getCenter } from "ol/extent";
+import Translate from "ol/interaction/Translate";
+import Collection from "ol/Collection";
+import { Style, Circle as CircleStyle, Fill, Stroke, Text } from "ol/style";
+import { Point } from "ol/geom";
 
-import PinFeature from '../PinFeature/PinFeature';
-import SideBar from '../SideBar/SideBar';
+import PinFeature from "../PinFeature/PinFeature";
+import SideBar from "../SideBar/SideBar";
 
-import {
-  getMapRecord,
-  updateMapPins,
-  PinData,
-} from '../idbService';
+import { getMapRecord, updateMapPins, PinData } from "../idbService";
 
-import './CenteredImage.css';
+import "./CenteredImage.css";
 
 const IMAGE_W = 10200;
 const IMAGE_H = 6600;
 const EXTENT: [number, number, number, number] = [0, 0, IMAGE_W, IMAGE_H];
 const PIXEL_PROJ = new Projection({
-  code: 'pixel',
-  units: 'pixels',
+  code: "pixel",
+  units: "pixels",
   extent: EXTENT,
 });
 
@@ -47,7 +43,7 @@ const CenteredImage: React.FC = () => {
   const vectorLayerRef = useRef<VectorLayer<any> | null>(null);
 
   const [pins, setPins] = useState<PinData[]>([]);
-  const [mapName, setMapName] = useState<string | null>("")
+  const [mapName, setMapName] = useState<string | null>("");
   const [nextLabel, setNextLabel] = useState(1);
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
   const selectedPinLabelRef = useRef<string | null>(null);
@@ -66,7 +62,7 @@ const CenteredImage: React.FC = () => {
     label: string,
     newInfo: string,
     newArea?: string,
-    newExtraSections?: PinData['extraSections'],
+    newExtraSections?: PinData["extraSections"],
     newLinkedMapId?: string,
     newTags?: string[]
   ) => {
@@ -78,7 +74,7 @@ const CenteredImage: React.FC = () => {
             areaName: newArea ?? pin.areaName,
             extraSections: newExtraSections ?? pin.extraSections,
             linkedMapId: newLinkedMapId,
-            tags: newTags ?? pin.tags
+            tags: newTags ?? pin.tags,
           }
         : pin
     );
@@ -95,7 +91,7 @@ const CenteredImage: React.FC = () => {
       setMapUrl(objectUrl);
       setPins(rec.pins || []);
       setNextLabel((rec.pins?.length ?? 0) + 1);
-      setMapName(rec.name)
+      setMapName(rec.name);
     });
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -117,27 +113,27 @@ const CenteredImage: React.FC = () => {
       projection: PIXEL_PROJ,
       imageExtent: EXTENT,
     });
-    staticSrc.on('imageloadstart', () => setLoading(true));
-    staticSrc.on('imageloadend', () => setLoading(false));
-    staticSrc.on('imageloaderror', () => setLoading(false));
+    staticSrc.on("imageloadstart", () => setLoading(true));
+    staticSrc.on("imageloadend", () => setLoading(false));
+    staticSrc.on("imageloaderror", () => setLoading(false));
 
     const vectorLayer = new VectorLayer({
       source: vectorSource,
       zIndex: 1,
       style: (feature, resolution) => {
         const radius = 100 / resolution;
-        const lbl = feature.get('pin') as string;
+        const lbl = feature.get("pin") as string;
         const isSel = selectedPinLabelRef.current === lbl;
         return new Style({
           image: new CircleStyle({
             radius,
-            fill: new Fill({ color: 'black' }),
-            stroke: new Stroke({ color: isSel ? 'blue' : 'white', width: 2 }),
+            fill: new Fill({ color: "black" }),
+            stroke: new Stroke({ color: isSel ? "blue" : "white", width: 2 }),
           }),
           text: new Text({
             text: lbl,
             font: `${radius}px sans-serif`,
-            fill: new Fill({ color: 'white' }),
+            fill: new Fill({ color: "white" }),
           }),
         });
       },
@@ -146,23 +142,20 @@ const CenteredImage: React.FC = () => {
 
     const map = new Map({
       target: mapRef.current,
-      layers: [
-        new ImageLayer({ source: staticSrc, zIndex: 0 }),
-        vectorLayer,
-      ],
-    view: new View({
-    projection: PIXEL_PROJ,
-    center: getCenter(EXTENT),
-    zoom: 3,
-    minZoom: 0.1, // allow zooming far out
-    maxZoom: 8,
-    extent: [
-        EXTENT[0] - IMAGE_W,
-        EXTENT[1] - IMAGE_H,
-        EXTENT[2] + IMAGE_W,
-        EXTENT[3] + IMAGE_H,
-    ], // expand viewable extent
-    }),
+      layers: [new ImageLayer({ source: staticSrc, zIndex: 0 }), vectorLayer],
+      view: new View({
+        projection: PIXEL_PROJ,
+        center: getCenter(EXTENT),
+        zoom: 3,
+        minZoom: 0.1, // allow zooming far out
+        maxZoom: 8,
+        extent: [
+          EXTENT[0] - IMAGE_W,
+          EXTENT[1] - IMAGE_H,
+          EXTENT[2] + IMAGE_W,
+          EXTENT[3] + IMAGE_H,
+        ], // expand viewable extent
+      }),
     });
 
     mapObject.current = map;
@@ -182,7 +175,7 @@ const CenteredImage: React.FC = () => {
         const label = `${nextLabel}`;
         setPins((p) => [
           ...p,
-          { label, info: '', areaName: '', x, y, extraSections: [], tags: [] },
+          { label, info: "", areaName: "", x, y, extraSections: [], tags: [] },
         ]);
         setNextLabel((n) => n + 1);
         return;
@@ -190,7 +183,7 @@ const CenteredImage: React.FC = () => {
       if (isDeleting) {
         let hit: string | null = null;
         map.forEachFeatureAtPixel(evt.pixel, (feat) => {
-          if (typeof feat.get('pin') === 'string') hit = feat.get('pin');
+          if (typeof feat.get("pin") === "string") hit = feat.get("pin");
         });
         if (hit) {
           const rem = pins.filter((p) => p.label !== hit);
@@ -203,17 +196,16 @@ const CenteredImage: React.FC = () => {
       }
       let hit: string | null = null;
       map.forEachFeatureAtPixel(evt.pixel, (feat) => {
-        if (typeof feat.get('pin') === 'string') hit = feat.get('pin');
+        if (typeof feat.get("pin") === "string") hit = feat.get("pin");
       });
       setSelectedPinLabel(hit);
     };
-    map.on('singleclick', onClick);
-    map.on('pointermove', (evt) => {
-        const hit = map.hasFeatureAtPixel(evt.pixel);
-        map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+    map.on("singleclick", onClick);
+    map.on("pointermove", (evt) => {
+      const hit = map.hasFeatureAtPixel(evt.pixel);
+      map.getTargetElement().style.cursor = hit ? "pointer" : "";
     });
-    return () => map.un('singleclick', onClick);
-    
+    return () => map.un("singleclick", onClick);
   }, [isAdding, isDeleting, nextLabel, pins]);
 
   // ─── drag‐to‐move pins ───────────────────────────────────────────
@@ -224,15 +216,15 @@ const CenteredImage: React.FC = () => {
     if (selectedPinLabel) {
       const feat = vectorSource
         .getFeatures()
-        .find((f) => f.get('pin') === selectedPinLabel);
+        .find((f) => f.get("pin") === selectedPinLabel);
       if (feat) {
         trans = new Translate({ features: new Collection([feat]) });
         map.addInteraction(trans);
-        trans.on('translateend', (e) => {
+        trans.on("translateend", (e) => {
           const f = e.features.item(0);
-          const lbl = f?.get('pin');
+          const lbl = f?.get("pin");
           const geom = f?.getGeometry() as Point;
-          if (typeof lbl === 'string' && geom) {
+          if (typeof lbl === "string" && geom) {
             const [x, y] = geom.getCoordinates();
             setPins((prev) =>
               prev.map((p) => (p.label === lbl ? { ...p, x, y } : p))
@@ -258,44 +250,48 @@ const CenteredImage: React.FC = () => {
         </div>
       )}
 
-      <div className="ci-map-name">
-        Map Name: {mapName}
-      </div>
-      <button className="ci-back-btn" onClick={() => navigate('/')}>
+      <div className="ci-map-name">Map Name: {mapName}</div>
+      <button className="ci-back-btn" onClick={() => navigate("/")}>
         ← Back to Maps
       </button>
 
-    <div className="ci-mode-btns">
-    <button
-        className={isAdding ? 'ci-btn active' : 'ci-btn'}
-        onClick={() => {
-        setIsAdding((a) => !a);
-        if (!isAdding) {
-            setIsDeleting(false);
-            setSelectedPinLabel(null);
-        }
-        }}
-    >
-        {isAdding ? 'Exit Add-Pin Mode' : 'Enter Add-Pin Mode'}
-    </button>
+      <div className="ci-mode-btns">
+        <button
+          className={isAdding ? "ci-btn active" : "ci-btn"}
+          onClick={() => {
+            setIsAdding((a) => !a);
+            if (!isAdding) {
+              setIsDeleting(false);
+              setSelectedPinLabel(null);
+            }
+          }}
+        >
+          {isAdding ? "Exit Add-Pin Mode" : "Enter Add-Pin Mode"}
+        </button>
 
-    <button
-        className={isDeleting ? 'ci-btn active' : 'ci-btn'}
-        onClick={() => {
-        setIsDeleting((d) => !d);
-        if (!isDeleting) {
-            setIsAdding(false);
-            setSelectedPinLabel(null);
-        }
-        }}
-    >
-        {isDeleting ? 'Exit Delete-Pin Mode' : 'Enter Delete-Pin Mode'}
-    </button>
-    </div>
+        <button
+          className={isDeleting ? "ci-btn active" : "ci-btn"}
+          onClick={() => {
+            setIsDeleting((d) => !d);
+            if (!isDeleting) {
+              setIsAdding(false);
+              setSelectedPinLabel(null);
+            }
+          }}
+        >
+          {isDeleting ? "Exit Delete-Pin Mode" : "Enter Delete-Pin Mode"}
+        </button>
+      </div>
       <div ref={mapRef} className="ci-map" />
       <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
       {pins.map((p) => (
-        <PinFeature key={p.label} source={vectorSource} x={p.x} y={p.y} pin={p} />
+        <PinFeature
+          key={p.label}
+          source={vectorSource}
+          x={p.x}
+          y={p.y}
+          pin={p}
+        />
       ))}
     </div>
   );

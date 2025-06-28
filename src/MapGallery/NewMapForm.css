@@ -3,7 +3,10 @@
 /* full‐screen semi-opaque backdrop */
 .mg-form-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
@@ -18,7 +21,7 @@
   border-radius: 8px;
   width: 320px;
   max-width: 90%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
 }

@@ -1,8 +1,8 @@
 // src/MapGallery/NewMapForm.tsx
-import React, { useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { saveMap } from '../idbService';
-import './NewMapForm.css';
+import React, { useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { saveMap } from "../idbService";
+import "./NewMapForm.css";
 
 interface Props {
   onSaved: () => void;
@@ -18,8 +18,8 @@ export const NewMapForm: React.FC<Props> = ({ onSaved, onCancel }) => {
     const file = fileRef.current?.files?.[0];
     const name = nameRef.current?.value.trim();
     const description = descRef.current?.value.trim() || undefined;
-    if (!file) return alert('Pick an image file');
-    if (!name) return alert('Give your map a name');
+    if (!file) return alert("Pick an image file");
+    if (!name) return alert("Give your map a name");
     const id = uuidv4();
     await saveMap(id, file, name, description);
     onSaved();

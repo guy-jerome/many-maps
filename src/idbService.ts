@@ -1,6 +1,6 @@
 // src/idbService.ts
-import { openDB, DBSchema } from 'idb';
-import { makeThumbnail } from './utils/makeThumbnail';
+import { openDB, DBSchema } from "idb";
+import { makeThumbnail } from "./utils/makeThumbnail";
 export interface ExtraSection {
   title: string;
   content: string;
@@ -32,8 +32,8 @@ interface MapGalleryDB extends DBSchema {
   };
 }
 
-const DB_NAME = 'map-gallery-db';
-const STORE = 'maps';
+const DB_NAME = "map-gallery-db";
+const STORE = "maps";
 
 async function getDB() {
   return openDB<MapGalleryDB>(DB_NAME, 1, {
@@ -66,10 +66,16 @@ export async function getAllMaps(): Promise<
   { id: string; blob: Blob; thumb?: Blob; name: string; description?: string }[]
 > {
   const db = await getDB();
-  const tx = db.transaction(STORE, 'readonly');
+  const tx = db.transaction(STORE, "readonly");
   const store = tx.objectStore(STORE);
   const keys = await store.getAllKeys();
-  const out: { id: string; blob: Blob; thumb?: Blob; name: string; description?: string }[] = [];
+  const out: {
+    id: string;
+    blob: Blob;
+    thumb?: Blob;
+    name: string;
+    description?: string;
+  }[] = [];
   for (const key of keys) {
     const rec = await store.get(key as string);
     if (rec) {
@@ -102,7 +108,7 @@ export async function deleteMap(id: string) {
   await db.delete(STORE, id);
 
   // 2) Fetch all remaining records
-  const tx = db.transaction(STORE, 'readwrite');
+  const tx = db.transaction(STORE, "readwrite");
   const store = tx.objectStore(STORE);
   const keys = await store.getAllKeys();
 
@@ -116,7 +122,7 @@ export async function deleteMap(id: string) {
       if (pin.linkedMapId === id) {
         dirty = true;
         const { linkedMapId, ...rest } = pin;
-        return rest;  // drop the property
+        return rest; // drop the property
       }
       return pin;
     });

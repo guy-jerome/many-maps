@@ -1,6 +1,6 @@
 // src/components/RoomLayer.tsx
-import React from 'react';
-import { Layer, Rect } from 'react-konva';
+import React from "react";
+import { Layer, Rect } from "react-konva";
 
 interface RoomShape {
   x: number;

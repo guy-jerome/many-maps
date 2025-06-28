@@ -14,17 +14,14 @@
 }
 /* Map Name */
 .ci-map-name {
-position: absolute;
-  bottom:50px;
+  position: absolute;
+  bottom: 50px;
   left: 200px;
   color: #ffffff94;
-text-shadow:
--1px -1px 0 black,
-    1px -1px 0 black;
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black;
   border-radius: 4px;
   font-size: 40px;
   z-index: 2000;
-  
 }
 /* Back button */
 .ci-back-btn {
@@ -91,7 +88,7 @@ text-shadow:
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,12 +99,14 @@ text-shadow:
 .ci-spinner {
   width: 48px;
   height: 48px;
-  border: 6px solid rgba(255,255,255,0.6);
+  border: 6px solid rgba(255, 255, 255, 0.6);
   border-top-color: #ffffff;
   border-radius: 50%;
   animation: ci-spin 1s linear infinite;
 }
 
 @keyframes ci-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

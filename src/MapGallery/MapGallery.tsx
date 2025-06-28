@@ -1,9 +1,9 @@
 // src/MapGallery/MapGallery.tsx
-import React, { useEffect, useState, useCallback } from 'react';
-import { getAllMaps, deleteMap } from '../idbService';
-import { NewMapForm } from './NewMapForm';
-import { MapCard } from './MapCard';
-import './MapGallery.css';
+import React, { useEffect, useState, useCallback } from "react";
+import { getAllMaps, deleteMap } from "../idbService";
+import { NewMapForm } from "./NewMapForm";
+import { MapCard } from "./MapCard";
+import "./MapGallery.css";
 
 interface MapEntry {
   id: string;
@@ -63,7 +63,7 @@ export const MapGallery: React.FC = () => {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this map?')) return;
+    if (!window.confirm("Delete this map?")) return;
     await deleteMap(id);
     setMaps((prev) => {
       const gone = prev.find((m) => m.id === id);
