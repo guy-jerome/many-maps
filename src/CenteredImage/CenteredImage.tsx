@@ -17,7 +17,12 @@ import { Point } from "ol/geom";
 import PinFeature from "../PinFeature/PinFeature";
 import SideBar from "../SideBar/SideBar";
 
-import { getMapRecord, updateMapPins, PinData } from "../idbService";
+import {
+  getMapRecord,
+  updateMapPins,
+  updateMapMeta,
+  PinData,
+} from "../idbService";
 
 import "./CenteredImage.css";
 
@@ -50,6 +55,13 @@ const CenteredImage: React.FC = () => {
 
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mapDescription, setMapDescription] = useState<string | null>("");
+  const [descOpen, setDescOpen] = useState(false);
+
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [metaSaving, setMetaSaving] = useState(false);
 
   // Keep selection-ref & style in sync
   useEffect(() => {
@@ -92,6 +104,9 @@ const CenteredImage: React.FC = () => {
       setPins(rec.pins || []);
       setNextLabel((rec.pins?.length ?? 0) + 1);
       setMapName(rec.name);
+      setMapDescription(rec.description || "");
+      setEditName(rec.name);
+      setEditDesc(rec.description || "");
     });
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -249,8 +264,91 @@ const CenteredImage: React.FC = () => {
           <div className="ci-spinner" />
         </div>
       )}
-
-      <div className="ci-map-name">Map Name: {mapName}</div>
+      <div className="ci-map-name-block">
+        {editingMeta ? (
+          <form
+            className="ci-meta-edit-form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setMetaSaving(true);
+              await updateMapMeta(mapId!, editName, editDesc);
+              setMapName(editName);
+              setMapDescription(editDesc);
+              setEditingMeta(false);
+              setMetaSaving(false);
+            }}
+          >
+            <input
+              className="ci-meta-edit-input"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              disabled={metaSaving}
+              maxLength={80}
+              required
+            />
+            <textarea
+              className="ci-meta-edit-textarea"
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              rows={2}
+              disabled={metaSaving}
+              maxLength={400}
+              placeholder="Description (optional)"
+            />
+            <div className="ci-meta-edit-actions">
+              <button
+                type="submit"
+                className="ci-meta-edit-save"
+                disabled={metaSaving}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className="ci-meta-edit-cancel"
+                disabled={metaSaving}
+                onClick={() => setEditingMeta(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <span className="ci-map-name">{mapName}</span>
+            {mapDescription && (
+              <button
+                className="ci-map-desc-btn"
+                onClick={() => setDescOpen(true)}
+                title="Show map description"
+              >
+                ℹ️
+              </button>
+            )}
+            <button
+              className="ci-map-meta-edit-btn"
+              onClick={() => setEditingMeta(true)}
+              title="Edit map name/description"
+            >
+              ✎
+            </button>
+          </>
+        )}
+      </div>
+      {descOpen && (
+        <div className="ci-desc-modal-bg" onClick={() => setDescOpen(false)}>
+          <div className="ci-desc-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Description</h2>
+            <div className="ci-desc-content">{mapDescription}</div>
+            <button
+              className="ci-desc-close"
+              onClick={() => setDescOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <button className="ci-back-btn" onClick={() => navigate("/")}>
         ← Back to Maps
       </button>
