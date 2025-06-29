@@ -1,8 +1,244 @@
 {
-  "hash": "fa8d2cde",
+  "hash": "985df596",
   "configHash": "36cda7ca",
-  "lockfileHash": "f6a7d05f",
-  "browserHash": "2f09064d",
-  "optimized": {},
-  "chunks": {}
+  "lockfileHash": "1c7ea0b0",
+  "browserHash": "7efc8910",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "e5c2fdd1",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "97495688",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "a8e13805",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "9b26b5ee",
+      "needsInterop": false
+    },
+    "ol/Map": {
+      "src": "../../node_modules/ol/Map.js",
+      "file": "ol_Map.js",
+      "fileHash": "70cbe208",
+      "needsInterop": false
+    },
+    "ol/View": {
+      "src": "../../node_modules/ol/View.js",
+      "file": "ol_View.js",
+      "fileHash": "1c2aef4d",
+      "needsInterop": false
+    },
+    "ol/layer/Image": {
+      "src": "../../node_modules/ol/layer/Image.js",
+      "file": "ol_layer_Image.js",
+      "fileHash": "9f975e7a",
+      "needsInterop": false
+    },
+    "ol/source/ImageStatic": {
+      "src": "../../node_modules/ol/source/ImageStatic.js",
+      "file": "ol_source_ImageStatic.js",
+      "fileHash": "5217473f",
+      "needsInterop": false
+    },
+    "ol/source/Vector": {
+      "src": "../../node_modules/ol/source/Vector.js",
+      "file": "ol_source_Vector.js",
+      "fileHash": "e1c5f46c",
+      "needsInterop": false
+    },
+    "ol/layer/Vector": {
+      "src": "../../node_modules/ol/layer/Vector.js",
+      "file": "ol_layer_Vector.js",
+      "fileHash": "216816d5",
+      "needsInterop": false
+    },
+    "ol/proj/Projection": {
+      "src": "../../node_modules/ol/proj/Projection.js",
+      "file": "ol_proj_Projection.js",
+      "fileHash": "5bd62687",
+      "needsInterop": false
+    },
+    "ol/extent": {
+      "src": "../../node_modules/ol/extent.js",
+      "file": "ol_extent.js",
+      "fileHash": "8a7c15ca",
+      "needsInterop": false
+    },
+    "ol/interaction/Translate": {
+      "src": "../../node_modules/ol/interaction/Translate.js",
+      "file": "ol_interaction_Translate.js",
+      "fileHash": "b9de7a92",
+      "needsInterop": false
+    },
+    "ol/Collection": {
+      "src": "../../node_modules/ol/Collection.js",
+      "file": "ol_Collection.js",
+      "fileHash": "52d9f82b",
+      "needsInterop": false
+    },
+    "ol/style": {
+      "src": "../../node_modules/ol/style.js",
+      "file": "ol_style.js",
+      "fileHash": "c68a49b8",
+      "needsInterop": false
+    },
+    "idb": {
+      "src": "../../node_modules/idb/build/index.js",
+      "file": "idb.js",
+      "fileHash": "b9fcaf3d",
+      "needsInterop": false
+    },
+    "react-konva": {
+      "src": "../../node_modules/react-konva/es/ReactKonva.js",
+      "file": "react-konva.js",
+      "fileHash": "9100b46c",
+      "needsInterop": false
+    },
+    "uuid": {
+      "src": "../../node_modules/uuid/dist/esm-browser/index.js",
+      "file": "uuid.js",
+      "fileHash": "1f2b012f",
+      "needsInterop": false
+    },
+    "use-image": {
+      "src": "../../node_modules/use-image/index.js",
+      "file": "use-image.js",
+      "fileHash": "01acf303",
+      "needsInterop": true
+    },
+    "ol": {
+      "src": "../../node_modules/ol/index.js",
+      "file": "ol.js",
+      "fileHash": "a5ef1b38",
+      "needsInterop": false
+    },
+    "ol/geom/Point": {
+      "src": "../../node_modules/ol/geom/Point.js",
+      "file": "ol_geom_Point.js",
+      "fileHash": "57b400b7",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "4ad6a25d",
+      "needsInterop": false
+    },
+    "react-color": {
+      "src": "../../node_modules/react-color/es/index.js",
+      "file": "react-color.js",
+      "fileHash": "e0053474",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-YM2MD6IJ": {
+      "file": "chunk-YM2MD6IJ.js"
+    },
+    "chunk-HM3IY3H4": {
+      "file": "chunk-HM3IY3H4.js"
+    },
+    "chunk-EOBQ5VHW": {
+      "file": "chunk-EOBQ5VHW.js"
+    },
+    "chunk-2RJY23WM": {
+      "file": "chunk-2RJY23WM.js"
+    },
+    "chunk-6X7PUEDZ": {
+      "file": "chunk-6X7PUEDZ.js"
+    },
+    "chunk-SLWRCXUG": {
+      "file": "chunk-SLWRCXUG.js"
+    },
+    "chunk-INBXMGOT": {
+      "file": "chunk-INBXMGOT.js"
+    },
+    "chunk-XRPSZXM7": {
+      "file": "chunk-XRPSZXM7.js"
+    },
+    "chunk-37XA2P7J": {
+      "file": "chunk-37XA2P7J.js"
+    },
+    "chunk-IFXSVHE2": {
+      "file": "chunk-IFXSVHE2.js"
+    },
+    "chunk-XKGAF25G": {
+      "file": "chunk-XKGAF25G.js"
+    },
+    "chunk-M4TB6NZJ": {
+      "file": "chunk-M4TB6NZJ.js"
+    },
+    "chunk-OHOIX423": {
+      "file": "chunk-OHOIX423.js"
+    },
+    "chunk-R7XIRFVL": {
+      "file": "chunk-R7XIRFVL.js"
+    },
+    "chunk-Y7AWLA4Y": {
+      "file": "chunk-Y7AWLA4Y.js"
+    },
+    "chunk-OAZAAUMI": {
+      "file": "chunk-OAZAAUMI.js"
+    },
+    "chunk-6GAV2S6I": {
+      "file": "chunk-6GAV2S6I.js"
+    },
+    "chunk-2KHIR4TD": {
+      "file": "chunk-2KHIR4TD.js"
+    },
+    "chunk-ONNT5YTT": {
+      "file": "chunk-ONNT5YTT.js"
+    },
+    "chunk-3TH2XOAI": {
+      "file": "chunk-3TH2XOAI.js"
+    },
+    "chunk-QBUEIRCB": {
+      "file": "chunk-QBUEIRCB.js"
+    },
+    "chunk-RMAK6H7K": {
+      "file": "chunk-RMAK6H7K.js"
+    },
+    "chunk-D4A43A4S": {
+      "file": "chunk-D4A43A4S.js"
+    },
+    "chunk-QEYZBGX2": {
+      "file": "chunk-QEYZBGX2.js"
+    },
+    "chunk-KHKFE2P7": {
+      "file": "chunk-KHKFE2P7.js"
+    },
+    "chunk-4J5YODSC": {
+      "file": "chunk-4J5YODSC.js"
+    },
+    "chunk-2OTXVSIZ": {
+      "file": "chunk-2OTXVSIZ.js"
+    },
+    "chunk-EVILGB3L": {
+      "file": "chunk-EVILGB3L.js"
+    },
+    "chunk-UST64PWU": {
+      "file": "chunk-UST64PWU.js"
+    },
+    "chunk-7CJRFAPB": {
+      "file": "chunk-7CJRFAPB.js"
+    },
+    "chunk-B2X3XHYI": {
+      "file": "chunk-B2X3XHYI.js"
+    },
+    "chunk-DC5AMYBS": {
+      "file": "chunk-DC5AMYBS.js"
+    }
+  }
 }

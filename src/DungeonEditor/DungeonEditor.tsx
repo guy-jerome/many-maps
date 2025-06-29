@@ -1,381 +1,639 @@
-// src/DungeonEditor.tsx
-import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import useSnapToGrid from "./hooks/useSnapToGrid";
-import useHistory from "./hooks/useHistory";
-import useBackground from "./hooks/useBackground";
-import { exportToImage, saveMapState, loadMapState } from "./utils/mapUtils";
-import CanvasContainer from "./components/CanvasContainer";
-import GridLayer from "./components/GridLayer";
-import WallLayer from "./components/WallLayer";
-import RoomLayer from "./components/RoomLayer";
-import DoorLayer from "./components/DoorLayer";
-import CircleLayer from "./components/CircleLayer";
-import FreehandLayer from "./components/FreehandLayer";
-import TokenLayer from "./components/TokenLayer";
-import TextLayer from "./components/TextLayer";
-import Toolbar from "./components/Toolbar";
+import React from "react";
+import { Stage, Layer } from "react-konva";
+import "./DungeonEditor.css";
+import { Line as KonvaLine, Rect as KonvaRect, Circle as KonvaCircle, Text as KonvaText } from "react-konva";
+import { SketchPicker } from "react-color";
 
-type Shape =
-  | {
-      type: "wall";
-      points: number[];
-      id: string;
-      stroke: string;
-      strokeWidth: number;
-    }
-  | {
-      type: "room";
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      id: string;
-      stroke: string;
-      fill: string;
-      strokeWidth: number;
-    }
-  | {
-      type: "door";
-      points: number[];
-      id: string;
-      stroke: string;
-      strokeWidth: number;
-      open: boolean;
-    }
-  | {
-      type: "circle";
-      x: number;
-      y: number;
-      radius: number;
-      id: string;
-      stroke: string;
-      fill: string;
-      strokeWidth: number;
-    }
-  | {
-      type: "freehand";
-      points: number[];
-      id: string;
-      stroke: string;
-      strokeWidth: number;
-    }
-  | {
-      type: "text";
-      x: number;
-      y: number;
-      text: string;
-      id: string;
-      fontSize: number;
-      fill: string;
-    }
-  | {
-      type: "token";
-      x: number;
-      y: number;
-      id: string;
-      src: string;
-      width: number;
-      height: number;
-      rotation: number;
-    };
+const GRID_SIZE = 32;
+const CANVAS_WIDTH = 1024;
+const CANVAS_HEIGHT = 768;
+
+// Tool types
+const TOOL_LIST = [
+  { name: "select", icon: "🖱️" },
+  { name: "line", icon: "📏" },
+  { name: "free", icon: "✏️" },
+  { name: "rect", icon: "⬛" },
+  { name: "roundedRect", icon: "⬜" },
+  { name: "triangle", icon: "🔺" },
+  { name: "circle", icon: "⚪" },
+  { name: "pentagon", icon: "⬟" },
+  { name: "hexagon", icon: "⬢" },
+  { name: "octagon", icon: "⯃" },
+  { name: "erase", icon: "🧹" },
+  { name: "fill", icon: "🪣" },
+  { name: "icon", icon: "⭐" }
+];
+
+type ToolName = "select" | "line" | "rect" | "roundedRect" | "triangle" | "circle" | "pentagon" | "hexagon" | "octagon" | "free" | "erase" | "fill" | "icon";
+
+// Add new shape interfaces
+interface RoundedRect {
+  tool: "roundedRect";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius: number;
+  color: string;
+  thickness?: number;
+}
+interface Triangle {
+  tool: "triangle";
+  points: [Point, Point, Point];
+  color: string;
+  thickness?: number;
+}
+interface Circle {
+  tool: "circle";
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  thickness?: number;
+}
+interface Polygon {
+  tool: "pentagon" | "hexagon" | "octagon";
+  x: number;
+  y: number;
+  radius: number;
+  sides: number;
+  color: string;
+  thickness?: number;
+}
+
+// Existing interfaces
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Line {
+  tool: "line";
+  points: [Point, Point];
+  color: string;
+  thickness?: number;
+}
+
+interface Rect {
+  tool: "rect";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  thickness?: number;
+}
+
+interface Free {
+  tool: "free";
+  points: Point[];
+  color: string;
+  thickness?: number;
+}
+
+// Add icon shape type
+interface IconShape {
+  tool: "icon";
+  x: number;
+  y: number;
+  icon: string;
+}
+interface TextShape {
+  tool: "text";
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+}
+
+type Shape = Line | Rect | Free | RoundedRect | Triangle | Circle | Polygon | IconShape | TextShape;
+
+function snapToGrid(val: number) {
+  return Math.round(val / GRID_SIZE) * GRID_SIZE;
+}
+
+// ICONS array must be defined before use
+const ICONS = [
+  { name: "stairs", icon: "🪜" },
+  { name: "chest", icon: "🧰" },
+  { name: "trap", icon: "☠️" },
+  { name: "door", icon: "🚪" },
+];
 
 const DungeonEditor: React.FC = () => {
-  const { mapId } = useParams<{ mapId: string }>();
-  const stageRef = useRef<any>(null);
+  const [tool, setTool] = React.useState<ToolName>("line");
+  const [drawing, setDrawing] = React.useState<Shape | null>(null);
+  const [shapes, setShapes] = React.useState<Shape[]>([]);
+  const [color, setColor] = React.useState<string>("#222");
+  const [iconIndex, setIconIndex] = React.useState(0);
+  const [showColorPicker, setShowColorPicker] = React.useState(false);
+  const [showGrid, setShowGrid] = React.useState(true);
+  const [snapTo, setSnapTo] = React.useState(true);
+  const [thickness, setThickness] = React.useState(4);
+  const [eraserStrokes, setEraserStrokes] = React.useState<{ points: number[]; size: number }[]>([]);
+  const [isErasing, setIsErasing] = React.useState(false);
+  const [eraserSize, setEraserSize] = React.useState(24);
+  const stageRef = React.useRef<any>(null);
 
-  /** Tool and UI state **/
-  const [mode, setMode] = useState<
-    | "select"
-    | "wall"
-    | "room"
-    | "door"
-    | "circle"
-    | "freehand"
-    | "text"
-    | "token"
-    | "eraser"
-    | "pan"
-  >("select");
-  const [strokeColor, setStrokeColor] = useState("#000000");
-  const [fillColor, setFillColor] = useState("#ffffff");
-  const [strokeWidth, setStrokeWidth] = useState(4);
-  const [fontSize, setFontSize] = useState(18);
+  function maybeSnap(val: number) {
+    return snapTo ? snapToGrid(val) : val;
+  }
 
-  /** Background, grid, snapping **/
-  const { bgColor, setBgColor } = useBackground("#ffffff");
-  const [gridOn, setGridOn] = useState(true);
-  const [snapOn, setSnapOn] = useState(true);
-  const [cellSize, setCellSize] = useState(50);
-  const snap = useSnapToGrid(cellSize, snapOn);
-
-  /** Shapes and History **/
-  const {
-    state: shapes,
-    setState: setShapes,
-    undo,
-    redo,
-  } = useHistory<Shape[]>({ initial: [] });
-
-  /** Draft drawing state **/
-  const [drawing, setDrawing] = useState(false);
-  const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(
-    null
-  );
-  const [draftPoints, setDraftPoints] = useState<number[] | null>(null);
-  const [draftRect, setDraftRect] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [draftCircle, setDraftCircle] = useState<{
-    x: number;
-    y: number;
-    radius: number;
-  } | null>(null);
-
-  /** Load saved state on mount **/
-  useEffect(() => {
-    const saved = loadMapState(mapId || "default");
-    if (saved) {
-      setBgColor(saved.bgColor);
-      setCellSize(saved.cellSize);
-      setGridOn(saved.gridOn);
-      setShapes(saved.shapes);
-    }
-  }, [mapId]);
-
-  /** Transform pointer to stage coordinates accounting for pan/zoom **/
-  const getStageCoords = () => {
-    const stage = stageRef.current;
-    if (!stage) return null;
-    // Get pointer position relative to container
+  // Mouse events for drawing
+  const handleMouseDown = (e: any) => {
+    const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
-    if (!pointer) return null;
-    // Invert the stage transform to map to untransformed coords
-    const transform = stage.getAbsoluteTransform().copy().invert();
-    const pos = transform.point(pointer);
-    return { x: pos.x, y: pos.y };
-  };
-
-  /** Mouse handlers **/
-  const handleMouseDown = () => {
-    const pos = getStageCoords();
-    if (!pos) return;
-    const x = snap(pos.x);
-    const y = snap(pos.y);
-
-    if (mode === "wall" || mode === "door" || mode === "freehand") {
-      setDrawing(true);
-      setDraftPoints([x, y]);
-    } else if (mode === "room") {
-      setDrawing(true);
-      setStartPos({ x, y });
-      setDraftRect({ x, y, width: 0, height: 0 });
-    } else if (mode === "circle") {
-      setDrawing(true);
-      setStartPos({ x, y });
-      setDraftCircle({ x, y, radius: 0 });
-    } else if (mode === "text") {
-      const text = prompt("Enter label text");
-      if (text) {
-        const id = `text-${Date.now()}`;
-        setShapes([
-          ...shapes,
-          { type: "text", x, y, text, id, fontSize, fill: strokeColor },
-        ]);
-      }
-    } else if (mode === "token") {
-      const url = prompt("Enter token image URL");
-      if (url) {
-        const id = `token-${Date.now()}`;
-        setShapes([
-          ...shapes,
-          {
-            type: "token",
-            x,
-            y,
-            id,
-            src: url,
-            width: 50,
-            height: 50,
-            rotation: 0,
-          },
-        ]);
-      }
-    } else if (mode === "eraser") {
-      const stage = stageRef.current;
-      const shape = stage.getIntersection(stage.getPointerPosition());
-      if (shape && shape.getAttr("id")) {
-        setShapes(shapes.filter((s) => s.id !== shape.getAttr("id")));
-      }
+    if (!pointer) return;
+    const x = maybeSnap(pointer.x);
+    const y = maybeSnap(pointer.y);
+    if (tool === "erase") {
+      setIsErasing(true);
+      setEraserStrokes((prev) => [...prev, { points: [x, y], size: eraserSize }]);
+      return;
+    }
+    if (tool === "icon") {
+      setShapes([...shapes, { tool: "icon", x, y, icon: ICONS[iconIndex].icon } as IconShape]);
+      return;
+    }
+    if (tool === "line") {
+      setDrawing({ tool: "line", points: [{ x, y }, { x, y }], color, thickness });
+    } else if (tool === "rect") {
+      setDrawing({ tool: "rect", x, y, width: 0, height: 0, color, thickness });
+    } else if (tool === "roundedRect") {
+      setDrawing({ tool: "roundedRect", x, y, width: 0, height: 0, radius: 16, color, thickness });
+    } else if (tool === "triangle") {
+      setDrawing({ tool: "triangle", points: [{ x, y }, { x, y }, { x, y }], color, thickness });
+    } else if (tool === "circle") {
+      setDrawing({ tool: "circle", x, y, radius: 0, color, thickness });
+    } else if (["pentagon", "hexagon", "octagon"].includes(tool)) {
+      setDrawing({ tool: tool as "pentagon" | "hexagon" | "octagon", x, y, radius: 0, sides: tool === "pentagon" ? 5 : tool === "hexagon" ? 6 : 8, color, thickness });
+    } else if (tool === "free") {
+      setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
     }
   };
 
-  const handleMouseMove = () => {
+  const handleMouseMove = (e: any) => {
+    if (tool === "erase" && isErasing) {
+      const stage = e.target.getStage();
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const x = maybeSnap(pointer.x);
+      const y = maybeSnap(pointer.y);
+      setEraserStrokes((prev) => {
+        const last = prev[prev.length - 1];
+        if (!last) return prev;
+        // Add to last stroke
+        const updated = [...prev];
+        updated[updated.length - 1] = { ...last, points: [...last.points, x, y] };
+        return updated;
+      });
+      return;
+    }
     if (!drawing) return;
-    const pos = getStageCoords();
-    if (!pos) return;
-    const x = snap(pos.x),
-      y = snap(pos.y);
-
-    if (mode === "freehand" && draftPoints) {
-      setDraftPoints([...draftPoints, x, y]);
-    } else if ((mode === "wall" || mode === "door") && draftPoints) {
-      setDraftPoints([draftPoints[0], draftPoints[1], x, y]);
-    } else if (mode === "room" && startPos) {
-      const newX = Math.min(startPos.x, x),
-        newY = Math.min(startPos.y, y);
-      setDraftRect({
-        x: newX,
-        y: newY,
-        width: Math.abs(x - startPos.x),
-        height: Math.abs(y - startPos.y),
-      });
-    } else if (mode === "circle" && startPos) {
-      const dx = x - startPos.x;
-      const dy = y - startPos.y;
-      setDraftCircle({
-        x: startPos.x,
-        y: startPos.y,
-        radius: Math.sqrt(dx * dx + dy * dy),
-      });
+    const stage = e.target.getStage();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const x = maybeSnap(pointer.x);
+    const y = maybeSnap(pointer.y);
+    if (drawing.tool === "line") {
+      setDrawing({ ...drawing, points: [drawing.points[0], { x, y }] });
+    } else if (drawing.tool === "rect") {
+      setDrawing({ ...drawing, width: x - drawing.x, height: y - drawing.y });
+    } else if (drawing.tool === "roundedRect") {
+      setDrawing({ ...drawing, width: x - drawing.x, height: y - drawing.y });
+    } else if (drawing.tool === "triangle") {
+      // Equilateral triangle from start to current
+      const p1 = drawing.points[0];
+      const p2 = { x, y };
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const p3 = { x: p1.x - dy, y: p1.y + dx };
+      setDrawing({ ...drawing, points: [p1, p2, p3] });
+    } else if (drawing.tool === "circle") {
+      const dx = x - drawing.x;
+      const dy = y - drawing.y;
+      setDrawing({ ...drawing, radius: Math.sqrt(dx * dx + dy * dy) });
+    } else if (["pentagon", "hexagon", "octagon"].includes(drawing.tool)) {
+      // TypeScript: drawing is Polygon
+      const poly = drawing as Polygon;
+      const dx = x - poly.x;
+      const dy = y - poly.y;
+      setDrawing({ ...poly, radius: Math.sqrt(dx * dx + dy * dy) });
+    } else if (drawing.tool === "free") {
+      setDrawing({ ...drawing, points: [...drawing.points, { x, y }] });
     }
   };
 
   const handleMouseUp = () => {
-    if (!drawing) return;
-    let newShape: Shape | undefined;
-    if (mode === "freehand" && draftPoints) {
-      newShape = {
-        type: "freehand",
-        points: draftPoints,
-        id: `freehand-${Date.now()}`,
-        stroke: strokeColor,
-        strokeWidth,
-      };
-    } else if (mode === "wall" && draftPoints?.length === 4) {
-      newShape = {
-        type: "wall",
-        points: draftPoints,
-        id: `wall-${Date.now()}`,
-        stroke: strokeColor,
-        strokeWidth,
-      };
-    } else if (mode === "door" && draftPoints?.length === 4) {
-      newShape = {
-        type: "door",
-        points: draftPoints,
-        id: `door-${Date.now()}`,
-        stroke: strokeColor,
-        strokeWidth,
-        open: false,
-      };
-    } else if (mode === "room" && draftRect) {
-      newShape = {
-        type: "room",
-        x: draftRect.x,
-        y: draftRect.y,
-        width: draftRect.width,
-        height: draftRect.height,
-        id: `room-${Date.now()}`,
-        stroke: strokeColor,
-        fill: fillColor,
-        strokeWidth,
-      };
-    } else if (mode === "circle" && draftCircle) {
-      newShape = {
-        type: "circle",
-        x: draftCircle.x,
-        y: draftCircle.y,
-        radius: draftCircle.radius,
-        id: `circle-${Date.now()}`,
-        stroke: strokeColor,
-        fill: fillColor,
-        strokeWidth,
-      };
+    if (tool === "erase" && isErasing) {
+      setIsErasing(false);
+      return;
     }
-    if (newShape) setShapes([...shapes, newShape]);
-    setDrawing(false);
-    setDraftPoints(null);
-    setDraftRect(null);
-    setDraftCircle(null);
-    setStartPos(null);
+    if (drawing) {
+      setShapes([...shapes, drawing]);
+      setDrawing(null);
+    }
   };
 
-  /** Toolbar actions **/
-  const handleUndo = () => undo();
-  const handleRedo = () => redo();
-  const handleClear = () => setShapes([]);
-  const handleSaveImage = () =>
-    exportToImage(stageRef.current, `dungeon-${mapId || "map"}.png`);
-  const handleSaveJSON = () =>
-    saveMapState(mapId || "default", {
-      shapes,
-      bgColor,
-      gridOn,
-      snapOn,
-      cellSize,
-    });
-
   return (
-    <div>
-      <Toolbar
-        mode={mode}
-        setMode={setMode}
-        strokeColor={strokeColor}
-        setStrokeColor={setStrokeColor}
-        fillColor={fillColor}
-        setFillColor={setFillColor}
-        strokeWidth={strokeWidth}
-        setStrokeWidth={setStrokeWidth}
-        fontSize={fontSize}
-        setFontSize={setFontSize}
-        bgColor={bgColor}
-        setBgColor={setBgColor}
-        gridOn={gridOn}
-        setGridOn={setGridOn}
-        snapOn={snapOn}
-        setSnapOn={setSnapOn}
-        cellSize={cellSize}
-        setCellSize={setCellSize}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onClear={handleClear}
-        onSaveImage={handleSaveImage}
-        onSaveJSON={handleSaveJSON}
-      />
-
-      <CanvasContainer
-        stageRef={stageRef}
-        width={1000}
-        height={800}
-        draggable={mode === "pan"}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-      >
-        {gridOn && <GridLayer width={1000} height={800} cellSize={cellSize} />}
-        <RoomLayer
-          rooms={shapes.filter((s) => s.type === "room") as any}
-          draftRect={draftRect}
-        />
-        <WallLayer walls={shapes.filter((s) => s.type === "wall") as any} />
-        <DoorLayer doors={shapes.filter((s) => s.type === "door") as any} />
-        <CircleLayer
-          circles={shapes.filter((s) => s.type === "circle") as any}
-          draft={draftCircle}
-        />
-        <FreehandLayer
-          lines={shapes.filter((s) => s.type === "freehand") as any}
-          current={draftPoints}
-        />
-        <TextLayer texts={shapes.filter((s) => s.type === "text") as any} />
-        <TokenLayer tokens={shapes.filter((s) => s.type === "token") as any} />
-      </CanvasContainer>
+    <div className="dungeon-editor-container">
+      <div className="dungeon-upperbar">
+        <button
+          className={showGrid ? "active" : ""}
+          onClick={() => setShowGrid((v) => !v)}
+          style={{ margin: 8, padding: "4px 12px", borderRadius: 4, border: "none", background: showGrid ? "#444" : "#ccc", color: showGrid ? "#fff" : "#222", cursor: "pointer" }}
+        >
+          {showGrid ? "Hide Grid" : "Show Grid"}
+        </button>
+        <button
+          className={snapTo ? "active" : ""}
+          onClick={() => setSnapTo((v) => !v)}
+          style={{ margin: 8, padding: "4px 12px", borderRadius: 4, border: "none", background: snapTo ? "#444" : "#ccc", color: snapTo ? "#fff" : "#222", cursor: "pointer" }}
+        >
+          {snapTo ? "Snap On" : "Snap Off"}
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 16 }}>
+          <label htmlFor="thickness-slider" style={{ color: '#fff', marginRight: 8 }}>Line Thickness</label>
+          <input
+            id="thickness-slider"
+            type="range"
+            min={1}
+            max={16}
+            value={thickness}
+            onChange={e => setThickness(Number(e.target.value))}
+            style={{ marginRight: 8 }}
+          />
+          <span style={{ color: '#fff', minWidth: 24, display: 'inline-block' }}>{thickness}</span>
+        </div>
+        {tool === "erase" && (
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: 16 }}>
+            <label htmlFor="eraser-size-slider" style={{ color: '#fff', marginRight: 8 }}>Eraser Size</label>
+            <input
+              id="eraser-size-slider"
+              type="range"
+              min={4}
+              max={64}
+              value={eraserSize}
+              onChange={e => setEraserSize(Number(e.target.value))}
+              style={{ marginRight: 8 }}
+            />
+            <span style={{ color: '#fff', minWidth: 24, display: 'inline-block' }}>{eraserSize}</span>
+          </div>
+        )}
+        {/* Add more settings here as needed */}
+      </div>
+      <div style={{ display: 'flex', flex: 1, height: '100%' }}>
+        <div className="dungeon-toolbar">
+          {TOOL_LIST.map((t) => (
+            <button
+              key={t.name}
+              className={tool === t.name ? "active" : ""}
+              onClick={() => setTool(t.name as ToolName)}
+              style={{ fontSize: 24, margin: 8, background: tool === t.name ? "#444" : "#222", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", width: 48, height: 48 }}
+              title={t.name}
+            >
+              {t.icon}
+            </button>
+          ))}
+          <button
+            style={{ background: color, width: 36, height: 36, border: "2px solid #fff", borderRadius: 4, margin: 8, cursor: "pointer" }}
+            title="Pick color"
+            onClick={() => setShowColorPicker((v) => !v)}
+          >
+            🎨
+          </button>
+          {showColorPicker && (
+            <div style={{ position: "absolute", zIndex: 10, left: 90, top: 16 }}>
+              <SketchPicker
+                color={color}
+                onChange={(c: { hex: string }) => {
+                  setColor(c.hex);
+                }}
+                disableAlpha
+              />
+              <button style={{ marginTop: 4, width: "100%" }} onClick={() => setShowColorPicker(false)}>Close</button>
+            </div>
+          )}
+          {/* Icon selector for icon tool */}
+          {tool === "icon" && (
+            <div style={{ margin: 8 }}>
+              {ICONS.map((ic, idx) => (
+                <button
+                  key={ic.name}
+                  style={{ fontSize: 20, margin: 2, background: iconIndex === idx ? "#888" : "#222", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", width: 32, height: 32 }}
+                  onClick={() => setIconIndex(idx)}
+                  title={ic.name}
+                >
+                  {ic.icon}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Stage
+            ref={stageRef}
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            className="dungeon-canvas"
+            style={{ background: "#fafafa", border: "1px solid #ccc" }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
+            {showGrid && (
+              <Layer
+                listening={false}
+                hitStrokeWidth={0}
+                perfectDrawEnabled={false}
+                id="grid-layer"
+              >
+                <React.Fragment>
+                  <CustomGrid />
+                </React.Fragment>
+              </Layer>
+            )}
+            {/* Drawing Layer */}
+            <Layer>
+              {/* Render existing shapes */}
+              {shapes.map((shape, i) => {
+                if (shape.tool === "icon") {
+                  const iconShape = shape as IconShape;
+                  return (
+                    <KonvaText
+                      key={i}
+                      x={iconShape.x}
+                      y={iconShape.y}
+                      text={iconShape.icon}
+                      fontSize={32}
+                      fontStyle="bold"
+                      fill="#222"
+                      offsetX={16}
+                      offsetY={16}
+                    />
+                  );
+                } else if (shape.tool === "line") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={[
+                        shape.points[0].x,
+                        shape.points[0].y,
+                        shape.points[1].x,
+                        shape.points[1].y,
+                      ]}
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      lineCap="round"
+                      lineJoin="round"
+                    />
+                  );
+                } else if (shape.tool === "rect") {
+                  return (
+                    <KonvaRect
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      width={shape.width}
+                      height={shape.height}
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      fill={(shape as any).fill || ""}
+                    />
+                  );
+                } else if (shape.tool === "roundedRect") {
+                  return (
+                    <KonvaRect
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      width={shape.width}
+                      height={shape.height}
+                      cornerRadius={shape.radius}
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      fill={(shape as any).fill || ""}
+                    />
+                  );
+                } else if (shape.tool === "triangle") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      closed
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      fill={(shape as any).fill || ""}
+                    />
+                  );
+                } else if (shape.tool === "circle") {
+                  return (
+                    <KonvaCircle
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      radius={shape.radius}
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      fill={(shape as any).fill || ""}
+                    />
+                  );
+                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                  const poly = shape as Polygon;
+                  const angle = (2 * Math.PI) / poly.sides;
+                  const points = Array.from({ length: poly.sides }, (_, j) => [
+                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={points}
+                      closed
+                      stroke={poly.color}
+                      strokeWidth={poly.thickness || thickness}
+                      fill={(poly as any).fill || ""}
+                    />
+                  );
+                } else if (shape.tool === "free") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      stroke={shape.color}
+                      strokeWidth={shape.thickness || thickness}
+                      lineCap="round"
+                      lineJoin="round"
+                      tension={0.5}
+                      globalCompositeOperation="source-over"
+                    />
+                  );
+                }
+                return null;
+              })}
+              {/* Render current drawing shape */}
+              {drawing && drawing.tool === "line" && (
+                <KonvaLine
+                  points={[
+                    drawing.points[0].x,
+                    drawing.points[0].y,
+                    drawing.points[1].x,
+                    drawing.points[1].y,
+                  ]}
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[8, 8]}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              )}
+              {drawing && drawing.tool === "rect" && (
+                <KonvaRect
+                  x={drawing.x}
+                  y={drawing.y}
+                  width={drawing.width}
+                  height={drawing.height}
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[8, 8]}
+                  fill=""
+                />
+              )}
+              {drawing && drawing.tool === "roundedRect" && (
+                <KonvaRect
+                  x={drawing.x}
+                  y={drawing.y}
+                  width={drawing.width}
+                  height={drawing.height}
+                  cornerRadius={drawing.radius}
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[8, 8]}
+                  fill=""
+                />
+              )}
+              {drawing && drawing.tool === "triangle" && (
+                <KonvaLine
+                  points={drawing.points.flatMap((p) => [p.x, p.y])}
+                  closed
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[8, 8]}
+                  fill=""
+                />
+              )}
+              {drawing && drawing.tool === "circle" && (
+                <KonvaCircle
+                  x={drawing.x}
+                  y={drawing.y}
+                  radius={drawing.radius}
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[8, 8]}
+                  fill=""
+                />
+              )}
+              {drawing && ["pentagon", "hexagon", "octagon"].includes(drawing.tool) && (
+                (() => {
+                  const poly = drawing as Polygon;
+                  const angle = (2 * Math.PI) / poly.sides;
+                  const points = Array.from({ length: poly.sides }, (_, j) => [
+                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  return (
+                    <KonvaLine
+                      points={points}
+                      closed
+                      stroke={poly.color}
+                      strokeWidth={poly.thickness || thickness}
+                      dash={[8, 8]}
+                      fill=""
+                    />
+                  );
+                })()
+              )}
+              {drawing && drawing.tool === "free" && (
+                <KonvaLine
+                  points={drawing.points.flatMap((p) => [p.x, p.y])}
+                  stroke={drawing.color}
+                  strokeWidth={drawing.thickness || thickness}
+                  dash={[4, 4]}
+                  lineCap="round"
+                  lineJoin="round"
+                  tension={0.5}
+                  globalCompositeOperation="source-over"
+                />
+              )}
+            </Layer>
+            {/* Pixel Erase Layer */}
+            <Layer globalCompositeOperation="destination-out">
+              {eraserStrokes.map((stroke, i) => (
+                <KonvaLine
+                  key={i}
+                  points={stroke.points}
+                  stroke="#000"
+                  strokeWidth={stroke.size}
+                  lineCap="round"
+                  lineJoin="round"
+                  tension={0.5}
+                  globalCompositeOperation="destination-out"
+                />
+              ))}
+            </Layer>
+          </Stage>
+        </div>
+      </div>
     </div>
   );
 };
+
+// CustomGrid component to draw grid using Konva primitives
+const CustomGrid: React.FC = () => {
+  const lines = [];
+  for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SIZE) {
+    lines.push(
+      <KonvaLine
+        key={"v-" + x}
+        points={[x, 0, x, CANVAS_HEIGHT]}
+        stroke="#e0e0e0"
+        strokeWidth={1}
+        listening={false}
+      />
+    );
+  }
+  for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SIZE) {
+    lines.push(
+      <KonvaLine
+        key={"h-" + y}
+        points={[0, y, CANVAS_WIDTH, y]}
+        stroke="#e0e0e0"
+        strokeWidth={1}
+        listening={false}
+      />
+    );
+  }
+  return <>{lines}</>;
+};
+
+// Utility: distance from point to segment
+function pointToSegmentDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+  const A = px - x1;
+  const B = py - y1;
+  const C = x2 - x1;
+  const D = y2 - y1;
+  const dot = A * C + B * D;
+  const len_sq = C * C + D * D;
+  let param = -1;
+  if (len_sq !== 0) param = dot / len_sq;
+  let xx, yy;
+  if (param < 0) { xx = x1; yy = y1; }
+  else if (param > 1) { xx = x2; yy = y2; }
+  else { xx = x1 + param * C; yy = y1 + param * D; }
+  const dx = px - xx;
+  const dy = py - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 export default DungeonEditor;
