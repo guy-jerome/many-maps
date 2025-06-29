@@ -13,7 +13,6 @@ function App() {
         <Route path="/gallery" element={<MapGallery />} />
         <Route path="/dungeon" element={<DungeonEditor />} />
         <Route path="/map/:mapId" element={<CenteredImage />} />
-        <Route path="/dungeon/:mapId" element={<DungeonEditor />} />
       </Routes>
     </Router>
   );
