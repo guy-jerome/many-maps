@@ -1,7 +1,12 @@
 import React from "react";
 import { Stage, Layer } from "react-konva";
 import "./DungeonEditor.css";
-import { Line as KonvaLine, Rect as KonvaRect, Circle as KonvaCircle, Text as KonvaText } from "react-konva";
+import {
+  Line as KonvaLine,
+  Rect as KonvaRect,
+  Circle as KonvaCircle,
+  Text as KonvaText,
+} from "react-konva";
 import { SketchPicker } from "react-color";
 
 const GRID_SIZE = 32;
@@ -22,10 +27,23 @@ const TOOL_LIST = [
   { name: "octagon", icon: "⯃" },
   { name: "erase", icon: "🧹" },
   { name: "fill", icon: "🪣" },
-  { name: "icon", icon: "⭐" }
+  { name: "icon", icon: "⭐" },
 ];
 
-type ToolName = "select" | "line" | "rect" | "roundedRect" | "triangle" | "circle" | "pentagon" | "hexagon" | "octagon" | "free" | "erase" | "fill" | "icon";
+type ToolName =
+  | "select"
+  | "line"
+  | "rect"
+  | "roundedRect"
+  | "triangle"
+  | "circle"
+  | "pentagon"
+  | "hexagon"
+  | "octagon"
+  | "free"
+  | "erase"
+  | "fill"
+  | "icon";
 
 // Add new shape interfaces
 interface RoundedRect {
@@ -107,7 +125,16 @@ interface TextShape {
   color: string;
 }
 
-type Shape = Line | Rect | Free | RoundedRect | Triangle | Circle | Polygon | IconShape | TextShape;
+type Shape =
+  | Line
+  | Rect
+  | Free
+  | RoundedRect
+  | Triangle
+  | Circle
+  | Polygon
+  | IconShape
+  | TextShape;
 
 function snapToGrid(val: number) {
   return Math.round(val / GRID_SIZE) * GRID_SIZE;
@@ -131,7 +158,9 @@ const DungeonEditor: React.FC = () => {
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
   const [thickness, setThickness] = React.useState(4);
-  const [eraserStrokes, setEraserStrokes] = React.useState<{ points: number[]; size: number }[]>([]);
+  const [eraserStrokes, setEraserStrokes] = React.useState<
+    { points: number[]; size: number }[]
+  >([]);
   const [isErasing, setIsErasing] = React.useState(false);
   const [eraserSize, setEraserSize] = React.useState(24);
   const stageRef = React.useRef<any>(null);
@@ -149,25 +178,65 @@ const DungeonEditor: React.FC = () => {
     const y = maybeSnap(pointer.y);
     if (tool === "erase") {
       setIsErasing(true);
-      setEraserStrokes((prev) => [...prev, { points: [x, y], size: eraserSize }]);
+      setEraserStrokes((prev) => [
+        ...prev,
+        { points: [x, y], size: eraserSize },
+      ]);
       return;
     }
     if (tool === "icon") {
-      setShapes([...shapes, { tool: "icon", x, y, icon: ICONS[iconIndex].icon } as IconShape]);
+      setShapes([
+        ...shapes,
+        { tool: "icon", x, y, icon: ICONS[iconIndex].icon } as IconShape,
+      ]);
       return;
     }
     if (tool === "line") {
-      setDrawing({ tool: "line", points: [{ x, y }, { x, y }], color, thickness });
+      setDrawing({
+        tool: "line",
+        points: [
+          { x, y },
+          { x, y },
+        ],
+        color,
+        thickness,
+      });
     } else if (tool === "rect") {
       setDrawing({ tool: "rect", x, y, width: 0, height: 0, color, thickness });
     } else if (tool === "roundedRect") {
-      setDrawing({ tool: "roundedRect", x, y, width: 0, height: 0, radius: 16, color, thickness });
+      setDrawing({
+        tool: "roundedRect",
+        x,
+        y,
+        width: 0,
+        height: 0,
+        radius: 16,
+        color,
+        thickness,
+      });
     } else if (tool === "triangle") {
-      setDrawing({ tool: "triangle", points: [{ x, y }, { x, y }, { x, y }], color, thickness });
+      setDrawing({
+        tool: "triangle",
+        points: [
+          { x, y },
+          { x, y },
+          { x, y },
+        ],
+        color,
+        thickness,
+      });
     } else if (tool === "circle") {
       setDrawing({ tool: "circle", x, y, radius: 0, color, thickness });
     } else if (["pentagon", "hexagon", "octagon"].includes(tool)) {
-      setDrawing({ tool: tool as "pentagon" | "hexagon" | "octagon", x, y, radius: 0, sides: tool === "pentagon" ? 5 : tool === "hexagon" ? 6 : 8, color, thickness });
+      setDrawing({
+        tool: tool as "pentagon" | "hexagon" | "octagon",
+        x,
+        y,
+        radius: 0,
+        sides: tool === "pentagon" ? 5 : tool === "hexagon" ? 6 : 8,
+        color,
+        thickness,
+      });
     } else if (tool === "free") {
       setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
     }
@@ -185,7 +254,10 @@ const DungeonEditor: React.FC = () => {
         if (!last) return prev;
         // Add to last stroke
         const updated = [...prev];
-        updated[updated.length - 1] = { ...last, points: [...last.points, x, y] };
+        updated[updated.length - 1] = {
+          ...last,
+          points: [...last.points, x, y],
+        };
         return updated;
       });
       return;
@@ -242,69 +314,125 @@ const DungeonEditor: React.FC = () => {
         <button
           className={showGrid ? "active" : ""}
           onClick={() => setShowGrid((v) => !v)}
-          style={{ margin: 8, padding: "4px 12px", borderRadius: 4, border: "none", background: showGrid ? "#444" : "#ccc", color: showGrid ? "#fff" : "#222", cursor: "pointer" }}
+          style={{
+            margin: 8,
+            padding: "4px 12px",
+            borderRadius: 4,
+            border: "none",
+            background: showGrid ? "#444" : "#ccc",
+            color: showGrid ? "#fff" : "#222",
+            cursor: "pointer",
+          }}
         >
           {showGrid ? "Hide Grid" : "Show Grid"}
         </button>
         <button
           className={snapTo ? "active" : ""}
           onClick={() => setSnapTo((v) => !v)}
-          style={{ margin: 8, padding: "4px 12px", borderRadius: 4, border: "none", background: snapTo ? "#444" : "#ccc", color: snapTo ? "#fff" : "#222", cursor: "pointer" }}
+          style={{
+            margin: 8,
+            padding: "4px 12px",
+            borderRadius: 4,
+            border: "none",
+            background: snapTo ? "#444" : "#ccc",
+            color: snapTo ? "#fff" : "#222",
+            cursor: "pointer",
+          }}
         >
           {snapTo ? "Snap On" : "Snap Off"}
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 16 }}>
-          <label htmlFor="thickness-slider" style={{ color: '#fff', marginRight: 8 }}>Line Thickness</label>
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
+          <label
+            htmlFor="thickness-slider"
+            style={{ color: "#fff", marginRight: 8 }}
+          >
+            Line Thickness
+          </label>
           <input
             id="thickness-slider"
             type="range"
             min={1}
             max={16}
             value={thickness}
-            onChange={e => setThickness(Number(e.target.value))}
+            onChange={(e) => setThickness(Number(e.target.value))}
             style={{ marginRight: 8 }}
           />
-          <span style={{ color: '#fff', minWidth: 24, display: 'inline-block' }}>{thickness}</span>
+          <span
+            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
+          >
+            {thickness}
+          </span>
         </div>
         {tool === "erase" && (
-          <div style={{ display: 'flex', alignItems: 'center', marginLeft: 16 }}>
-            <label htmlFor="eraser-size-slider" style={{ color: '#fff', marginRight: 8 }}>Eraser Size</label>
+          <div
+            style={{ display: "flex", alignItems: "center", marginLeft: 16 }}
+          >
+            <label
+              htmlFor="eraser-size-slider"
+              style={{ color: "#fff", marginRight: 8 }}
+            >
+              Eraser Size
+            </label>
             <input
               id="eraser-size-slider"
               type="range"
               min={4}
               max={64}
               value={eraserSize}
-              onChange={e => setEraserSize(Number(e.target.value))}
+              onChange={(e) => setEraserSize(Number(e.target.value))}
               style={{ marginRight: 8 }}
             />
-            <span style={{ color: '#fff', minWidth: 24, display: 'inline-block' }}>{eraserSize}</span>
+            <span
+              style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
+            >
+              {eraserSize}
+            </span>
           </div>
         )}
         {/* Add more settings here as needed */}
       </div>
-      <div style={{ display: 'flex', flex: 1, height: '100%' }}>
+      <div style={{ display: "flex", flex: 1, height: "100%" }}>
         <div className="dungeon-toolbar">
           {TOOL_LIST.map((t) => (
             <button
               key={t.name}
               className={tool === t.name ? "active" : ""}
               onClick={() => setTool(t.name as ToolName)}
-              style={{ fontSize: 24, margin: 8, background: tool === t.name ? "#444" : "#222", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", width: 48, height: 48 }}
+              style={{
+                fontSize: 24,
+                margin: 8,
+                background: tool === t.name ? "#444" : "#222",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                width: 48,
+                height: 48,
+              }}
               title={t.name}
             >
               {t.icon}
             </button>
           ))}
           <button
-            style={{ background: color, width: 36, height: 36, border: "2px solid #fff", borderRadius: 4, margin: 8, cursor: "pointer" }}
+            style={{
+              background: color,
+              width: 36,
+              height: 36,
+              border: "2px solid #fff",
+              borderRadius: 4,
+              margin: 8,
+              cursor: "pointer",
+            }}
             title="Pick color"
             onClick={() => setShowColorPicker((v) => !v)}
           >
             🎨
           </button>
           {showColorPicker && (
-            <div style={{ position: "absolute", zIndex: 10, left: 90, top: 16 }}>
+            <div
+              style={{ position: "absolute", zIndex: 10, left: 90, top: 16 }}
+            >
               <SketchPicker
                 color={color}
                 onChange={(c: { hex: string }) => {
@@ -312,7 +440,12 @@ const DungeonEditor: React.FC = () => {
                 }}
                 disableAlpha
               />
-              <button style={{ marginTop: 4, width: "100%" }} onClick={() => setShowColorPicker(false)}>Close</button>
+              <button
+                style={{ marginTop: 4, width: "100%" }}
+                onClick={() => setShowColorPicker(false)}
+              >
+                Close
+              </button>
             </div>
           )}
           {/* Icon selector for icon tool */}
@@ -321,7 +454,17 @@ const DungeonEditor: React.FC = () => {
               {ICONS.map((ic, idx) => (
                 <button
                   key={ic.name}
-                  style={{ fontSize: 20, margin: 2, background: iconIndex === idx ? "#888" : "#222", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", width: 32, height: 32 }}
+                  style={{
+                    fontSize: 20,
+                    margin: 2,
+                    background: iconIndex === idx ? "#888" : "#222",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    width: 32,
+                    height: 32,
+                  }}
                   onClick={() => setIconIndex(idx)}
                   title={ic.name}
                 >
@@ -331,7 +474,14 @@ const DungeonEditor: React.FC = () => {
             </div>
           )}
         </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <Stage
             ref={stageRef}
             width={CANVAS_WIDTH}
@@ -439,7 +589,9 @@ const DungeonEditor: React.FC = () => {
                       fill={(shape as any).fill || ""}
                     />
                   );
-                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                } else if (
+                  ["pentagon", "hexagon", "octagon"].includes(shape.tool)
+                ) {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
@@ -534,7 +686,8 @@ const DungeonEditor: React.FC = () => {
                   fill=""
                 />
               )}
-              {drawing && ["pentagon", "hexagon", "octagon"].includes(drawing.tool) && (
+              {drawing &&
+                ["pentagon", "hexagon", "octagon"].includes(drawing.tool) &&
                 (() => {
                   const poly = drawing as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
@@ -552,8 +705,7 @@ const DungeonEditor: React.FC = () => {
                       fill=""
                     />
                   );
-                })()
-              )}
+                })()}
               {drawing && drawing.tool === "free" && (
                 <KonvaLine
                   points={drawing.points.flatMap((p) => [p.x, p.y])}
@@ -616,24 +768,5 @@ const CustomGrid: React.FC = () => {
   }
   return <>{lines}</>;
 };
-
-// Utility: distance from point to segment
-function pointToSegmentDist(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
-  const A = px - x1;
-  const B = py - y1;
-  const C = x2 - x1;
-  const D = y2 - y1;
-  const dot = A * C + B * D;
-  const len_sq = C * C + D * D;
-  let param = -1;
-  if (len_sq !== 0) param = dot / len_sq;
-  let xx, yy;
-  if (param < 0) { xx = x1; yy = y1; }
-  else if (param > 1) { xx = x2; yy = y2; }
-  else { xx = x1 + param * C; yy = y1 + param * D; }
-  const dx = px - xx;
-  const dy = py - yy;
-  return Math.sqrt(dx * dx + dy * dy);
-}
 
 export default DungeonEditor;
