@@ -159,11 +159,6 @@ const DungeonEditor: React.FC = () => {
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
   const [thickness, setThickness] = React.useState(4);
-  const [eraserStrokes, setEraserStrokes] = React.useState<
-    { points: number[]; size: number }[]
-  >([]);
-  const [isErasing, setIsErasing] = React.useState(false);
-  const [eraserSize, setEraserSize] = React.useState(24);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
 
@@ -179,11 +174,70 @@ const DungeonEditor: React.FC = () => {
     const x = maybeSnap(pointer.x);
     const y = maybeSnap(pointer.y);
     if (tool === "erase") {
-      setIsErasing(true);
-      setEraserStrokes((prev) => [
-        ...prev,
-        { points: [x, y], size: eraserSize },
-      ]);
+      // Shape-based erase: remove topmost shape under cursor
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        const shape = shapes[i];
+        let hit = false;
+        if (shape.tool === "icon") {
+          if (
+            x >= shape.x - 16 &&
+            x <= shape.x + 16 &&
+            y >= shape.y - 16 &&
+            y <= shape.y + 16
+          )
+            hit = true;
+        } else if (shape.tool === "line") {
+          const [p1, p2] = shape.points;
+          const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
+          if (dist <= (shape.thickness || thickness) + 6) hit = true;
+        } else if (shape.tool === "free") {
+          for (let j = 0; j < shape.points.length - 1; j++) {
+            const p1 = shape.points[j];
+            const p2 = shape.points[j + 1];
+            const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
+            if (dist <= (shape.thickness || thickness) + 6) {
+              hit = true;
+              break;
+            }
+          }
+        } else if (shape.tool === "rect" || shape.tool === "roundedRect") {
+          if (
+            x >= shape.x &&
+            x <= shape.x + shape.width &&
+            y >= shape.y &&
+            y <= shape.y + shape.height
+          )
+            hit = true;
+        } else if (shape.tool === "triangle") {
+          const pts = shape.points;
+          const minX = Math.min(pts[0].x, pts[1].x, pts[2].x);
+          const maxX = Math.max(pts[0].x, pts[1].x, pts[2].x);
+          const minY = Math.min(pts[0].y, pts[1].y, pts[2].y);
+          const maxY = Math.max(pts[0].y, pts[1].y, pts[2].y);
+          if (x >= minX && x <= maxX && y >= minY && y <= maxY) hit = true;
+        } else if (shape.tool === "circle") {
+          const dx = x - shape.x;
+          const dy = y - shape.y;
+          if (
+            Math.sqrt(dx * dx + dy * dy) <=
+            shape.radius + (shape.thickness || thickness) / 2
+          )
+            hit = true;
+        } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+          const poly = shape as Polygon;
+          const dx = x - poly.x;
+          const dy = y - poly.y;
+          if (
+            Math.sqrt(dx * dx + dy * dy) <=
+            poly.radius + (poly.thickness || thickness) / 2
+          )
+            hit = true;
+        }
+        if (hit) {
+          setShapes((shapes) => shapes.filter((_, idx) => idx !== i));
+          return;
+        }
+      }
       return;
     }
     if (tool === "icon") {
@@ -245,25 +299,6 @@ const DungeonEditor: React.FC = () => {
   };
 
   const handleMouseMove = (e: any) => {
-    if (tool === "erase" && isErasing) {
-      const stage = e.target.getStage();
-      const pointer = stage.getPointerPosition();
-      if (!pointer) return;
-      const x = maybeSnap(pointer.x);
-      const y = maybeSnap(pointer.y);
-      setEraserStrokes((prev) => {
-        const last = prev[prev.length - 1];
-        if (!last) return prev;
-        // Add to last stroke
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          ...last,
-          points: [...last.points, x, y],
-        };
-        return updated;
-      });
-      return;
-    }
     if (!drawing) return;
     const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
@@ -300,10 +335,6 @@ const DungeonEditor: React.FC = () => {
   };
 
   const handleMouseUp = () => {
-    if (tool === "erase" && isErasing) {
-      setIsErasing(false);
-      return;
-    }
     if (drawing) {
       setShapes([...shapes, drawing]);
       setDrawing(null);
@@ -396,14 +427,14 @@ const DungeonEditor: React.FC = () => {
               type="range"
               min={4}
               max={64}
-              value={eraserSize}
-              onChange={(e) => setEraserSize(Number(e.target.value))}
+              value={thickness}
+              onChange={(e) => setThickness(Number(e.target.value))}
               style={{ marginRight: 8 }}
             />
             <span
               style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
             >
-              {eraserSize}
+              {thickness}
             </span>
           </div>
         )}
@@ -737,21 +768,6 @@ const DungeonEditor: React.FC = () => {
                 />
               )}
             </Layer>
-            {/* Pixel Erase Layer */}
-            <Layer globalCompositeOperation="destination-out">
-              {eraserStrokes.map((stroke, i) => (
-                <KonvaLine
-                  key={i}
-                  points={stroke.points}
-                  stroke="#000"
-                  strokeWidth={stroke.size}
-                  lineCap="round"
-                  lineJoin="round"
-                  tension={0.5}
-                  globalCompositeOperation="destination-out"
-                />
-              ))}
-            </Layer>
           </Stage>
         </div>
       </div>
@@ -786,5 +802,38 @@ const CustomGrid: React.FC = () => {
   }
   return <>{lines}</>;
 };
+
+// Utility: distance from point to segment
+function pointToSegmentDist(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+) {
+  const A = px - x1;
+  const B = py - y1;
+  const C = x2 - x1;
+  const D = y2 - y1;
+  const dot = A * C + B * D;
+  const len_sq = C * C + D * D;
+  let param = -1;
+  if (len_sq !== 0) param = dot / len_sq;
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+  const dx = px - xx;
+  const dy = py - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 export default DungeonEditor;
