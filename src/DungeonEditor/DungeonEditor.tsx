@@ -27,7 +27,6 @@ const TOOL_LIST = [
   { name: "hexagon", icon: "⬢" },
   { name: "octagon", icon: "⯃" },
   { name: "erase", icon: "🧹" },
-  { name: "fill", icon: "🪣" },
   { name: "icon", icon: "⭐" },
 ];
 
@@ -43,7 +42,6 @@ type ToolName =
   | "octagon"
   | "free"
   | "erase"
-  | "fill"
   | "icon";
 
 // Add new shape interfaces
@@ -341,6 +339,35 @@ const DungeonEditor: React.FC = () => {
     }
   };
 
+  // Set cursor style based on tool
+  React.useEffect(() => {
+    let cursor = "default";
+    if (
+      tool === "line" ||
+      tool === "rect" ||
+      tool === "roundedRect" ||
+      tool === "triangle" ||
+      tool === "circle" ||
+      ["pentagon", "hexagon", "octagon"].includes(tool)
+    ) {
+      cursor = "crosshair";
+    } else if (tool === "free") {
+      cursor =
+        "url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><text x=\'0\' y=\'24\' font-size=\'24\'>✏️</text></svg>') 0 24, pointer";
+    } else if (tool === "erase") {
+      cursor =
+        "url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><text x=\'0\' y=\'24\' font-size=\'24\'>🧹</text></svg>') 0 24, pointer";
+    } else if (tool === "icon") {
+      cursor = "pointer";
+    } else if (tool === "select") {
+      cursor = "pointer";
+    }
+    const canvas = document.querySelector(
+      ".dungeon-canvas"
+    ) as HTMLElement;
+    if (canvas) canvas.style.cursor = cursor;
+  }, [tool]);
+
   return (
     <div className="dungeon-editor-container">
       <div className="dungeon-upperbar">
@@ -594,7 +621,6 @@ const DungeonEditor: React.FC = () => {
                       height={shape.height}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
-                      fill={(shape as any).fill || ""}
                     />
                   );
                 } else if (shape.tool === "roundedRect") {
@@ -608,7 +634,6 @@ const DungeonEditor: React.FC = () => {
                       cornerRadius={shape.radius}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
-                      fill={(shape as any).fill || ""}
                     />
                   );
                 } else if (shape.tool === "triangle") {
@@ -619,7 +644,6 @@ const DungeonEditor: React.FC = () => {
                       closed
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
-                      fill={(shape as any).fill || ""}
                     />
                   );
                 } else if (shape.tool === "circle") {
@@ -631,7 +655,6 @@ const DungeonEditor: React.FC = () => {
                       radius={shape.radius}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
-                      fill={(shape as any).fill || ""}
                     />
                   );
                 } else if (
@@ -650,7 +673,6 @@ const DungeonEditor: React.FC = () => {
                       closed
                       stroke={poly.color}
                       strokeWidth={poly.thickness || thickness}
-                      fill={(poly as any).fill || ""}
                     />
                   );
                 } else if (shape.tool === "free") {
@@ -694,7 +716,6 @@ const DungeonEditor: React.FC = () => {
                   stroke={drawing.color}
                   strokeWidth={drawing.thickness || thickness}
                   dash={[8, 8]}
-                  fill=""
                 />
               )}
               {drawing && drawing.tool === "roundedRect" && (
@@ -707,7 +728,6 @@ const DungeonEditor: React.FC = () => {
                   stroke={drawing.color}
                   strokeWidth={drawing.thickness || thickness}
                   dash={[8, 8]}
-                  fill=""
                 />
               )}
               {drawing && drawing.tool === "triangle" && (
@@ -717,7 +737,6 @@ const DungeonEditor: React.FC = () => {
                   stroke={drawing.color}
                   strokeWidth={drawing.thickness || thickness}
                   dash={[8, 8]}
-                  fill=""
                 />
               )}
               {drawing && drawing.tool === "circle" && (
@@ -728,7 +747,6 @@ const DungeonEditor: React.FC = () => {
                   stroke={drawing.color}
                   strokeWidth={drawing.thickness || thickness}
                   dash={[8, 8]}
-                  fill=""
                 />
               )}
               {drawing &&
@@ -747,7 +765,6 @@ const DungeonEditor: React.FC = () => {
                       stroke={poly.color}
                       strokeWidth={poly.thickness || thickness}
                       dash={[8, 8]}
-                      fill=""
                     />
                   );
                 })()}
