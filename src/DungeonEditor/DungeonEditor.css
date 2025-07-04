@@ -13,7 +13,7 @@
   background: #232323;
   padding: 0 16px;
   min-height: 56px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
 }
 
@@ -31,7 +31,7 @@
   min-width: 64px;
   width: 64px;
   height: 100%;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
   position: absolute;
   top: 56px;
@@ -68,7 +68,7 @@
   background: #fafafa;
   border: 2px solid #bbb;
   border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
   position: absolute;
   left: 64px;
   top: 56px;

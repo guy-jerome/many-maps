@@ -8,6 +8,7 @@ import {
   Text as KonvaText,
 } from "react-konva";
 import { SketchPicker } from "react-color";
+import { useNavigate } from "react-router-dom";
 
 const GRID_SIZE = 32;
 const CANVAS_WIDTH = 1024;
@@ -164,6 +165,7 @@ const DungeonEditor: React.FC = () => {
   const [isErasing, setIsErasing] = React.useState(false);
   const [eraserSize, setEraserSize] = React.useState(24);
   const stageRef = React.useRef<any>(null);
+  const navigate = useNavigate();
 
   function maybeSnap(val: number) {
     return snapTo ? snapToGrid(val) : val;
@@ -311,6 +313,22 @@ const DungeonEditor: React.FC = () => {
   return (
     <div className="dungeon-editor-container">
       <div className="dungeon-upperbar">
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#444",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 18,
+            cursor: "pointer",
+          }}
+        >
+          ⟵ Back to Home
+        </button>
         <button
           className={showGrid ? "active" : ""}
           onClick={() => setShowGrid((v) => !v)}
