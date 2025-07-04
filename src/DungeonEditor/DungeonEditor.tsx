@@ -507,6 +507,23 @@ const DungeonEditor: React.FC = () => {
           ⟵ Back to Home
         </button>
         <button
+          onClick={() => setShapes([])}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#c00",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+          title="Clear all shapes"
+        >
+          🗑️ Clear All
+        </button>
+        <button
           className={showGrid ? "active" : ""}
           onClick={() => setShowGrid((v) => !v)}
           style={{
