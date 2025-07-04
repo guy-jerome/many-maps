@@ -441,7 +441,18 @@ const DungeonEditor: React.FC = () => {
         {/* Add more settings here as needed */}
       </div>
       <div style={{ display: "flex", flex: 1, height: "100%" }}>
-        <div className="dungeon-toolbar" style={{ flexDirection: "column", alignItems: "center", width: 112, minWidth: 112, maxWidth: 112, paddingTop: 8, position: "relative" }}>
+        <div
+          className="dungeon-toolbar"
+          style={{
+            flexDirection: "column",
+            alignItems: "center",
+            width: 112,
+            minWidth: 112,
+            maxWidth: 112,
+            paddingTop: 8,
+            position: "relative",
+          }}
+        >
           {/* Color picker at the very top */}
           <button
             style={{
@@ -478,12 +489,14 @@ const DungeonEditor: React.FC = () => {
             </div>
           )}
           {/* Double wide tool grid */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 48px)",
-            gap: 8,
-            margin: 8,
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 48px)",
+              gap: 8,
+              margin: 8,
+            }}
+          >
             {TOOL_LIST.map((t) => (
               <button
                 key={t.name}
