@@ -157,6 +157,8 @@ const DungeonEditor: React.FC = () => {
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
   const [thickness, setThickness] = React.useState(4);
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
+  const [dragOffset, setDragOffset] = React.useState<{dx: number, dy: number} | null>(null);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
 
@@ -164,13 +166,86 @@ const DungeonEditor: React.FC = () => {
     return snapTo ? snapToGrid(val) : val;
   }
 
-  // Mouse events for drawing
+  // Mouse events for drawing and selection
   const handleMouseDown = (e: any) => {
     const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
     const x = maybeSnap(pointer.x);
     const y = maybeSnap(pointer.y);
+    if (tool === "select") {
+      // Find topmost shape under cursor
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        const shape = shapes[i];
+        let hit = false;
+        if (shape.tool === "icon") {
+          if (
+            x >= shape.x - 16 &&
+            x <= shape.x + 16 &&
+            y >= shape.y - 16 &&
+            y <= shape.y + 16
+          ) hit = true;
+        } else if (shape.tool === "line") {
+          const [p1, p2] = shape.points;
+          const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
+          if (dist <= (shape.thickness || thickness) + 6) hit = true;
+        } else if (shape.tool === "free") {
+          for (let j = 0; j < shape.points.length - 1; j++) {
+            const p1 = shape.points[j];
+            const p2 = shape.points[j + 1];
+            const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
+            if (dist <= (shape.thickness || thickness) + 6) {
+              hit = true;
+              break;
+            }
+          }
+        } else if (shape.tool === "rect" || shape.tool === "roundedRect") {
+          if (
+            x >= shape.x &&
+            x <= shape.x + shape.width &&
+            y >= shape.y &&
+            y <= shape.y + shape.height
+          ) hit = true;
+        } else if (shape.tool === "triangle") {
+          const pts = shape.points;
+          const minX = Math.min(pts[0].x, pts[1].x, pts[2].x);
+          const maxX = Math.max(pts[0].x, pts[1].x, pts[2].x);
+          const minY = Math.min(pts[0].y, pts[1].y, pts[2].y);
+          const maxY = Math.max(pts[0].y, pts[1].y, pts[2].y);
+          if (x >= minX && x <= maxX && y >= minY && y <= maxY) hit = true;
+        } else if (shape.tool === "circle") {
+          const dx = x - shape.x;
+          const dy = y - shape.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= shape.radius) hit = true;
+        } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+          const poly = shape as Polygon;
+          const dx = x - poly.x;
+          const dy = y - poly.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= poly.radius) hit = true;
+        }
+        if (hit) {
+          setSelectedIndex(i);
+          // Calculate drag offset
+          let dx = 0, dy = 0;
+          const shape = shapes[i];
+          if ("x" in shape && "y" in shape) {
+            dx = x - (shape as any).x;
+            dy = y - (shape as any).y;
+          } else if (shape.tool === "line") {
+            dx = x - shape.points[0].x;
+            dy = y - shape.points[0].y;
+          } else if (shape.tool === "free") {
+            dx = x - shape.points[0].x;
+            dy = y - shape.points[0].y;
+          }
+          setDragOffset({ dx, dy });
+          return;
+        }
+      }
+      setSelectedIndex(null);
+      setDragOffset(null);
+      return;
+    }
     if (tool === "erase") {
       // Shape-based erase: remove topmost shape under cursor
       for (let i = shapes.length - 1; i >= 0; i--) {
@@ -297,6 +372,48 @@ const DungeonEditor: React.FC = () => {
   };
 
   const handleMouseMove = (e: any) => {
+    if (tool === "select" && selectedIndex !== null && dragOffset) {
+      const stage = e.target.getStage();
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const x = maybeSnap(pointer.x);
+      const y = maybeSnap(pointer.y);
+      setShapes((shapes) =>
+        shapes.map((s, idx) => {
+          if (idx !== selectedIndex) return s;
+          if (s.tool === "triangle") {
+            // Move all points by the drag delta, preserving tuple
+            const dx = x - dragOffset.dx - s.points[0].x;
+            const dy = y - dragOffset.dy - s.points[0].y;
+            const newPoints: [Point, Point, Point] = [
+              { x: s.points[0].x + dx, y: s.points[0].y + dy },
+              { x: s.points[1].x + dx, y: s.points[1].y + dy },
+              { x: s.points[2].x + dx, y: s.points[2].y + dy },
+            ];
+            return { ...s, points: newPoints };
+          } else if (s.tool === "line") {
+            const dx = x - dragOffset.dx - s.points[0].x;
+            const dy = y - dragOffset.dy - s.points[0].y;
+            const newPoints: [Point, Point] = [
+              { x: s.points[0].x + dx, y: s.points[0].y + dy },
+              { x: s.points[1].x + dx, y: s.points[1].y + dy },
+            ];
+            return { ...s, points: newPoints };
+          } else if (s.tool === "free") {
+            const dx = x - dragOffset.dx - s.points[0].x;
+            const dy = y - dragOffset.dy - s.points[0].y;
+            return {
+              ...s,
+              points: s.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy })),
+            };
+          } else if ("x" in s && "y" in s) {
+            return { ...s, x: x - dragOffset.dx, y: y - dragOffset.dy };
+          }
+          return s;
+        })
+      );
+      return;
+    }
     if (!drawing) return;
     const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
@@ -333,6 +450,10 @@ const DungeonEditor: React.FC = () => {
   };
 
   const handleMouseUp = () => {
+    if (tool === "select") {
+      setDragOffset(null);
+      return;
+    }
     if (drawing) {
       setShapes([...shapes, drawing]);
       setDrawing(null);
@@ -353,18 +474,16 @@ const DungeonEditor: React.FC = () => {
       cursor = "crosshair";
     } else if (tool === "free") {
       cursor =
-        "url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><text x=\'0\' y=\'24\' font-size=\'24\'>✏️</text></svg>') 0 24, pointer";
+        "url('data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text x='0' y='24' font-size='24'>✏️</text></svg>') 0 24, pointer";
     } else if (tool === "erase") {
       cursor =
-        "url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><text x=\'0\' y=\'24\' font-size=\'24\'>🧹</text></svg>') 0 24, pointer";
+        "url('data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text x='0' y='24' font-size='24'>🧹</text></svg>') 0 24, pointer";
     } else if (tool === "icon") {
       cursor = "pointer";
     } else if (tool === "select") {
       cursor = "pointer";
     }
-    const canvas = document.querySelector(
-      ".dungeon-canvas"
-    ) as HTMLElement;
+    const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
     if (canvas) canvas.style.cursor = cursor;
   }, [tool]);
 
@@ -580,6 +699,7 @@ const DungeonEditor: React.FC = () => {
             <Layer>
               {/* Render existing shapes */}
               {shapes.map((shape, i) => {
+                const isSelected = tool === "select" && i === selectedIndex;
                 if (shape.tool === "icon") {
                   const iconShape = shape as IconShape;
                   return (
@@ -593,6 +713,9 @@ const DungeonEditor: React.FC = () => {
                       fill="#222"
                       offsetX={16}
                       offsetY={16}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "line") {
@@ -609,6 +732,9 @@ const DungeonEditor: React.FC = () => {
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "rect") {
@@ -621,6 +747,9 @@ const DungeonEditor: React.FC = () => {
                       height={shape.height}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "roundedRect") {
@@ -634,6 +763,9 @@ const DungeonEditor: React.FC = () => {
                       cornerRadius={shape.radius}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "triangle") {
@@ -644,6 +776,9 @@ const DungeonEditor: React.FC = () => {
                       closed
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "circle") {
@@ -655,6 +790,9 @@ const DungeonEditor: React.FC = () => {
                       radius={shape.radius}
                       stroke={shape.color}
                       strokeWidth={shape.thickness || thickness}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (
@@ -673,6 +811,9 @@ const DungeonEditor: React.FC = () => {
                       closed
                       stroke={poly.color}
                       strokeWidth={poly.thickness || thickness}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 } else if (shape.tool === "free") {
@@ -686,6 +827,9 @@ const DungeonEditor: React.FC = () => {
                       lineJoin="round"
                       tension={0.5}
                       globalCompositeOperation="source-over"
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
                     />
                   );
                 }
