@@ -151,6 +151,8 @@ const DungeonEditor: React.FC = () => {
   const [tool, setTool] = React.useState<ToolName>("line");
   const [drawing, setDrawing] = React.useState<Shape | null>(null);
   const [shapes, setShapes] = React.useState<Shape[]>([]);
+  const [history, setHistory] = React.useState<Shape[][]>([]);
+  const [future, setFuture] = React.useState<Shape[][]>([]);
   const [color, setColor] = React.useState<string>("#222");
   const [iconIndex, setIconIndex] = React.useState(0);
   const [showColorPicker, setShowColorPicker] = React.useState(false);
@@ -158,7 +160,10 @@ const DungeonEditor: React.FC = () => {
   const [snapTo, setSnapTo] = React.useState(true);
   const [thickness, setThickness] = React.useState(4);
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
-  const [dragOffset, setDragOffset] = React.useState<{dx: number, dy: number} | null>(null);
+  const [dragOffset, setDragOffset] = React.useState<{
+    dx: number;
+    dy: number;
+  } | null>(null);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
 
@@ -184,7 +189,8 @@ const DungeonEditor: React.FC = () => {
             x <= shape.x + 16 &&
             y >= shape.y - 16 &&
             y <= shape.y + 16
-          ) hit = true;
+          )
+            hit = true;
         } else if (shape.tool === "line") {
           const [p1, p2] = shape.points;
           const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
@@ -205,7 +211,8 @@ const DungeonEditor: React.FC = () => {
             x <= shape.x + shape.width &&
             y >= shape.y &&
             y <= shape.y + shape.height
-          ) hit = true;
+          )
+            hit = true;
         } else if (shape.tool === "triangle") {
           const pts = shape.points;
           const minX = Math.min(pts[0].x, pts[1].x, pts[2].x);
@@ -226,7 +233,8 @@ const DungeonEditor: React.FC = () => {
         if (hit) {
           setSelectedIndex(i);
           // Calculate drag offset
-          let dx = 0, dy = 0;
+          let dx = 0,
+            dy = 0;
           const shape = shapes[i];
           if ("x" in shape && "y" in shape) {
             dx = x - (shape as any).x;
@@ -307,14 +315,14 @@ const DungeonEditor: React.FC = () => {
             hit = true;
         }
         if (hit) {
-          setShapes((shapes) => shapes.filter((_, idx) => idx !== i));
+          pushHistoryAndSetShapes(shapes.filter((_, idx) => idx !== i));
           return;
         }
       }
       return;
     }
     if (tool === "icon") {
-      setShapes([
+      pushHistoryAndSetShapes([
         ...shapes,
         { tool: "icon", x, y, icon: ICONS[iconIndex].icon } as IconShape,
       ]);
@@ -455,10 +463,49 @@ const DungeonEditor: React.FC = () => {
       return;
     }
     if (drawing) {
-      setShapes([...shapes, drawing]);
+      pushHistoryAndSetShapes([...shapes, drawing]);
       setDrawing(null);
     }
   };
+
+  // Undo/redo handlers
+  const handleUndo = () => {
+    if (history.length > 0) {
+      setFuture((f) => [shapes, ...f]);
+      setShapes(history[history.length - 1]);
+      setHistory((h) => h.slice(0, h.length - 1));
+    }
+  };
+  const handleRedo = () => {
+    if (future.length > 0) {
+      setHistory((h) => [...h, shapes]);
+      setShapes(future[0]);
+      setFuture((f) => f.slice(1));
+    }
+  };
+
+  // Helper to push to history before shape change
+  function pushHistoryAndSetShapes(newShapes: Shape[]) {
+    setHistory((h) => [...h, shapes]);
+    setShapes(newShapes);
+    setFuture([]);
+  }
+
+  // Update clear all to push to history
+  function handleClearAll() {
+    if (shapes.length > 0) {
+      pushHistoryAndSetShapes([]);
+    }
+  }
+
+  // Remove the useEffect for history/future
+  // React.useEffect(() => {
+  //   if (drawing === null) {
+  //     setHistory(h => [...h, shapes]);
+  //     setFuture([]);
+  //   }
+  //   // eslint-disable-next-line
+  // }, [drawing]);
 
   // Set cursor style based on tool
   React.useEffect(() => {
@@ -507,7 +554,45 @@ const DungeonEditor: React.FC = () => {
           ⟵ Back to Home
         </button>
         <button
-          onClick={() => setShapes([])}
+          onClick={handleUndo}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: history.length === 0 ? "#888" : "#444",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: history.length === 0 ? "not-allowed" : "pointer",
+            opacity: history.length === 0 ? 0.5 : 1,
+          }}
+          disabled={history.length === 0}
+          title="Undo"
+        >
+          ↶ Undo
+        </button>
+        <button
+          onClick={handleRedo}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: future.length === 0 ? "#888" : "#444",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: future.length === 0 ? "not-allowed" : "pointer",
+            opacity: future.length === 0 ? 0.5 : 1,
+          }}
+          disabled={future.length === 0}
+          title="Redo"
+        >
+          ↷ Redo
+        </button>
+        <button
+          onClick={handleClearAll}
           style={{
             margin: 8,
             padding: "4px 16px",
