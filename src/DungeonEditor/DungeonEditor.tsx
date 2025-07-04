@@ -412,32 +412,7 @@ const DungeonEditor: React.FC = () => {
             {thickness}
           </span>
         </div>
-        {tool === "erase" && (
-          <div
-            style={{ display: "flex", alignItems: "center", marginLeft: 16 }}
-          >
-            <label
-              htmlFor="eraser-size-slider"
-              style={{ color: "#fff", marginRight: 8 }}
-            >
-              Eraser Size
-            </label>
-            <input
-              id="eraser-size-slider"
-              type="range"
-              min={4}
-              max={64}
-              value={thickness}
-              onChange={(e) => setThickness(Number(e.target.value))}
-              style={{ marginRight: 8 }}
-            />
-            <span
-              style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
-            >
-              {thickness}
-            </span>
-          </div>
-        )}
+        {/* Remove eraser size slider and logic */}
         {/* Add more settings here as needed */}
       </div>
       <div style={{ display: "flex", flex: 1, height: "100%" }}>
