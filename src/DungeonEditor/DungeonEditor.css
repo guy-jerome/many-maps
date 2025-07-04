@@ -25,30 +25,32 @@
 .dungeon-toolbar {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   background: #222;
-  padding: 12px 4px 12px 4px;
-  min-width: 64px;
-  width: 64px;
-  height: 100%;
+  padding: 12px 4px;
+  gap: 8px;
+  height: auto;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
-  position: absolute;
-  top: 56px;
-  left: 0;
+  position: static;
 }
 
 .dungeon-toolbar button {
-  margin-bottom: 8px;
-  width: 48px;
-  height: 48px;
+  margin: 0;
+  width: 40px;
+  height: 40px;
   background: #222;
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .dungeon-toolbar button.active,
 .dungeon-toolbar button:focus {
@@ -116,7 +118,8 @@
     left: 0;
   }
   .dungeon-toolbar {
-    min-width: 48px;
-    width: 48px;
+    width: 40px;
+    min-width: 40px;
+    padding: 8px 2px;
   }
 }

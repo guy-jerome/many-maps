@@ -441,28 +441,8 @@ const DungeonEditor: React.FC = () => {
         {/* Add more settings here as needed */}
       </div>
       <div style={{ display: "flex", flex: 1, height: "100%" }}>
-        <div className="dungeon-toolbar">
-          {TOOL_LIST.map((t) => (
-            <button
-              key={t.name}
-              className={tool === t.name ? "active" : ""}
-              onClick={() => setTool(t.name as ToolName)}
-              style={{
-                fontSize: 24,
-                margin: 8,
-                background: tool === t.name ? "#444" : "#222",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-                width: 48,
-                height: 48,
-              }}
-              title={t.name}
-            >
-              {t.icon}
-            </button>
-          ))}
+        <div className="dungeon-toolbar" style={{ flexDirection: "column", alignItems: "center", width: 112, minWidth: 112, maxWidth: 112, paddingTop: 8, position: "relative" }}>
+          {/* Color picker at the very top */}
           <button
             style={{
               background: color,
@@ -480,7 +460,7 @@ const DungeonEditor: React.FC = () => {
           </button>
           {showColorPicker && (
             <div
-              style={{ position: "absolute", zIndex: 10, left: 90, top: 16 }}
+              style={{ position: "fixed", zIndex: 1000, left: 140, top: 80 }}
             >
               <SketchPicker
                 color={color}
@@ -497,6 +477,34 @@ const DungeonEditor: React.FC = () => {
               </button>
             </div>
           )}
+          {/* Double wide tool grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 48px)",
+            gap: 8,
+            margin: 8,
+          }}>
+            {TOOL_LIST.map((t) => (
+              <button
+                key={t.name}
+                className={tool === t.name ? "active" : ""}
+                onClick={() => setTool(t.name as ToolName)}
+                style={{
+                  fontSize: 24,
+                  background: tool === t.name ? "#444" : "#222",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  width: 48,
+                  height: 48,
+                }}
+                title={t.name}
+              >
+                {t.icon}
+              </button>
+            ))}
+          </div>
           {/* Icon selector for icon tool */}
           {tool === "icon" && (
             <div style={{ margin: 8 }}>
