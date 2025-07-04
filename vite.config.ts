@@ -3,6 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/many-maps/", // Set base for GitHub Pages
+  base: "/", // Use root for Vercel deployment
   plugins: [react()],
 });
