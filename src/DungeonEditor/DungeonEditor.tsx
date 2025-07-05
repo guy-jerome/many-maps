@@ -187,7 +187,10 @@ const DungeonEditor: React.FC = () => {
     return snapToGrid(val);
   }
 
-  function getDoorSnap(pointer: { x: number; y: number }, orientation: "horizontal" | "vertical") {
+  function getDoorSnap(
+    pointer: { x: number; y: number },
+    orientation: "horizontal" | "vertical"
+  ) {
     // For horizontal: x center of cell, y between grid lines
     // For vertical: y center of cell, x between grid lines
     if (orientation === "horizontal") {
@@ -920,7 +923,9 @@ const DungeonEditor: React.FC = () => {
                       globalCompositeOperation="destination-out"
                     />
                   );
-                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                } else if (
+                  ["pentagon", "hexagon", "octagon"].includes(shape.tool)
+                ) {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
@@ -953,102 +958,112 @@ const DungeonEditor: React.FC = () => {
                 return null;
               })}
               {/* Render current drawing shape as carve-out preview */}
-              {drawing && drawing.tool !== "icon" && drawing.tool !== "text" && (() => {
-                if (drawing.tool === "line") {
-                  return (
-                    <KonvaLine
-                      points={[
-                        drawing.points[0].x,
-                        drawing.points[0].y,
-                        drawing.points[1].x,
-                        drawing.points[1].y,
-                      ]}
-                      stroke="#fff"
-                      strokeWidth={drawing.thickness || thickness}
-                      dash={[8, 8]}
-                      lineCap="round"
-                      lineJoin="round"
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (drawing.tool === "rect") {
-                  return (
-                    <KonvaRect
-                      x={drawing.x}
-                      y={drawing.y}
-                      width={drawing.width}
-                      height={drawing.height}
-                      fill="#fff"
-                      dash={[8, 8]}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (drawing.tool === "roundedRect") {
-                  return (
-                    <KonvaRect
-                      x={drawing.x}
-                      y={drawing.y}
-                      width={drawing.width}
-                      height={drawing.height}
-                      cornerRadius={drawing.radius}
-                      fill="#fff"
-                      dash={[8, 8]}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (drawing.tool === "triangle") {
-                  return (
-                    <KonvaLine
-                      points={drawing.points.flatMap((p) => [p.x, p.y])}
-                      closed
-                      fill="#fff"
-                      dash={[8, 8]}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (drawing.tool === "circle") {
-                  return (
-                    <KonvaCircle
-                      x={drawing.x}
-                      y={drawing.y}
-                      radius={drawing.radius}
-                      fill="#fff"
-                      dash={[8, 8]}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (["pentagon", "hexagon", "octagon"].includes(drawing.tool)) {
-                  const poly = drawing as Polygon;
-                  const angle = (2 * Math.PI) / poly.sides;
-                  const points = Array.from({ length: poly.sides }, (_, j) => [
-                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
-                  ]).flat();
-                  return (
-                    <KonvaLine
-                      points={points}
-                      closed
-                      fill="#fff"
-                      dash={[8, 8]}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                } else if (drawing.tool === "free") {
-                  return (
-                    <KonvaLine
-                      points={drawing.points.flatMap((p) => [p.x, p.y])}
-                      stroke="#fff"
-                      strokeWidth={drawing.thickness || thickness}
-                      dash={[4, 4]}
-                      lineCap="round"
-                      lineJoin="round"
-                      tension={0.5}
-                      globalCompositeOperation="destination-out"
-                    />
-                  );
-                }
-                return null;
-              })()}
+              {drawing &&
+                drawing.tool !== "icon" &&
+                drawing.tool !== "text" &&
+                (() => {
+                  if (drawing.tool === "line") {
+                    return (
+                      <KonvaLine
+                        points={[
+                          drawing.points[0].x,
+                          drawing.points[0].y,
+                          drawing.points[1].x,
+                          drawing.points[1].y,
+                        ]}
+                        stroke="#fff"
+                        strokeWidth={drawing.thickness || thickness}
+                        dash={[8, 8]}
+                        lineCap="round"
+                        lineJoin="round"
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (drawing.tool === "rect") {
+                    return (
+                      <KonvaRect
+                        x={drawing.x}
+                        y={drawing.y}
+                        width={drawing.width}
+                        height={drawing.height}
+                        fill="#fff"
+                        dash={[8, 8]}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (drawing.tool === "roundedRect") {
+                    return (
+                      <KonvaRect
+                        x={drawing.x}
+                        y={drawing.y}
+                        width={drawing.width}
+                        height={drawing.height}
+                        cornerRadius={drawing.radius}
+                        fill="#fff"
+                        dash={[8, 8]}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (drawing.tool === "triangle") {
+                    return (
+                      <KonvaLine
+                        points={drawing.points.flatMap((p) => [p.x, p.y])}
+                        closed
+                        fill="#fff"
+                        dash={[8, 8]}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (drawing.tool === "circle") {
+                    return (
+                      <KonvaCircle
+                        x={drawing.x}
+                        y={drawing.y}
+                        radius={drawing.radius}
+                        fill="#fff"
+                        dash={[8, 8]}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (
+                    ["pentagon", "hexagon", "octagon"].includes(drawing.tool)
+                  ) {
+                    const poly = drawing as Polygon;
+                    const angle = (2 * Math.PI) / poly.sides;
+                    const points = Array.from(
+                      { length: poly.sides },
+                      (_, j) => [
+                        poly.x +
+                          poly.radius * Math.cos(j * angle - Math.PI / 2),
+                        poly.y +
+                          poly.radius * Math.sin(j * angle - Math.PI / 2),
+                      ]
+                    ).flat();
+                    return (
+                      <KonvaLine
+                        points={points}
+                        closed
+                        fill="#fff"
+                        dash={[8, 8]}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  } else if (drawing.tool === "free") {
+                    return (
+                      <KonvaLine
+                        points={drawing.points.flatMap((p) => [p.x, p.y])}
+                        stroke="#fff"
+                        strokeWidth={drawing.thickness || thickness}
+                        dash={[4, 4]}
+                        lineCap="round"
+                        lineJoin="round"
+                        tension={0.5}
+                        globalCompositeOperation="destination-out"
+                      />
+                    );
+                  }
+                  return null;
+                })()}
             </Layer>
             {/* Grid Layer (top, only visible in carved-out areas) */}
             {showGrid && (
@@ -1091,10 +1106,28 @@ const DungeonEditor: React.FC = () => {
                   return (
                     <KonvaRect
                       key={i}
-                      x={shape.x - (shape.orientation === "horizontal" ? shape.width / 2 : shape.height / 2)}
-                      y={shape.y - (shape.orientation === "vertical" ? shape.width / 2 : shape.height / 2)}
-                      width={shape.orientation === "horizontal" ? shape.width : shape.height}
-                      height={shape.orientation === "vertical" ? shape.width : shape.height}
+                      x={
+                        shape.x -
+                        (shape.orientation === "horizontal"
+                          ? shape.width / 2
+                          : shape.height / 2)
+                      }
+                      y={
+                        shape.y -
+                        (shape.orientation === "vertical"
+                          ? shape.width / 2
+                          : shape.height / 2)
+                      }
+                      width={
+                        shape.orientation === "horizontal"
+                          ? shape.width
+                          : shape.height
+                      }
+                      height={
+                        shape.orientation === "vertical"
+                          ? shape.width
+                          : shape.height
+                      }
                       fill="#fff"
                       stroke="#222"
                       strokeWidth={2}
@@ -1110,10 +1143,28 @@ const DungeonEditor: React.FC = () => {
               {/* Door preview while drawing */}
               {drawing && drawing.tool === "door" && (
                 <KonvaRect
-                  x={drawing.x - (drawing.orientation === "horizontal" ? drawing.width / 2 : drawing.height / 2)}
-                  y={drawing.y - (drawing.orientation === "vertical" ? drawing.width / 2 : drawing.height / 2)}
-                  width={drawing.orientation === "horizontal" ? drawing.width : drawing.height}
-                  height={drawing.orientation === "vertical" ? drawing.width : drawing.height}
+                  x={
+                    drawing.x -
+                    (drawing.orientation === "horizontal"
+                      ? drawing.width / 2
+                      : drawing.height / 2)
+                  }
+                  y={
+                    drawing.y -
+                    (drawing.orientation === "vertical"
+                      ? drawing.width / 2
+                      : drawing.height / 2)
+                  }
+                  width={
+                    drawing.orientation === "horizontal"
+                      ? drawing.width
+                      : drawing.height
+                  }
+                  height={
+                    drawing.orientation === "vertical"
+                      ? drawing.width
+                      : drawing.height
+                  }
                   fill="#fff"
                   stroke="#222"
                   strokeWidth={2}
