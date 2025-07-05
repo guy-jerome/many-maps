@@ -780,11 +780,218 @@ const DungeonEditor: React.FC = () => {
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
             className="dungeon-canvas"
-            style={{ background: "#fafafa", border: "1px solid #ccc" }}
+            style={{ background: "#f5ecd6", border: "1px solid #ccc" }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           >
+            {/* Underground + Mask Layer: solid base, then carve-out shapes using destination-out */}
+            <Layer id="underground-mask-layer">
+              <KonvaRect
+                x={0}
+                y={0}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                fill="#222"
+                listening={false}
+              />
+              {shapes.map((shape, i) => {
+                // Only carve-out shapes (not icons/text)
+                if (shape.tool === "icon" || shape.tool === "text") return null;
+                if (shape.tool === "line") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={[
+                        shape.points[0].x,
+                        shape.points[0].y,
+                        shape.points[1].x,
+                        shape.points[1].y,
+                      ]}
+                      stroke="#fff"
+                      strokeWidth={shape.thickness || thickness}
+                      lineCap="round"
+                      lineJoin="round"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (shape.tool === "rect") {
+                  return (
+                    <KonvaRect
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      width={shape.width}
+                      height={shape.height}
+                      fill="#fff"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (shape.tool === "roundedRect") {
+                  return (
+                    <KonvaRect
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      width={shape.width}
+                      height={shape.height}
+                      cornerRadius={shape.radius}
+                      fill="#fff"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (shape.tool === "triangle") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      closed
+                      fill="#fff"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (shape.tool === "circle") {
+                  return (
+                    <KonvaCircle
+                      key={i}
+                      x={shape.x}
+                      y={shape.y}
+                      radius={shape.radius}
+                      fill="#fff"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                  const poly = shape as Polygon;
+                  const angle = (2 * Math.PI) / poly.sides;
+                  const points = Array.from({ length: poly.sides }, (_, j) => [
+                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={points}
+                      closed
+                      fill="#fff"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (shape.tool === "free") {
+                  return (
+                    <KonvaLine
+                      key={i}
+                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      stroke="#fff"
+                      strokeWidth={shape.thickness || thickness}
+                      lineCap="round"
+                      lineJoin="round"
+                      tension={0.5}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                }
+                return null;
+              })}
+              {/* Render current drawing shape as carve-out preview */}
+              {drawing && drawing.tool !== "icon" && drawing.tool !== "text" && (() => {
+                if (drawing.tool === "line") {
+                  return (
+                    <KonvaLine
+                      points={[
+                        drawing.points[0].x,
+                        drawing.points[0].y,
+                        drawing.points[1].x,
+                        drawing.points[1].y,
+                      ]}
+                      stroke="#fff"
+                      strokeWidth={drawing.thickness || thickness}
+                      dash={[8, 8]}
+                      lineCap="round"
+                      lineJoin="round"
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (drawing.tool === "rect") {
+                  return (
+                    <KonvaRect
+                      x={drawing.x}
+                      y={drawing.y}
+                      width={drawing.width}
+                      height={drawing.height}
+                      fill="#fff"
+                      dash={[8, 8]}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (drawing.tool === "roundedRect") {
+                  return (
+                    <KonvaRect
+                      x={drawing.x}
+                      y={drawing.y}
+                      width={drawing.width}
+                      height={drawing.height}
+                      cornerRadius={drawing.radius}
+                      fill="#fff"
+                      dash={[8, 8]}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (drawing.tool === "triangle") {
+                  return (
+                    <KonvaLine
+                      points={drawing.points.flatMap((p) => [p.x, p.y])}
+                      closed
+                      fill="#fff"
+                      dash={[8, 8]}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (drawing.tool === "circle") {
+                  return (
+                    <KonvaCircle
+                      x={drawing.x}
+                      y={drawing.y}
+                      radius={drawing.radius}
+                      fill="#fff"
+                      dash={[8, 8]}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (["pentagon", "hexagon", "octagon"].includes(drawing.tool)) {
+                  const poly = drawing as Polygon;
+                  const angle = (2 * Math.PI) / poly.sides;
+                  const points = Array.from({ length: poly.sides }, (_, j) => [
+                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  return (
+                    <KonvaLine
+                      points={points}
+                      closed
+                      fill="#fff"
+                      dash={[8, 8]}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                } else if (drawing.tool === "free") {
+                  return (
+                    <KonvaLine
+                      points={drawing.points.flatMap((p) => [p.x, p.y])}
+                      stroke="#fff"
+                      strokeWidth={drawing.thickness || thickness}
+                      dash={[4, 4]}
+                      lineCap="round"
+                      lineJoin="round"
+                      tension={0.5}
+                      globalCompositeOperation="destination-out"
+                    />
+                  );
+                }
+                return null;
+              })()}
+            </Layer>
+            {/* Grid Layer (top, only visible in carved-out areas) */}
             {showGrid && (
               <Layer
                 listening={false}
@@ -797,9 +1004,8 @@ const DungeonEditor: React.FC = () => {
                 </React.Fragment>
               </Layer>
             )}
-            {/* Drawing Layer */}
-            <Layer>
-              {/* Render existing shapes */}
+            {/* Icon/Text Layer (above mask) */}
+            <Layer id="icon-layer">
               {shapes.map((shape, i) => {
                 const isSelected = tool === "select" && i === selectedIndex;
                 if (shape.tool === "icon") {
@@ -820,212 +1026,10 @@ const DungeonEditor: React.FC = () => {
                       shadowBlur={isSelected ? 8 : 0}
                     />
                   );
-                } else if (shape.tool === "line") {
-                  return (
-                    <KonvaLine
-                      key={i}
-                      points={[
-                        shape.points[0].x,
-                        shape.points[0].y,
-                        shape.points[1].x,
-                        shape.points[1].y,
-                      ]}
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      lineCap="round"
-                      lineJoin="round"
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (shape.tool === "rect") {
-                  return (
-                    <KonvaRect
-                      key={i}
-                      x={shape.x}
-                      y={shape.y}
-                      width={shape.width}
-                      height={shape.height}
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (shape.tool === "roundedRect") {
-                  return (
-                    <KonvaRect
-                      key={i}
-                      x={shape.x}
-                      y={shape.y}
-                      width={shape.width}
-                      height={shape.height}
-                      cornerRadius={shape.radius}
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (shape.tool === "triangle") {
-                  return (
-                    <KonvaLine
-                      key={i}
-                      points={shape.points.flatMap((p) => [p.x, p.y])}
-                      closed
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (shape.tool === "circle") {
-                  return (
-                    <KonvaCircle
-                      key={i}
-                      x={shape.x}
-                      y={shape.y}
-                      radius={shape.radius}
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (
-                  ["pentagon", "hexagon", "octagon"].includes(shape.tool)
-                ) {
-                  const poly = shape as Polygon;
-                  const angle = (2 * Math.PI) / poly.sides;
-                  const points = Array.from({ length: poly.sides }, (_, j) => [
-                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
-                  ]).flat();
-                  return (
-                    <KonvaLine
-                      key={i}
-                      points={points}
-                      closed
-                      stroke={poly.color}
-                      strokeWidth={poly.thickness || thickness}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
-                } else if (shape.tool === "free") {
-                  return (
-                    <KonvaLine
-                      key={i}
-                      points={shape.points.flatMap((p) => [p.x, p.y])}
-                      stroke={shape.color}
-                      strokeWidth={shape.thickness || thickness}
-                      lineCap="round"
-                      lineJoin="round"
-                      tension={0.5}
-                      globalCompositeOperation="source-over"
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
-                  );
                 }
+                // Add text support here if needed
                 return null;
               })}
-              {/* Render current drawing shape */}
-              {drawing && drawing.tool === "line" && (
-                <KonvaLine
-                  points={[
-                    drawing.points[0].x,
-                    drawing.points[0].y,
-                    drawing.points[1].x,
-                    drawing.points[1].y,
-                  ]}
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[8, 8]}
-                  lineCap="round"
-                  lineJoin="round"
-                />
-              )}
-              {drawing && drawing.tool === "rect" && (
-                <KonvaRect
-                  x={drawing.x}
-                  y={drawing.y}
-                  width={drawing.width}
-                  height={drawing.height}
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[8, 8]}
-                />
-              )}
-              {drawing && drawing.tool === "roundedRect" && (
-                <KonvaRect
-                  x={drawing.x}
-                  y={drawing.y}
-                  width={drawing.width}
-                  height={drawing.height}
-                  cornerRadius={drawing.radius}
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[8, 8]}
-                />
-              )}
-              {drawing && drawing.tool === "triangle" && (
-                <KonvaLine
-                  points={drawing.points.flatMap((p) => [p.x, p.y])}
-                  closed
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[8, 8]}
-                />
-              )}
-              {drawing && drawing.tool === "circle" && (
-                <KonvaCircle
-                  x={drawing.x}
-                  y={drawing.y}
-                  radius={drawing.radius}
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[8, 8]}
-                />
-              )}
-              {drawing &&
-                ["pentagon", "hexagon", "octagon"].includes(drawing.tool) &&
-                (() => {
-                  const poly = drawing as Polygon;
-                  const angle = (2 * Math.PI) / poly.sides;
-                  const points = Array.from({ length: poly.sides }, (_, j) => [
-                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
-                  ]).flat();
-                  return (
-                    <KonvaLine
-                      points={points}
-                      closed
-                      stroke={poly.color}
-                      strokeWidth={poly.thickness || thickness}
-                      dash={[8, 8]}
-                    />
-                  );
-                })()}
-              {drawing && drawing.tool === "free" && (
-                <KonvaLine
-                  points={drawing.points.flatMap((p) => [p.x, p.y])}
-                  stroke={drawing.color}
-                  strokeWidth={drawing.thickness || thickness}
-                  dash={[4, 4]}
-                  lineCap="round"
-                  lineJoin="round"
-                  tension={0.5}
-                  globalCompositeOperation="source-over"
-                />
-              )}
             </Layer>
           </Stage>
         </div>
@@ -1042,7 +1046,7 @@ const CustomGrid: React.FC = () => {
       <KonvaLine
         key={"v-" + x}
         points={[x, 0, x, CANVAS_HEIGHT]}
-        stroke="#e0e0e0"
+        stroke="#888" // darker grid
         strokeWidth={1}
         listening={false}
       />
@@ -1053,7 +1057,7 @@ const CustomGrid: React.FC = () => {
       <KonvaLine
         key={"h-" + y}
         points={[0, y, CANVAS_WIDTH, y]}
-        stroke="#e0e0e0"
+        stroke="#888" // darker grid
         strokeWidth={1}
         listening={false}
       />
