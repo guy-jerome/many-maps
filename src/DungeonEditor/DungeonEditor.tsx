@@ -28,6 +28,7 @@ const TOOL_LIST = [
   { name: "octagon", icon: "⯃" },
   { name: "erase", icon: "🧹" },
   { name: "icon", icon: "⭐" },
+  { name: "door", icon: "🚪" },
 ];
 
 type ToolName =
@@ -42,7 +43,8 @@ type ToolName =
   | "octagon"
   | "free"
   | "erase"
-  | "icon";
+  | "icon"
+  | "door";
 
 // Add new shape interfaces
 interface RoundedRect {
@@ -123,6 +125,14 @@ interface TextShape {
   text: string;
   color: string;
 }
+interface DoorShape {
+  tool: "door";
+  x: number;
+  y: number;
+  orientation: "horizontal" | "vertical";
+  width: number;
+  height: number;
+}
 
 type Shape =
   | Line
@@ -133,7 +143,8 @@ type Shape =
   | Circle
   | Polygon
   | IconShape
-  | TextShape;
+  | TextShape
+  | DoorShape;
 
 function snapToGrid(val: number) {
   return Math.round(val / GRID_SIZE) * GRID_SIZE;
@@ -167,8 +178,29 @@ const DungeonEditor: React.FC = () => {
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
 
-  function maybeSnap(val: number) {
-    return snapTo ? snapToGrid(val) : val;
+  function maybeSnap(val: number, forDoor = false) {
+    if (!snapTo) return val;
+    if (forDoor) {
+      // Snap to the center of the grid line
+      return Math.floor(val / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
+    }
+    return snapToGrid(val);
+  }
+
+  function getDoorSnap(pointer: { x: number; y: number }, orientation: "horizontal" | "vertical") {
+    // For horizontal: x center of cell, y between grid lines
+    // For vertical: y center of cell, x between grid lines
+    if (orientation === "horizontal") {
+      return {
+        x: Math.floor(pointer.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2,
+        y: Math.floor(pointer.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE,
+      };
+    } else {
+      return {
+        x: Math.floor(pointer.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE,
+        y: Math.floor(pointer.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2,
+      };
+    }
   }
 
   // Mouse events for drawing and selection
@@ -376,6 +408,18 @@ const DungeonEditor: React.FC = () => {
       });
     } else if (tool === "free") {
       setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
+    } else if (tool === "door") {
+      // Place a door at snapped x/y, default orientation horizontal, size 20x8
+      const { x, y } = getDoorSnap(pointer, "horizontal");
+      setDrawing({
+        tool: "door",
+        x,
+        y,
+        orientation: "horizontal",
+        width: 20,
+        height: 8,
+      });
+      return;
     }
   };
 
@@ -454,6 +498,16 @@ const DungeonEditor: React.FC = () => {
       setDrawing({ ...poly, radius: Math.sqrt(dx * dx + dy * dy) });
     } else if (drawing.tool === "free") {
       setDrawing({ ...drawing, points: [...drawing.points, { x, y }] });
+    } else if (drawing.tool === "door") {
+      // Toggle orientation if user drags far enough vertically or horizontally
+      let orientation = drawing.orientation;
+      const dx = Math.abs(pointer.x - drawing.x);
+      const dy = Math.abs(pointer.y - drawing.y);
+      if (dx > dy) orientation = "horizontal";
+      else if (dy > dx) orientation = "vertical";
+      const snapped = getDoorSnap(pointer, orientation);
+      setDrawing({ ...drawing, x: snapped.x, y: snapped.y, orientation });
+      return;
     }
   };
 
@@ -463,6 +517,11 @@ const DungeonEditor: React.FC = () => {
       return;
     }
     if (drawing) {
+      if (drawing.tool === "door") {
+        pushHistoryAndSetShapes([...shapes, drawing]);
+        setDrawing(null);
+        return;
+      }
       pushHistoryAndSetShapes([...shapes, drawing]);
       setDrawing(null);
     }
@@ -1027,9 +1086,40 @@ const DungeonEditor: React.FC = () => {
                     />
                   );
                 }
+                if (shape.tool === "door") {
+                  // Draw a filled rectangle for the door (above mask)
+                  return (
+                    <KonvaRect
+                      key={i}
+                      x={shape.x - (shape.orientation === "horizontal" ? shape.width / 2 : shape.height / 2)}
+                      y={shape.y - (shape.orientation === "vertical" ? shape.width / 2 : shape.height / 2)}
+                      width={shape.orientation === "horizontal" ? shape.width : shape.height}
+                      height={shape.orientation === "vertical" ? shape.width : shape.height}
+                      fill="#fff"
+                      stroke="#222"
+                      strokeWidth={2}
+                      shadowEnabled={isSelected}
+                      shadowColor={isSelected ? "#00f" : undefined}
+                      shadowBlur={isSelected ? 8 : 0}
+                    />
+                  );
+                }
                 // Add text support here if needed
                 return null;
               })}
+              {/* Door preview while drawing */}
+              {drawing && drawing.tool === "door" && (
+                <KonvaRect
+                  x={drawing.x - (drawing.orientation === "horizontal" ? drawing.width / 2 : drawing.height / 2)}
+                  y={drawing.y - (drawing.orientation === "vertical" ? drawing.width / 2 : drawing.height / 2)}
+                  width={drawing.orientation === "horizontal" ? drawing.width : drawing.height}
+                  height={drawing.orientation === "vertical" ? drawing.width : drawing.height}
+                  fill="#fff"
+                  stroke="#222"
+                  strokeWidth={2}
+                  dash={[4, 4]}
+                />
+              )}
             </Layer>
           </Stage>
         </div>
