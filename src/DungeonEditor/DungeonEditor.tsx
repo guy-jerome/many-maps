@@ -266,11 +266,27 @@ const DungeonEditor: React.FC = () => {
           if (Math.sqrt(dx * dx + dy * dy) <= poly.radius) hit = true;
         } else if (shape.tool === "door") {
           // Door hit test: check if pointer is inside door rect
-          const doorX = shape.x - (shape.orientation === "horizontal" ? shape.width / 2 : shape.height / 2);
-          const doorY = shape.y - (shape.orientation === "vertical" ? shape.width / 2 : shape.height / 2);
-          const doorW = shape.orientation === "horizontal" ? shape.width : shape.height;
-          const doorH = shape.orientation === "vertical" ? shape.width : shape.height;
-          if (x >= doorX && x <= doorX + doorW && y >= doorY && y <= doorY + doorH) hit = true;
+          const doorX =
+            shape.x -
+            (shape.orientation === "horizontal"
+              ? shape.width / 2
+              : shape.height / 2);
+          const doorY =
+            shape.y -
+            (shape.orientation === "vertical"
+              ? shape.width / 2
+              : shape.height / 2);
+          const doorW =
+            shape.orientation === "horizontal" ? shape.width : shape.height;
+          const doorH =
+            shape.orientation === "vertical" ? shape.width : shape.height;
+          if (
+            x >= doorX &&
+            x <= doorX + doorW &&
+            y >= doorY &&
+            y <= doorY + doorH
+          )
+            hit = true;
         }
         if (hit) {
           setSelectedIndex(i);
