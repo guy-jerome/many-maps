@@ -264,6 +264,13 @@ const DungeonEditor: React.FC = () => {
           const dx = x - poly.x;
           const dy = y - poly.y;
           if (Math.sqrt(dx * dx + dy * dy) <= poly.radius) hit = true;
+        } else if (shape.tool === "door") {
+          // Door hit test: check if pointer is inside door rect
+          const doorX = shape.x - (shape.orientation === "horizontal" ? shape.width / 2 : shape.height / 2);
+          const doorY = shape.y - (shape.orientation === "vertical" ? shape.width / 2 : shape.height / 2);
+          const doorW = shape.orientation === "horizontal" ? shape.width : shape.height;
+          const doorH = shape.orientation === "vertical" ? shape.width : shape.height;
+          if (x >= doorX && x <= doorX + doorW && y >= doorY && y <= doorY + doorH) hit = true;
         }
         if (hit) {
           setSelectedIndex(i);
@@ -271,15 +278,18 @@ const DungeonEditor: React.FC = () => {
           let dx = 0,
             dy = 0;
           const shape = shapes[i];
-          if ("x" in shape && "y" in shape) {
+          if (shape.tool === "door") {
+            dx = x - shape.x;
+            dy = y - shape.y;
+          } else if ("x" in shape && "y" in shape) {
             dx = x - (shape as any).x;
             dy = y - (shape as any).y;
           } else if (shape.tool === "line") {
             dx = x - shape.points[0].x;
-            dy = y - shape.points[0].y;
+            dy = x - shape.points[0].y;
           } else if (shape.tool === "free") {
             dx = x - shape.points[0].x;
-            dy = y - shape.points[0].y;
+            dy = x - shape.points[0].y;
           }
           setDragOffset({ dx, dy });
           return;
@@ -413,12 +423,23 @@ const DungeonEditor: React.FC = () => {
       setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
     } else if (tool === "door") {
       // Place a door at snapped x/y, default orientation horizontal, size 20x8
-      const { x, y } = getDoorSnap(pointer, "horizontal");
+      let doorX, doorY, orientation;
+      if (!snapTo) {
+        // Free placement
+        doorX = pointer.x;
+        doorY = pointer.y;
+        orientation = "horizontal";
+      } else {
+        const snapped = getDoorSnap(pointer, "horizontal");
+        doorX = snapped.x;
+        doorY = snapped.y;
+        orientation = "horizontal";
+      }
       setDrawing({
         tool: "door",
-        x,
-        y,
-        orientation: "horizontal",
+        x: doorX,
+        y: doorY,
+        orientation: orientation,
         width: 20,
         height: 8,
       });
@@ -431,13 +452,37 @@ const DungeonEditor: React.FC = () => {
       const stage = e.target.getStage();
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
-      const x = maybeSnap(pointer.x);
-      const y = maybeSnap(pointer.y);
+      // Special case for doors: allow free movement if snapTo is off
       setShapes((shapes) =>
         shapes.map((s, idx) => {
           if (idx !== selectedIndex) return s;
-          if (s.tool === "triangle") {
-            // Move all points by the drag delta, preserving tuple
+          if (s.tool === "door") {
+            if (!snapTo) {
+              // Free movement: update x/y directly to pointer (centered)
+              return {
+                ...s,
+                x: pointer.x,
+                y: pointer.y,
+              };
+            } else {
+              // Snap to grid: use getDoorSnap and orientation
+              let orientation = s.orientation;
+              // Optionally, allow orientation to change on drag (like drawing)
+              const dx = Math.abs(pointer.x - s.x);
+              const dy = Math.abs(pointer.y - s.y);
+              if (dx > dy) orientation = "horizontal";
+              else if (dy > dx) orientation = "vertical";
+              const snapped = getDoorSnap(pointer, orientation);
+              return {
+                ...s,
+                x: snapped.x,
+                y: snapped.y,
+                orientation,
+              };
+            }
+          } else if (s.tool === "triangle") {
+            const x = maybeSnap(pointer.x);
+            const y = maybeSnap(pointer.y);
             const dx = x - dragOffset.dx - s.points[0].x;
             const dy = y - dragOffset.dy - s.points[0].y;
             const newPoints: [Point, Point, Point] = [
@@ -447,6 +492,8 @@ const DungeonEditor: React.FC = () => {
             ];
             return { ...s, points: newPoints };
           } else if (s.tool === "line") {
+            const x = maybeSnap(pointer.x);
+            const y = maybeSnap(pointer.y);
             const dx = x - dragOffset.dx - s.points[0].x;
             const dy = y - dragOffset.dy - s.points[0].y;
             const newPoints: [Point, Point] = [
@@ -455,6 +502,8 @@ const DungeonEditor: React.FC = () => {
             ];
             return { ...s, points: newPoints };
           } else if (s.tool === "free") {
+            const x = maybeSnap(pointer.x);
+            const y = maybeSnap(pointer.y);
             const dx = x - dragOffset.dx - s.points[0].x;
             const dy = y - dragOffset.dy - s.points[0].y;
             return {
@@ -462,6 +511,8 @@ const DungeonEditor: React.FC = () => {
               points: s.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy })),
             };
           } else if ("x" in s && "y" in s) {
+            const x = maybeSnap(pointer.x);
+            const y = maybeSnap(pointer.y);
             return { ...s, x: x - dragOffset.dx, y: y - dragOffset.dy };
           }
           return s;
@@ -473,8 +524,12 @@ const DungeonEditor: React.FC = () => {
     const stage = e.target.getStage();
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
-    const x = maybeSnap(pointer.x);
-    const y = maybeSnap(pointer.y);
+    let x = pointer.x;
+    let y = pointer.y;
+    if (drawing.tool !== "door" && snapTo) {
+      x = maybeSnap(pointer.x);
+      y = maybeSnap(pointer.y);
+    }
     if (drawing.tool === "line") {
       setDrawing({ ...drawing, points: [drawing.points[0], { x, y }] });
     } else if (drawing.tool === "rect") {
@@ -508,8 +563,14 @@ const DungeonEditor: React.FC = () => {
       const dy = Math.abs(pointer.y - drawing.y);
       if (dx > dy) orientation = "horizontal";
       else if (dy > dx) orientation = "vertical";
-      const snapped = getDoorSnap(pointer, orientation);
-      setDrawing({ ...drawing, x: snapped.x, y: snapped.y, orientation });
+      let doorX = pointer.x;
+      let doorY = pointer.y;
+      if (snapTo) {
+        const snapped = getDoorSnap(pointer, orientation);
+        doorX = snapped.x;
+        doorY = snapped.y;
+      }
+      setDrawing({ ...drawing, x: doorX, y: doorY, orientation });
       return;
     }
   };
