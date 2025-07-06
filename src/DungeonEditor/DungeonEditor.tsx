@@ -179,6 +179,8 @@ function DungeonEditor() {
   } | null>(null);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
+  const [showSaveModal, setShowSaveModal] = React.useState(false);
+  const [saveFilename, setSaveFilename] = React.useState("dungeon-map.jpg");
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -668,6 +670,141 @@ function DungeonEditor() {
 
   return (
     <div className="dungeon-editor-container">
+      {/* Save as JPEG Modal */}
+      {showSaveModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowSaveModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 20, // reduced from 32
+              borderRadius: 8,
+              minWidth: 220, // reduced from 320
+              maxWidth: 320, // add a maxWidth for compactness
+              width: 260, // set a fixed width for consistency
+              boxShadow: "0 4px 24px #0003",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, fontSize: 20 }}>Save as JPEG</h2>
+            <div
+              style={{
+                fontSize: 14,
+                color: "#333",
+                marginBottom: 10,
+                lineHeight: 1.4,
+              }}
+            >
+              <div>
+                Choose a file name for your exported map. The browser will use
+                its default download location, or prompt you for a location if
+                your browser settings allow.
+              </div>
+            </div>
+            <label style={{ display: "block", marginBottom: 8, fontSize: 15 }}>
+              Filename:
+              <input
+                type="text"
+                value={saveFilename}
+                onChange={(e) => setSaveFilename(e.target.value)}
+                style={{
+                  width: "100%",
+                  marginTop: 4,
+                  padding: 4,
+                  fontSize: 15,
+                  boxSizing: "border-box",
+                }}
+              />
+            </label>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
+              <button
+                onClick={() => setShowSaveModal(false)}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: "#888",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: 15,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (stageRef.current) {
+                    const stage = stageRef.current;
+                    const bgLayer = new window.Konva.Layer();
+                    const bgRect = new window.Konva.Rect({
+                      x: 0,
+                      y: 0,
+                      width: CANVAS_WIDTH,
+                      height: CANVAS_HEIGHT,
+                      fill: "#f5ecd6",
+                      listening: false,
+                    });
+                    bgLayer.add(bgRect);
+                    stage.add(bgLayer);
+                    bgLayer.moveToBottom();
+                    stage.draw();
+                    const uri = stage.toDataURL({
+                      mimeType: "image/jpeg",
+                      quality: 1,
+                    });
+                    bgLayer.destroy();
+                    stage.draw();
+                    const link = document.createElement("a");
+                    link.download =
+                      saveFilename.endsWith(".jpg") ||
+                      saveFilename.endsWith(".jpeg")
+                        ? saveFilename
+                        : saveFilename + ".jpg";
+                    link.href = uri;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
+                  setShowSaveModal(false);
+                }}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: "#2a7",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: 15,
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="dungeon-upperbar">
         <button
           onClick={() => navigate("/")}
@@ -793,40 +930,7 @@ function DungeonEditor() {
           </span>
         </div>
         <button
-          onClick={() => {
-            if (stageRef.current) {
-              // Add a parchment background rect to the bottom of the stage for export
-              const stage = stageRef.current;
-              const bgLayer = new window.Konva.Layer();
-              const bgRect = new window.Konva.Rect({
-                x: 0,
-                y: 0,
-                width: CANVAS_WIDTH,
-                height: CANVAS_HEIGHT,
-                fill: "#f5ecd6",
-                listening: false,
-              });
-              bgLayer.add(bgRect);
-              stage.add(bgLayer);
-              bgLayer.moveToBottom();
-              stage.draw();
-              // Export as JPEG
-              const uri = stage.toDataURL({
-                mimeType: "image/jpeg",
-                quality: 1,
-              });
-              // Remove the temp background layer
-              bgLayer.destroy();
-              stage.draw();
-              // Download
-              const link = document.createElement("a");
-              link.download = "dungeon-map.jpg";
-              link.href = uri;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-          }}
+          onClick={() => setShowSaveModal(true)}
           style={{
             margin: 8,
             padding: "4px 16px",
