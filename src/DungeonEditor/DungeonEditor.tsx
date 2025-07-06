@@ -792,6 +792,56 @@ function DungeonEditor() {
             {thickness}
           </span>
         </div>
+        <button
+          onClick={() => {
+            if (stageRef.current) {
+              // Add a parchment background rect to the bottom of the stage for export
+              const stage = stageRef.current;
+              const bgLayer = new window.Konva.Layer();
+              const bgRect = new window.Konva.Rect({
+                x: 0,
+                y: 0,
+                width: CANVAS_WIDTH,
+                height: CANVAS_HEIGHT,
+                fill: "#f5ecd6",
+                listening: false,
+              });
+              bgLayer.add(bgRect);
+              stage.add(bgLayer);
+              bgLayer.moveToBottom();
+              stage.draw();
+              // Export as JPEG
+              const uri = stage.toDataURL({
+                mimeType: "image/jpeg",
+                quality: 1,
+              });
+              // Remove the temp background layer
+              bgLayer.destroy();
+              stage.draw();
+              // Download
+              const link = document.createElement("a");
+              link.download = "dungeon-map.jpg";
+              link.href = uri;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+          }}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#2a7",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+          title="Save as JPEG"
+        >
+          💾 Save as JPEG
+        </button>
         {/* Remove eraser size slider and logic */}
         {/* Add more settings here as needed */}
       </div>
