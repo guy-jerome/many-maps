@@ -9,10 +9,16 @@ import {
 } from "react-konva";
 import { SketchPicker } from "react-color";
 import { useNavigate } from "react-router-dom";
-
-const GRID_SIZE = 32;
-const CANVAS_WIDTH = 1024;
-const CANVAS_HEIGHT = 768;
+import {
+  GRID_SIZE,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  snapToGrid,
+  maybeSnap,
+  getDoorSnap,
+  pointToSegmentDist,
+  CustomGrid,
+} from "./dungeonUtils";
 
 // Tool types
 const TOOL_LIST = [
@@ -146,10 +152,6 @@ type Shape =
   | TextShape
   | DoorShape;
 
-function snapToGrid(val: number) {
-  return Math.round(val / GRID_SIZE) * GRID_SIZE;
-}
-
 // ICONS array must be defined before use
 const ICONS = [
   { name: "stairs", icon: "🪜" },
@@ -158,7 +160,7 @@ const ICONS = [
   { name: "door", icon: "🚪" },
 ];
 
-const DungeonEditor: React.FC = () => {
+function DungeonEditor() {
   const [tool, setTool] = React.useState<ToolName>("line");
   const [drawing, setDrawing] = React.useState<Shape | null>(null);
   const [shapes, setShapes] = React.useState<Shape[]>([]);
@@ -636,15 +638,6 @@ const DungeonEditor: React.FC = () => {
       pushHistoryAndSetShapes([]);
     }
   }
-
-  // Remove the useEffect for history/future
-  // React.useEffect(() => {
-  //   if (drawing === null) {
-  //     setHistory(h => [...h, shapes]);
-  //     setFuture([]);
-  //   }
-  //   // eslint-disable-next-line
-  // }, [drawing]);
 
   // Set cursor style based on tool
   React.useEffect(() => {
@@ -1254,67 +1247,6 @@ const DungeonEditor: React.FC = () => {
       </div>
     </div>
   );
-};
-
-// CustomGrid component to draw grid using Konva primitives
-const CustomGrid: React.FC = () => {
-  const lines = [];
-  for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SIZE) {
-    lines.push(
-      <KonvaLine
-        key={"v-" + x}
-        points={[x, 0, x, CANVAS_HEIGHT]}
-        stroke="#888" // darker grid
-        strokeWidth={1}
-        listening={false}
-      />
-    );
-  }
-  for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SIZE) {
-    lines.push(
-      <KonvaLine
-        key={"h-" + y}
-        points={[0, y, CANVAS_WIDTH, y]}
-        stroke="#888" // darker grid
-        strokeWidth={1}
-        listening={false}
-      />
-    );
-  }
-  return <>{lines}</>;
-};
-
-// Utility: distance from point to segment
-function pointToSegmentDist(
-  px: number,
-  py: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-) {
-  const A = px - x1;
-  const B = py - y1;
-  const C = x2 - x1;
-  const D = y2 - y1;
-  const dot = A * C + B * D;
-  const len_sq = C * C + D * D;
-  let param = -1;
-  if (len_sq !== 0) param = dot / len_sq;
-  let xx, yy;
-  if (param < 0) {
-    xx = x1;
-    yy = y1;
-  } else if (param > 1) {
-    xx = x2;
-    yy = y2;
-  } else {
-    xx = x1 + param * C;
-    yy = y1 + param * D;
-  }
-  const dx = px - xx;
-  const dy = py - yy;
-  return Math.sqrt(dx * dx + dy * dy);
 }
 
 export default DungeonEditor;
