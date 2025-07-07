@@ -183,7 +183,11 @@ function DungeonEditor() {
   const [gridSize, setGridSize] = React.useState<number>(GRID_SIZE);
   const [canvasWidth, setCanvasWidth] = React.useState<number>(1024);
   const [canvasHeight, setCanvasHeight] = React.useState<number>(768);
+  // --- Zoom and Pan ---
   const [zoom, setZoom] = React.useState(1);
+  const [pan, setPan] = React.useState({ x: 0, y: 0 });
+  const isPanning = React.useRef(false);
+  const lastPan = React.useRef({ x: 0, y: 0 });
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -211,10 +215,20 @@ function DungeonEditor() {
     }
   }
 
+  // Utility to get logical (untransformed) pointer position
+  function getLogicalPointerPosition(stage: any) {
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return null;
+    return {
+      x: (pointer.x - pan.x) / zoom,
+      y: (pointer.y - pan.y) / zoom,
+    };
+  }
+
   // Mouse events for drawing and selection
   const handleMouseDown = (e: any) => {
     const stage = e.target.getStage();
-    const pointer = stage.getPointerPosition();
+    const pointer = getLogicalPointerPosition(stage);
     if (!pointer) return;
     const x = maybeSnap(pointer.x);
     const y = maybeSnap(pointer.y);
@@ -471,7 +485,7 @@ function DungeonEditor() {
   const handleMouseMove = (e: any) => {
     if (tool === "select" && selectedIndex !== null && dragOffset) {
       const stage = e.target.getStage();
-      const pointer = stage.getPointerPosition();
+      const pointer = getLogicalPointerPosition(stage);
       if (!pointer) return;
       // Special case for doors: allow free movement if snapTo is off
       setShapes((shapes) =>
@@ -543,7 +557,7 @@ function DungeonEditor() {
     }
     if (!drawing) return;
     const stage = e.target.getStage();
-    const pointer = stage.getPointerPosition();
+    const pointer = getLogicalPointerPosition(stage);
     if (!pointer) return;
     let x = pointer.x;
     let y = pointer.y;
@@ -668,6 +682,73 @@ function DungeonEditor() {
     const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
     if (canvas) canvas.style.cursor = cursor;
   }, [tool]);
+
+  // Mouse wheel zoom (centered on mouse)
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    if (!stage) return;
+    const oldScale = zoom;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const scaleBy = 1.1;
+    let newZoom = oldScale;
+    if (e.evt.deltaY < 0) {
+      newZoom = Math.min(4, oldScale * scaleBy);
+    } else {
+      newZoom = Math.max(0.25, oldScale / scaleBy);
+    }
+    // Calculate new pan so zoom centers on pointer
+    const mousePointTo = {
+      x: (pointer.x - pan.x) / oldScale,
+      y: (pointer.y - pan.y) / oldScale,
+    };
+    const newPan = {
+      x: pointer.x - mousePointTo.x * newZoom,
+      y: pointer.y - mousePointTo.y * newZoom,
+    };
+    setZoom(newZoom);
+    setPan(newPan);
+  };
+
+  // Mouse drag panning
+  const handleStageMouseDown = (e: any) => {
+    if (e.evt.button === 1 || (e.target === e.target.getStage() && tool === 'select' && e.evt.ctrlKey)) {
+      isPanning.current = true;
+      lastPan.current = { x: e.evt.clientX, y: e.evt.clientY };
+      document.body.style.cursor = 'grab';
+    } else {
+      handleMouseDown(e);
+    }
+  };
+  const handleStageMouseMove = (e: any) => {
+    if (isPanning.current) {
+      const dx = e.evt.clientX - lastPan.current.x;
+      const dy = e.evt.clientY - lastPan.current.y;
+      setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      lastPan.current = { x: e.evt.clientX, y: e.evt.clientY };
+    } else {
+      handleMouseMove(e);
+    }
+  };
+  const handleStageMouseUp = (e: any) => {
+    if (isPanning.current) {
+      isPanning.current = false;
+      document.body.style.cursor = '';
+    } else {
+      handleMouseUp(); // fix: call with no arguments
+    }
+  };
+  React.useEffect(() => {
+    const up = () => {
+      if (isPanning.current) {
+        isPanning.current = false;
+        document.body.style.cursor = '';
+      }
+    };
+    window.addEventListener('mouseup', up);
+    return () => window.removeEventListener('mouseup', up);
+  }, []);
 
   return (
     <div className="dungeon-editor-container">
@@ -975,7 +1056,27 @@ function DungeonEditor() {
         {/* Zoom controls */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
           <button
-            onClick={() => setZoom(z => Math.max(0.25, z - 0.1))}
+            onClick={() => {
+              const stage = stageRef.current;
+              if (!stage) return;
+              // Center zoom on canvas center
+              const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+              const oldScale = zoom;
+              const scaleBy = 1.1;
+              let newZoom = Math.max(0.25, Math.min(4, zoom - 0.1));
+              if (zoom > newZoom) newZoom = Math.max(0.25, zoom / scaleBy);
+              else newZoom = Math.max(0.25, zoom - 0.1);
+              const mousePointTo = {
+                x: (center.x - pan.x) / oldScale,
+                y: (center.y - pan.y) / oldScale,
+              };
+              const newPan = {
+                x: center.x - mousePointTo.x * newZoom,
+                y: center.y - mousePointTo.y * newZoom,
+              };
+              setZoom(newZoom);
+              setPan(newPan);
+            }}
             style={{ marginRight: 4, padding: '2px 10px', fontSize: 18 }}
             title="Zoom Out"
           >
@@ -983,7 +1084,27 @@ function DungeonEditor() {
           </button>
           <span style={{ color: '#fff', minWidth: 40, textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
           <button
-            onClick={() => setZoom(z => Math.min(4, z + 0.1))}
+            onClick={() => {
+              const stage = stageRef.current;
+              if (!stage) return;
+              // Center zoom on canvas center
+              const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+              const oldScale = zoom;
+              const scaleBy = 1.1;
+              let newZoom = Math.min(4, Math.max(0.25, zoom + 0.1));
+              if (zoom < newZoom) newZoom = Math.min(4, zoom * scaleBy);
+              else newZoom = Math.min(4, zoom + 0.1);
+              const mousePointTo = {
+                x: (center.x - pan.x) / oldScale,
+                y: (center.y - pan.y) / oldScale,
+              };
+              const newPan = {
+                x: center.x - mousePointTo.x * newZoom,
+                y: center.y - mousePointTo.y * newZoom,
+              };
+              setZoom(newZoom);
+              setPan(newPan);
+            }}
             style={{ marginLeft: 4, padding: '2px 10px', fontSize: 18 }}
             title="Zoom In"
           >
@@ -1128,11 +1249,14 @@ function DungeonEditor() {
             height={canvasHeight}
             scaleX={zoom}
             scaleY={zoom}
+            x={pan.x}
+            y={pan.y}
             className="dungeon-canvas"
             style={{ background: "#f5ecd6", border: "1px solid #ccc" }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            onWheel={handleWheel}
+            onMouseDown={handleStageMouseDown}
+            onMouseMove={handleStageMouseMove}
+            onMouseUp={handleStageMouseUp}
           >
             {/* Underground + Mask Layer: solid base, then carve-out shapes using destination-out */}
             <Layer id="underground-mask-layer">
