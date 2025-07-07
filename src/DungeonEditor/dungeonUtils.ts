@@ -70,9 +70,9 @@ export function pointToSegmentDist(
 }
 
 // CustomGrid component to draw grid using Konva primitives
-export const CustomGrid: React.FC = () => {
+export const CustomGrid: React.FC<{ gridSize: number }> = ({ gridSize }) => {
   const lines = [];
-  for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SIZE) {
+  for (let x = 0; x <= CANVAS_WIDTH; x += gridSize) {
     lines.push(
       React.createElement(KonvaLine, {
         key: "v-" + x,
@@ -83,7 +83,7 @@ export const CustomGrid: React.FC = () => {
       })
     );
   }
-  for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SIZE) {
+  for (let y = 0; y <= CANVAS_HEIGHT; y += gridSize) {
     lines.push(
       React.createElement(KonvaLine, {
         key: "h-" + y,

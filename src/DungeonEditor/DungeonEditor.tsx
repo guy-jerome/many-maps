@@ -180,31 +180,30 @@ function DungeonEditor() {
   const navigate = useNavigate();
   const [showSaveModal, setShowSaveModal] = React.useState(false);
   const [saveFilename, setSaveFilename] = React.useState("dungeon-map.jpg");
+  const [gridSize, setGridSize] = React.useState<number>(GRID_SIZE);
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
     if (forDoor) {
       // Snap to the center of the grid line
-      return Math.floor(val / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
+      return Math.floor(val / gridSize) * gridSize + gridSize / 2;
     }
-    return snapToGrid(val);
+    return Math.round(val / gridSize) * gridSize;
   }
 
   function getDoorSnap(
     pointer: { x: number; y: number },
     orientation: "horizontal" | "vertical"
   ) {
-    // For horizontal: x center of cell, y between grid lines
-    // For vertical: y center of cell, x between grid lines
     if (orientation === "horizontal") {
       return {
-        x: Math.floor(pointer.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2,
-        y: Math.floor(pointer.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE,
+        x: Math.floor(pointer.x / gridSize) * gridSize + gridSize / 2,
+        y: Math.floor(pointer.y / gridSize) * gridSize + gridSize,
       };
     } else {
       return {
-        x: Math.floor(pointer.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE,
-        y: Math.floor(pointer.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2,
+        x: Math.floor(pointer.x / gridSize) * gridSize + gridSize,
+        y: Math.floor(pointer.y / gridSize) * gridSize + gridSize / 2,
       };
     }
   }
@@ -891,6 +890,7 @@ function DungeonEditor() {
         >
           {showGrid ? "Hide Grid" : "Show Grid"}
         </button>
+        {/* Restore snap tool toggle */}
         <button
           className={snapTo ? "active" : ""}
           onClick={() => setSnapTo((v) => !v)}
@@ -906,27 +906,39 @@ function DungeonEditor() {
         >
           {snapTo ? "Snap On" : "Snap Off"}
         </button>
+        {/* Grid size control */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label
-            htmlFor="thickness-slider"
-            style={{ color: "#fff", marginRight: 8 }}
-          >
+          <label htmlFor="grid-size-slider" style={{ color: "#fff", marginRight: 8 }}>
+            Grid Size
+          </label>
+          <input
+            id="grid-size-slider"
+            type="range"
+            min={8}
+            max={128}
+            step={8}
+            value={gridSize}
+            onChange={e => setGridSize(Number(e.target.value))}
+            style={{ marginRight: 8 }}
+          />
+          <span style={{ color: "#fff", minWidth: 24, display: "inline-block" }}>{gridSize}</span>
+        </div>
+        {/* Line thickness control */}
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
+          <label htmlFor="thickness-slider" style={{ color: "#fff", marginRight: 8 }}>
             Line Thickness
           </label>
           <input
             id="thickness-slider"
             type="range"
             min={1}
-            max={16}
+            max={24}
+            step={1}
             value={thickness}
-            onChange={(e) => setThickness(Number(e.target.value))}
+            onChange={e => setThickness(Number(e.target.value))}
             style={{ marginRight: 8 }}
           />
-          <span
-            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
-          >
-            {thickness}
-          </span>
+          <span style={{ color: "#fff", minWidth: 24, display: "inline-block" }}>{thickness}</span>
         </div>
         <button
           onClick={() => setShowSaveModal(true)}
@@ -1291,7 +1303,7 @@ function DungeonEditor() {
                 id="grid-layer"
               >
                 <React.Fragment>
-                  <CustomGrid />
+                  <CustomGrid gridSize={gridSize} />
                 </React.Fragment>
               </Layer>
             )}
