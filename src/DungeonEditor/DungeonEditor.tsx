@@ -181,6 +181,8 @@ function DungeonEditor() {
   const [showSaveModal, setShowSaveModal] = React.useState(false);
   const [saveFilename, setSaveFilename] = React.useState("dungeon-map.jpg");
   const [gridSize, setGridSize] = React.useState<number>(GRID_SIZE);
+  const [canvasWidth, setCanvasWidth] = React.useState<number>(1024);
+  const [canvasHeight, setCanvasHeight] = React.useState<number>(768);
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -940,6 +942,35 @@ function DungeonEditor() {
           />
           <span style={{ color: "#fff", minWidth: 24, display: "inline-block" }}>{thickness}</span>
         </div>
+        {/* Canvas size controls */}
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
+          <label htmlFor="canvas-width-input" style={{ color: "#fff", marginRight: 8 }}>
+            Width
+          </label>
+          <input
+            id="canvas-width-input"
+            type="number"
+            min={256}
+            max={4096}
+            step={8}
+            value={canvasWidth}
+            onChange={e => setCanvasWidth(Number(e.target.value))}
+            style={{ width: 64, marginRight: 8 }}
+          />
+          <label htmlFor="canvas-height-input" style={{ color: "#fff", marginRight: 8 }}>
+            Height
+          </label>
+          <input
+            id="canvas-height-input"
+            type="number"
+            min={256}
+            max={4096}
+            step={8}
+            value={canvasHeight}
+            onChange={e => setCanvasHeight(Number(e.target.value))}
+            style={{ width: 64, marginRight: 8 }}
+          />
+        </div>
         <button
           onClick={() => setShowSaveModal(true)}
           style={{
@@ -1074,8 +1105,8 @@ function DungeonEditor() {
         >
           <Stage
             ref={stageRef}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
+            width={canvasWidth}
+            height={canvasHeight}
             className="dungeon-canvas"
             style={{ background: "#f5ecd6", border: "1px solid #ccc" }}
             onMouseDown={handleMouseDown}
@@ -1087,8 +1118,8 @@ function DungeonEditor() {
               <KonvaRect
                 x={0}
                 y={0}
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
+                width={canvasWidth}
+                height={canvasHeight}
                 fill="#222"
                 listening={false}
               />
@@ -1303,7 +1334,7 @@ function DungeonEditor() {
                 id="grid-layer"
               >
                 <React.Fragment>
-                  <CustomGrid gridSize={gridSize} />
+                  <CustomGrid gridSize={gridSize} width={canvasWidth} height={canvasHeight} />
                 </React.Fragment>
               </Layer>
             )}
