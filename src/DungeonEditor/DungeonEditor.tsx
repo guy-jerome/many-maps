@@ -183,6 +183,7 @@ function DungeonEditor() {
   const [gridSize, setGridSize] = React.useState<number>(GRID_SIZE);
   const [canvasWidth, setCanvasWidth] = React.useState<number>(1024);
   const [canvasHeight, setCanvasHeight] = React.useState<number>(768);
+  const [zoom, setZoom] = React.useState(1);
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -971,6 +972,24 @@ function DungeonEditor() {
             style={{ width: 64, marginRight: 8 }}
           />
         </div>
+        {/* Zoom controls */}
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
+          <button
+            onClick={() => setZoom(z => Math.max(0.25, z - 0.1))}
+            style={{ marginRight: 4, padding: '2px 10px', fontSize: 18 }}
+            title="Zoom Out"
+          >
+            -
+          </button>
+          <span style={{ color: '#fff', minWidth: 40, textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom(z => Math.min(4, z + 0.1))}
+            style={{ marginLeft: 4, padding: '2px 10px', fontSize: 18 }}
+            title="Zoom In"
+          >
+            +
+          </button>
+        </div>
         <button
           onClick={() => setShowSaveModal(true)}
           style={{
@@ -1107,6 +1126,8 @@ function DungeonEditor() {
             ref={stageRef}
             width={canvasWidth}
             height={canvasHeight}
+            scaleX={zoom}
+            scaleY={zoom}
             className="dungeon-canvas"
             style={{ background: "#f5ecd6", border: "1px solid #ccc" }}
             onMouseDown={handleMouseDown}
