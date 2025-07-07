@@ -9,13 +9,12 @@ import {
 } from "react-konva";
 import { SketchPicker } from "react-color";
 import { useNavigate } from "react-router-dom";
+import Konva from "konva";
 import {
   GRID_SIZE,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   snapToGrid,
-  maybeSnap,
-  getDoorSnap,
   pointToSegmentDist,
   CustomGrid,
 } from "./dungeonUtils";
@@ -443,7 +442,7 @@ function DungeonEditor() {
       setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
     } else if (tool === "door") {
       // Place a door at snapped x/y, default orientation horizontal, size 20x8
-      let doorX, doorY, orientation;
+      let doorX: number, doorY: number, orientation: "horizontal" | "vertical";
       if (!snapTo) {
         // Free placement
         doorX = pointer.x;
@@ -756,8 +755,8 @@ function DungeonEditor() {
                 onClick={() => {
                   if (stageRef.current) {
                     const stage = stageRef.current;
-                    const bgLayer = new window.Konva.Layer();
-                    const bgRect = new window.Konva.Rect({
+                    const bgLayer = new Konva.Layer();
+                    const bgRect = new Konva.Rect({
                       x: 0,
                       y: 0,
                       width: CANVAS_WIDTH,
