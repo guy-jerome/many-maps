@@ -1146,9 +1146,7 @@ function DungeonEditor() {
                       globalCompositeOperation="destination-out"
                     />
                   );
-                } else if (
-                  ["pentagon", "hexagon", "octagon"].includes(shape.tool)
-                ) {
+                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
@@ -1248,18 +1246,14 @@ function DungeonEditor() {
                         globalCompositeOperation="destination-out"
                       />
                     );
-                  } else if (
-                    ["pentagon", "hexagon", "octagon"].includes(drawing.tool)
-                  ) {
+                  } else if (["pentagon", "hexagon", "octagon"].includes(drawing.tool)) {
                     const poly = drawing as Polygon;
                     const angle = (2 * Math.PI) / poly.sides;
                     const points = Array.from(
                       { length: poly.sides },
                       (_, j) => [
-                        poly.x +
-                          poly.radius * Math.cos(j * angle - Math.PI / 2),
-                        poly.y +
-                          poly.radius * Math.sin(j * angle - Math.PI / 2),
+                        poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                        poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
                       ]
                     ).flat();
                     return (
@@ -1305,95 +1299,258 @@ function DungeonEditor() {
             <Layer id="icon-layer">
               {shapes.map((shape, i) => {
                 const isSelected = tool === "select" && i === selectedIndex;
+                // Render icons, doors, and all visible shapes
                 if (shape.tool === "icon") {
                   const iconShape = shape as IconShape;
                   return (
-                    <KonvaText
-                      key={i}
-                      x={iconShape.x}
-                      y={iconShape.y}
-                      text={iconShape.icon}
-                      fontSize={32}
-                      fontStyle="bold"
-                      fill="#222"
-                      offsetX={16}
-                      offsetY={16}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
+                    <React.Fragment key={i}>
+                      <KonvaText
+                        x={iconShape.x}
+                        y={iconShape.y}
+                        text={iconShape.icon}
+                        fontSize={32}
+                        fontStyle="bold"
+                        fill="#222"
+                        offsetX={16}
+                        offsetY={16}
+                      />
+                      {isSelected && (
+                        <KonvaRect
+                          x={iconShape.x - 18}
+                          y={iconShape.y - 18}
+                          width={36}
+                          height={36}
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                          cornerRadius={8}
+                        />
+                      )}
+                    </React.Fragment>
                   );
                 }
                 if (shape.tool === "door") {
                   // Draw a filled rectangle for the door (above mask)
                   return (
-                    <KonvaRect
-                      key={i}
-                      x={
-                        shape.x -
-                        (shape.orientation === "horizontal"
-                          ? shape.width / 2
-                          : shape.height / 2)
-                      }
-                      y={
-                        shape.y -
-                        (shape.orientation === "vertical"
-                          ? shape.width / 2
-                          : shape.height / 2)
-                      }
-                      width={
-                        shape.orientation === "horizontal"
-                          ? shape.width
-                          : shape.height
-                      }
-                      height={
-                        shape.orientation === "vertical"
-                          ? shape.width
-                          : shape.height
-                      }
-                      fill="#fff"
-                      stroke="#222"
-                      strokeWidth={2}
-                      shadowEnabled={isSelected}
-                      shadowColor={isSelected ? "#00f" : undefined}
-                      shadowBlur={isSelected ? 8 : 0}
-                    />
+                    <React.Fragment key={i}>
+                      <KonvaRect
+                        x={
+                          shape.x -
+                          (shape.orientation === "horizontal"
+                            ? shape.width / 2
+                            : shape.height / 2)
+                        }
+                        y={
+                          shape.y -
+                          (shape.orientation === "vertical"
+                            ? shape.width / 2
+                            : shape.height / 2)
+                        }
+                        width={
+                          shape.orientation === "horizontal"
+                            ? shape.width
+                            : shape.height
+                        }
+                        height={
+                          shape.orientation === "vertical"
+                            ? shape.width
+                            : shape.height
+                        }
+                        fill="#fff"
+                        stroke="#222"
+                        strokeWidth={2}
+                      />
+                      {isSelected && (
+                        <KonvaRect
+                          x={
+                            shape.x -
+                            (shape.orientation === "horizontal"
+                              ? shape.width / 2
+                              : shape.height / 2) - 3
+                          }
+                          y={
+                            shape.y -
+                            (shape.orientation === "vertical"
+                              ? shape.width / 2
+                              : shape.height / 2) - 3
+                          }
+                          width={
+                            (shape.orientation === "horizontal"
+                              ? shape.width
+                              : shape.height) + 6
+                          }
+                          height={
+                            (shape.orientation === "vertical"
+                              ? shape.width
+                              : shape.height) + 6
+                          }
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                          cornerRadius={6}
+                        />
+                      )}
+                    </React.Fragment>
                   );
                 }
-                // Add text support here if needed
+                // Render visible outlines for selected shapes
+                if (shape.tool === "rect") {
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaRect
+                        x={shape.x}
+                        y={shape.y}
+                        width={shape.width}
+                        height={shape.height}
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaRect
+                          x={shape.x - 3}
+                          y={shape.y - 3}
+                          width={shape.width + 6}
+                          height={shape.height + 6}
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                          cornerRadius={4}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (shape.tool === "roundedRect") {
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaRect
+                        x={shape.x}
+                        y={shape.y}
+                        width={shape.width}
+                        height={shape.height}
+                        cornerRadius={shape.radius}
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaRect
+                          x={shape.x - 3}
+                          y={shape.y - 3}
+                          width={shape.width + 6}
+                          height={shape.height + 6}
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                          cornerRadius={shape.radius + 2}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (shape.tool === "triangle") {
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaLine
+                        points={shape.points.flatMap((p) => [p.x, p.y])}
+                        closed
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaLine
+                          points={shape.points.flatMap((p) => [p.x, p.y])}
+                          closed
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (shape.tool === "circle") {
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaCircle
+                        x={shape.x}
+                        y={shape.y}
+                        radius={shape.radius}
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaCircle
+                          x={shape.x}
+                          y={shape.y}
+                          radius={shape.radius + 3}
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                  const poly = shape as Polygon;
+                  const angle = (2 * Math.PI) / poly.sides;
+                  const points = Array.from({ length: poly.sides }, (_, j) => [
+                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaLine
+                        points={points}
+                        closed
+                        stroke={isSelected ? poly.color : undefined}
+                        strokeWidth={isSelected ? (poly.thickness || thickness) : 0}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaLine
+                          points={points}
+                          closed
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (shape.tool === "free") {
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaLine
+                        points={shape.points.flatMap((p) => [p.x, p.y])}
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        lineCap="round"
+                        lineJoin="round"
+                        tension={0.5}
+                        fillEnabled={false}
+                      />
+                      {isSelected && (
+                        <KonvaLine
+                          points={shape.points.flatMap((p) => [p.x, p.y])}
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                          dash={[4, 4]}
+                          lineCap="round"
+                          lineJoin="round"
+                          tension={0.5}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
                 return null;
               })}
-              {/* Door preview while drawing */}
-              {drawing && drawing.tool === "door" && (
-                <KonvaRect
-                  x={
-                    drawing.x -
-                    (drawing.orientation === "horizontal"
-                      ? drawing.width / 2
-                      : drawing.height / 2)
-                  }
-                  y={
-                    drawing.y -
-                    (drawing.orientation === "vertical"
-                      ? drawing.width / 2
-                      : drawing.height / 2)
-                  }
-                  width={
-                    drawing.orientation === "horizontal"
-                      ? drawing.width
-                      : drawing.height
-                  }
-                  height={
-                    drawing.orientation === "vertical"
-                      ? drawing.width
-                      : drawing.height
-                  }
-                  fill="#fff"
-                  stroke="#222"
-                  strokeWidth={2}
-                  dash={[4, 4]}
-                />
-              )}
             </Layer>
           </Stage>
         </div>
