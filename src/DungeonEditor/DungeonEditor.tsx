@@ -14,7 +14,6 @@ import {
   GRID_SIZE,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
-  snapToGrid,
   pointToSegmentDist,
   CustomGrid,
 } from "./dungeonUtils";
@@ -713,10 +712,13 @@ function DungeonEditor() {
 
   // Mouse drag panning
   const handleStageMouseDown = (e: any) => {
-    if (e.evt.button === 1 || (e.target === e.target.getStage() && tool === 'select' && e.evt.ctrlKey)) {
+    if (
+      e.evt.button === 1 ||
+      (e.target === e.target.getStage() && tool === "select" && e.evt.ctrlKey)
+    ) {
       isPanning.current = true;
       lastPan.current = { x: e.evt.clientX, y: e.evt.clientY };
-      document.body.style.cursor = 'grab';
+      document.body.style.cursor = "grab";
     } else {
       handleMouseDown(e);
     }
@@ -731,10 +733,10 @@ function DungeonEditor() {
       handleMouseMove(e);
     }
   };
-  const handleStageMouseUp = (e: any) => {
+  const handleStageMouseUp = () => {
     if (isPanning.current) {
       isPanning.current = false;
-      document.body.style.cursor = '';
+      document.body.style.cursor = "";
     } else {
       handleMouseUp(); // fix: call with no arguments
     }
@@ -743,11 +745,11 @@ function DungeonEditor() {
     const up = () => {
       if (isPanning.current) {
         isPanning.current = false;
-        document.body.style.cursor = '';
+        document.body.style.cursor = "";
       }
     };
-    window.addEventListener('mouseup', up);
-    return () => window.removeEventListener('mouseup', up);
+    window.addEventListener("mouseup", up);
+    return () => window.removeEventListener("mouseup", up);
   }, []);
 
   return (
@@ -992,7 +994,10 @@ function DungeonEditor() {
         </button>
         {/* Grid size control */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label htmlFor="grid-size-slider" style={{ color: "#fff", marginRight: 8 }}>
+          <label
+            htmlFor="grid-size-slider"
+            style={{ color: "#fff", marginRight: 8 }}
+          >
             Grid Size
           </label>
           <input
@@ -1002,14 +1007,21 @@ function DungeonEditor() {
             max={128}
             step={8}
             value={gridSize}
-            onChange={e => setGridSize(Number(e.target.value))}
+            onChange={(e) => setGridSize(Number(e.target.value))}
             style={{ marginRight: 8 }}
           />
-          <span style={{ color: "#fff", minWidth: 24, display: "inline-block" }}>{gridSize}</span>
+          <span
+            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
+          >
+            {gridSize}
+          </span>
         </div>
         {/* Line thickness control */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label htmlFor="thickness-slider" style={{ color: "#fff", marginRight: 8 }}>
+          <label
+            htmlFor="thickness-slider"
+            style={{ color: "#fff", marginRight: 8 }}
+          >
             Line Thickness
           </label>
           <input
@@ -1019,14 +1031,21 @@ function DungeonEditor() {
             max={24}
             step={1}
             value={thickness}
-            onChange={e => setThickness(Number(e.target.value))}
+            onChange={(e) => setThickness(Number(e.target.value))}
             style={{ marginRight: 8 }}
           />
-          <span style={{ color: "#fff", minWidth: 24, display: "inline-block" }}>{thickness}</span>
+          <span
+            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
+          >
+            {thickness}
+          </span>
         </div>
         {/* Canvas size controls */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label htmlFor="canvas-width-input" style={{ color: "#fff", marginRight: 8 }}>
+          <label
+            htmlFor="canvas-width-input"
+            style={{ color: "#fff", marginRight: 8 }}
+          >
             Width
           </label>
           <input
@@ -1036,10 +1055,13 @@ function DungeonEditor() {
             max={4096}
             step={8}
             value={canvasWidth}
-            onChange={e => setCanvasWidth(Number(e.target.value))}
+            onChange={(e) => setCanvasWidth(Number(e.target.value))}
             style={{ width: 64, marginRight: 8 }}
           />
-          <label htmlFor="canvas-height-input" style={{ color: "#fff", marginRight: 8 }}>
+          <label
+            htmlFor="canvas-height-input"
+            style={{ color: "#fff", marginRight: 8 }}
+          >
             Height
           </label>
           <input
@@ -1049,7 +1071,7 @@ function DungeonEditor() {
             max={4096}
             step={8}
             value={canvasHeight}
-            onChange={e => setCanvasHeight(Number(e.target.value))}
+            onChange={(e) => setCanvasHeight(Number(e.target.value))}
             style={{ width: 64, marginRight: 8 }}
           />
         </div>
@@ -1077,12 +1099,14 @@ function DungeonEditor() {
               setZoom(newZoom);
               setPan(newPan);
             }}
-            style={{ marginRight: 4, padding: '2px 10px', fontSize: 18 }}
+            style={{ marginRight: 4, padding: "2px 10px", fontSize: 18 }}
             title="Zoom Out"
           >
             -
           </button>
-          <span style={{ color: '#fff', minWidth: 40, textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
+          <span style={{ color: "#fff", minWidth: 40, textAlign: "center" }}>
+            {Math.round(zoom * 100)}%
+          </span>
           <button
             onClick={() => {
               const stage = stageRef.current;
@@ -1105,7 +1129,7 @@ function DungeonEditor() {
               setZoom(newZoom);
               setPan(newPan);
             }}
-            style={{ marginLeft: 4, padding: '2px 10px', fontSize: 18 }}
+            style={{ marginLeft: 4, padding: "2px 10px", fontSize: 18 }}
             title="Zoom In"
           >
             +
@@ -1221,7 +1245,6 @@ function DungeonEditor() {
                     background: iconIndex === idx ? "#888" : "#222",
                     color: "#fff",
                     border: "none",
-                    borderRadius: 4,
                     cursor: "pointer",
                     width: 32,
                     height: 32,
@@ -1334,7 +1357,9 @@ function DungeonEditor() {
                       globalCompositeOperation="destination-out"
                     />
                   );
-                } else if (["pentagon", "hexagon", "octagon"].includes(shape.tool)) {
+                } else if (
+                  ["pentagon", "hexagon", "octagon"].includes(shape.tool)
+                ) {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
@@ -1434,14 +1459,18 @@ function DungeonEditor() {
                         globalCompositeOperation="destination-out"
                       />
                     );
-                  } else if (["pentagon", "hexagon", "octagon"].includes(drawing.tool)) {
+                  } else if (
+                    ["pentagon", "hexagon", "octagon"].includes(drawing.tool)
+                  ) {
                     const poly = drawing as Polygon;
                     const angle = (2 * Math.PI) / poly.sides;
                     const points = Array.from(
                       { length: poly.sides },
                       (_, j) => [
-                        poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                        poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                        poly.x +
+                          poly.radius * Math.cos(j * angle - Math.PI / 2),
+                        poly.y +
+                          poly.radius * Math.sin(j * angle - Math.PI / 2),
                       ]
                     ).flat();
                     return (
@@ -1479,7 +1508,11 @@ function DungeonEditor() {
                 id="grid-layer"
               >
                 <React.Fragment>
-                  <CustomGrid gridSize={gridSize} width={canvasWidth} height={canvasHeight} />
+                  <CustomGrid
+                    gridSize={gridSize}
+                    width={canvasWidth}
+                    height={canvasHeight}
+                  />
                 </React.Fragment>
               </Layer>
             )}
@@ -1554,13 +1587,15 @@ function DungeonEditor() {
                             shape.x -
                             (shape.orientation === "horizontal"
                               ? shape.width / 2
-                              : shape.height / 2) - 3
+                              : shape.height / 2) -
+                            3
                           }
                           y={
                             shape.y -
                             (shape.orientation === "vertical"
                               ? shape.width / 2
-                              : shape.height / 2) - 3
+                              : shape.height / 2) -
+                            3
                           }
                           width={
                             (shape.orientation === "horizontal"
@@ -1591,7 +1626,9 @@ function DungeonEditor() {
                         width={shape.width}
                         height={shape.height}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         fillEnabled={false}
                       />
                       {isSelected && (
@@ -1619,7 +1656,9 @@ function DungeonEditor() {
                         height={shape.height}
                         cornerRadius={shape.radius}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         fillEnabled={false}
                       />
                       {isSelected && (
@@ -1644,7 +1683,9 @@ function DungeonEditor() {
                         points={shape.points.flatMap((p) => [p.x, p.y])}
                         closed
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         fillEnabled={false}
                       />
                       {isSelected && (
@@ -1667,7 +1708,9 @@ function DungeonEditor() {
                         y={shape.y}
                         radius={shape.radius}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         fillEnabled={false}
                       />
                       {isSelected && (
@@ -1696,7 +1739,9 @@ function DungeonEditor() {
                         points={points}
                         closed
                         stroke={isSelected ? poly.color : undefined}
-                        strokeWidth={isSelected ? (poly.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? poly.thickness || thickness : 0
+                        }
                         fillEnabled={false}
                       />
                       {isSelected && (
@@ -1717,7 +1762,9 @@ function DungeonEditor() {
                       <KonvaLine
                         points={shape.points.flatMap((p) => [p.x, p.y])}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? (shape.thickness || thickness) : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         lineCap="round"
                         lineJoin="round"
                         tension={0.5}
