@@ -10,6 +10,23 @@ export function snapToGrid(val: number) {
   return Math.round(val / GRID_SIZE) * GRID_SIZE;
 }
 
+export interface NormalizedRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export function normalizeRectCoords(x: number, y: number, width: number, height: number): NormalizedRect {
+  const normalized = {
+    x: width < 0 ? x + width : x,
+    y: height < 0 ? y + height : y,
+    width: Math.abs(width),
+    height: Math.abs(height),
+  };
+  return normalized;
+}
+
 export function maybeSnap(val: number, snapTo: boolean, forDoor = false) {
   if (!snapTo) return val;
   if (forDoor) {

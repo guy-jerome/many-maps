@@ -16,6 +16,7 @@ import {
   CANVAS_HEIGHT,
   pointToSegmentDist,
   CustomGrid,
+  normalizeRectCoords,
 } from "./dungeonUtils";
 
 // Tool types
@@ -420,13 +421,14 @@ function DungeonEditor() {
     } else if (tool === "rect") {
       setDrawing({ tool: "rect", x, y, width: 0, height: 0, color, thickness });
     } else if (tool === "roundedRect") {
+      // Start drawing from anchor point, width/height 0
       setDrawing({
         tool: "roundedRect",
         x,
         y,
         width: 0,
         height: 0,
-        radius: 16,
+        radius: 0,
         color,
         thickness,
       });
@@ -569,7 +571,15 @@ function DungeonEditor() {
     } else if (drawing.tool === "rect") {
       setDrawing({ ...drawing, width: x - drawing.x, height: y - drawing.y });
     } else if (drawing.tool === "roundedRect") {
-      setDrawing({ ...drawing, width: x - drawing.x, height: y - drawing.y });
+      // Do NOT update drawing.x/y to normalized values; keep anchor point as start
+      const width = x - drawing.x;
+      const height = y - drawing.y;
+      setDrawing({
+        ...drawing,
+        width,
+        height,
+        // radius will be normalized at render time
+      });
     } else if (drawing.tool === "triangle") {
       // Equilateral triangle from start to current
       const p1 = drawing.points[0];
@@ -1324,14 +1334,15 @@ function DungeonEditor() {
                     />
                   );
                 } else if (shape.tool === "roundedRect") {
+                  const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
                   return (
                     <KonvaRect
                       key={i}
-                      x={shape.x}
-                      y={shape.y}
-                      width={shape.width}
-                      height={shape.height}
-                      cornerRadius={shape.radius}
+                      x={norm.x}
+                      y={norm.y}
+                      width={norm.width}
+                      height={norm.height}
+                      cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
                       fill="#fff"
                       globalCompositeOperation="destination-out"
                     />
@@ -1426,13 +1437,19 @@ function DungeonEditor() {
                       />
                     );
                   } else if (drawing.tool === "roundedRect") {
+                    const norm = normalizeRectCoords(
+                      drawing.x,
+                      drawing.y,
+                      drawing.width,
+                      drawing.height
+                    );
                     return (
                       <KonvaRect
-                        x={drawing.x}
-                        y={drawing.y}
-                        width={drawing.width}
-                        height={drawing.height}
-                        cornerRadius={drawing.radius}
+                        x={norm.x}
+                        y={norm.y}
+                        width={norm.width}
+                        height={norm.height}
+                        cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
                         fill="#fff"
                         dash={[8, 8]}
                         globalCompositeOperation="destination-out"
@@ -1647,30 +1664,29 @@ function DungeonEditor() {
                   );
                 }
                 if (shape.tool === "roundedRect") {
+                  const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
                   return (
                     <React.Fragment key={i}>
                       <KonvaRect
-                        x={shape.x}
-                        y={shape.y}
-                        width={shape.width}
-                        height={shape.height}
-                        cornerRadius={shape.radius}
+                        x={norm.x}
+                        y={norm.y}
+                        width={norm.width}
+                        height={norm.height}
+                        cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={
-                          isSelected ? shape.thickness || thickness : 0
-                        }
+                        strokeWidth={isSelected ? shape.thickness || thickness : 0}
                         fillEnabled={false}
                       />
                       {isSelected && (
                         <KonvaRect
-                          x={shape.x - 3}
-                          y={shape.y - 3}
-                          width={shape.width + 6}
-                          height={shape.height + 6}
+                          x={norm.x - 3}
+                          y={norm.y - 3}
+                          width={norm.width + 6}
+                          height={norm.height + 6}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
-                          cornerRadius={shape.radius + 2}
+                          cornerRadius={Math.min(16, norm.width / 2, norm.height / 2) + 2}
                         />
                       )}
                     </React.Fragment>
