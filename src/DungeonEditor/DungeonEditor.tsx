@@ -891,20 +891,20 @@ function DungeonEditor() {
       )}
       <div className="dungeon-upperbar">
         <button
+          className="back-home-btn"
           onClick={() => navigate("/")}
           style={{
             margin: 8,
-            padding: "4px 16px",
+            // Remove large padding/font, let CSS handle size
             borderRadius: 4,
             border: "none",
             background: "#444",
             color: "#fff",
             fontWeight: 600,
-            fontSize: 18,
             cursor: "pointer",
           }}
         >
-          ⟵ Back to Home
+          ⟵ Home
         </button>
         <button
           onClick={handleUndo}

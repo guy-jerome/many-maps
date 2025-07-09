@@ -22,6 +22,20 @@
   color: #fff !important;
 }
 
+.dungeon-upperbar .back-home-btn {
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  font-size: 16px;
+  padding: 0 16px;
+  min-width: 48px;
+  width: auto;
+  max-width: 120px;
+  line-height: 1.2;
+  box-sizing: border-box;
+  letter-spacing: 0.01em;
+}
+
 .dungeon-toolbar {
   display: flex;
   flex-direction: column;
