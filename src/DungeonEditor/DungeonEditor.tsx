@@ -17,6 +17,9 @@ import {
   pointToSegmentDist,
   CustomGrid,
   normalizeRectCoords,
+  getShapeCenter,
+  getRotationHandlePosition,
+  calculateAngle,
 } from "./dungeonUtils";
 
 // Tool types
@@ -61,12 +64,14 @@ interface RoundedRect {
   radius: number;
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 interface Triangle {
   tool: "triangle";
   points: [Point, Point, Point];
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 interface Circle {
   tool: "circle";
@@ -75,6 +80,7 @@ interface Circle {
   radius: number;
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support (for consistency)
 }
 interface Polygon {
   tool: "pentagon" | "hexagon" | "octagon";
@@ -84,6 +90,7 @@ interface Polygon {
   sides: number;
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 
 // Existing interfaces
@@ -97,6 +104,7 @@ interface Line {
   points: [Point, Point];
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 
 interface Rect {
@@ -107,6 +115,7 @@ interface Rect {
   height: number;
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 
 interface Free {
@@ -114,6 +123,7 @@ interface Free {
   points: Point[];
   color: string;
   thickness?: number;
+  rotation?: number; // Add rotation support
 }
 
 // Add icon shape type
@@ -122,6 +132,7 @@ interface IconShape {
   x: number;
   y: number;
   icon: string;
+  rotation?: number; // Add rotation support
 }
 interface TextShape {
   tool: "text";
@@ -129,6 +140,7 @@ interface TextShape {
   y: number;
   text: string;
   color: string;
+  rotation?: number; // Add rotation support
 }
 interface DoorShape {
   tool: "door";
@@ -137,6 +149,7 @@ interface DoorShape {
   orientation: "horizontal" | "vertical";
   width: number;
   height: number;
+  rotation?: number; // Add rotation support
 }
 
 type Shape =
@@ -175,6 +188,11 @@ function DungeonEditor() {
   const [dragOffset, setDragOffset] = React.useState<{
     dx: number;
     dy: number;
+  } | null>(null);
+  const [isRotating, setIsRotating] = React.useState(false);
+  const [rotationStart, setRotationStart] = React.useState<{
+    angle: number;
+    shapeRotation: number;
   } | null>(null);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
@@ -232,7 +250,29 @@ function DungeonEditor() {
     if (!pointer) return;
     const x = maybeSnap(pointer.x);
     const y = maybeSnap(pointer.y);
+    
     if (tool === "select") {
+      // Check if clicking on rotation handle first - use raw coordinates for better precision
+      if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+        const shape = shapes[selectedIndex];
+        if (!shape) return; // Guard against undefined shape
+        const handlePos = getRotationHandlePosition(shape);
+        const distance = Math.sqrt(
+          Math.pow(pointer.x - handlePos.x, 2) + Math.pow(pointer.y - handlePos.y, 2)
+        );
+        if (distance <= 15) { // Even larger hit area for better usability
+          // Starting rotation
+          const center = getShapeCenter(shape);
+          const startAngle = calculateAngle(center, { x: pointer.x, y: pointer.y });
+          setIsRotating(true);
+          setRotationStart({
+            angle: startAngle,
+            shapeRotation: shape.rotation || 0,
+          });
+          return;
+        }
+      }
+
       // Find topmost shape under cursor
       for (let i = shapes.length - 1; i >= 0; i--) {
         const shape = shapes[i];
@@ -250,13 +290,23 @@ function DungeonEditor() {
           const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
           if (dist <= (shape.thickness || thickness) + 6) hit = true;
         } else if (shape.tool === "free") {
-          for (let j = 0; j < shape.points.length - 1; j++) {
-            const p1 = shape.points[j];
-            const p2 = shape.points[j + 1];
-            const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
-            if (dist <= (shape.thickness || thickness) + 6) {
-              hit = true;
-              break;
+          // Better hit detection for free-form shapes
+          const center = getShapeCenter(shape);
+          const checkRadius = 20; // Reasonable hit area around centroid
+          const dx = x - center.x;
+          const dy = y - center.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= checkRadius) {
+            hit = true;
+          } else {
+            // Also check individual line segments
+            for (let j = 0; j < shape.points.length - 1; j++) {
+              const p1 = shape.points[j];
+              const p2 = shape.points[j + 1];
+              const dist = pointToSegmentDist(x, y, p1.x, p1.y, p2.x, p2.y);
+              if (dist <= (shape.thickness || thickness) + 6) {
+                hit = true;
+                break;
+              }
             }
           }
         } else if (shape.tool === "rect" || shape.tool === "roundedRect") {
@@ -321,10 +371,10 @@ function DungeonEditor() {
             dy = y - (shape as any).y;
           } else if (shape.tool === "line") {
             dx = x - shape.points[0].x;
-            dy = x - shape.points[0].y;
+            dy = y - shape.points[0].y;
           } else if (shape.tool === "free") {
             dx = x - shape.points[0].x;
-            dy = x - shape.points[0].y;
+            dy = y - shape.points[0].y;
           }
           setDragOffset({ dx, dy });
           return;
@@ -484,6 +534,27 @@ function DungeonEditor() {
   };
 
   const handleMouseMove = (e: any) => {
+    if (isRotating && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && rotationStart) {
+      const stage = e.target.getStage();
+      const pointer = getLogicalPointerPosition(stage);
+      if (!pointer) return;
+      
+      const shape = shapes[selectedIndex];
+      if (!shape) return; // Guard against undefined shape
+      const center = getShapeCenter(shape);
+      const currentAngle = calculateAngle(center, pointer);
+      const deltaAngle = currentAngle - rotationStart.angle;
+      const newRotation = rotationStart.shapeRotation + deltaAngle;
+      
+      setShapes((shapes) =>
+        shapes.map((s, idx) => {
+          if (idx !== selectedIndex) return s;
+          return { ...s, rotation: newRotation };
+        })
+      );
+      return;
+    }
+
     if (tool === "select" && selectedIndex !== null && dragOffset) {
       const stage = e.target.getStage();
       const pointer = getLogicalPointerPosition(stage);
@@ -620,6 +691,12 @@ function DungeonEditor() {
   };
 
   const handleMouseUp = () => {
+    if (isRotating) {
+      setIsRotating(false);
+      setRotationStart(null);
+      return;
+    }
+    
     if (tool === "select") {
       setDragOffset(null);
       return;
@@ -1305,56 +1382,72 @@ function DungeonEditor() {
                 // Only carve-out shapes (not icons/text)
                 if (shape.tool === "icon" || shape.tool === "text") return null;
                 if (shape.tool === "line") {
+                  const center = getShapeCenter(shape);
                   return (
                     <KonvaLine
                       key={i}
                       points={[
-                        shape.points[0].x,
-                        shape.points[0].y,
-                        shape.points[1].x,
-                        shape.points[1].y,
+                        shape.points[0].x - center.x,
+                        shape.points[0].y - center.y,
+                        shape.points[1].x - center.x,
+                        shape.points[1].y - center.y,
                       ]}
                       stroke="#fff"
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      x={center.x}
+                      y={center.y}
                     />
                   );
                 } else if (shape.tool === "rect") {
+                  const center = getShapeCenter(shape);
                   return (
                     <KonvaRect
                       key={i}
-                      x={shape.x}
-                      y={shape.y}
+                      x={center.x}
+                      y={center.y}
                       width={shape.width}
                       height={shape.height}
                       fill="#fff"
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      offsetX={center.x - shape.x}
+                      offsetY={center.y - shape.y}
                     />
                   );
                 } else if (shape.tool === "roundedRect") {
                   const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
+                  const center = getShapeCenter(shape);
                   return (
                     <KonvaRect
                       key={i}
-                      x={norm.x}
-                      y={norm.y}
+                      x={center.x}
+                      y={center.y}
                       width={norm.width}
                       height={norm.height}
                       cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
                       fill="#fff"
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      offsetX={center.x - norm.x}
+                      offsetY={center.y - norm.y}
                     />
                   );
                 } else if (shape.tool === "triangle") {
+                  const center = getShapeCenter(shape);
                   return (
                     <KonvaLine
                       key={i}
-                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                       closed
                       fill="#fff"
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      x={center.x}
+                      y={center.y}
                     />
                   );
                 } else if (shape.tool === "circle") {
@@ -1366,6 +1459,7 @@ function DungeonEditor() {
                       radius={shape.radius}
                       fill="#fff"
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                     />
                   );
                 } else if (
@@ -1374,8 +1468,8 @@ function DungeonEditor() {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
-                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                    poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.radius * Math.sin(j * angle - Math.PI / 2),
                   ]).flat();
                   return (
                     <KonvaLine
@@ -1384,19 +1478,26 @@ function DungeonEditor() {
                       closed
                       fill="#fff"
                       globalCompositeOperation="destination-out"
+                      rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                      x={poly.x}
+                      y={poly.y}
                     />
                   );
                 } else if (shape.tool === "free") {
+                  const center = getShapeCenter(shape);
                   return (
                     <KonvaLine
                       key={i}
-                      points={shape.points.flatMap((p) => [p.x, p.y])}
+                      points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                       stroke="#fff"
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
                       tension={0.5}
                       globalCompositeOperation="destination-out"
+                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      x={center.x}
+                      y={center.y}
                     />
                   );
                 }
@@ -1551,17 +1652,21 @@ function DungeonEditor() {
                         fill="#222"
                         offsetX={16}
                         offsetY={16}
+                        rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
                       />
                       {isSelected && (
                         <KonvaRect
-                          x={iconShape.x - 18}
-                          y={iconShape.y - 18}
+                          x={iconShape.x}
+                          y={iconShape.y}
                           width={36}
                           height={36}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={8}
+                          offsetX={18}
+                          offsetY={18}
+                          rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
                         />
                       )}
                     </React.Fragment>
@@ -1635,11 +1740,12 @@ function DungeonEditor() {
                 }
                 // Render visible outlines for selected shapes
                 if (shape.tool === "rect") {
+                  const center = getShapeCenter(shape);
                   return (
                     <React.Fragment key={i}>
                       <KonvaRect
-                        x={shape.x}
-                        y={shape.y}
+                        x={center.x}
+                        y={center.y}
                         width={shape.width}
                         height={shape.height}
                         stroke={isSelected ? shape.color : undefined}
@@ -1647,17 +1753,23 @@ function DungeonEditor() {
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        offsetX={center.x - shape.x}
+                        offsetY={center.y - shape.y}
                       />
                       {isSelected && (
                         <KonvaRect
-                          x={shape.x - 3}
-                          y={shape.y - 3}
+                          x={center.x}
+                          y={center.y}
                           width={shape.width + 6}
                           height={shape.height + 6}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={4}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          offsetX={center.x - (shape.x - 3)}
+                          offsetY={center.y - (shape.y - 3)}
                         />
                       )}
                     </React.Fragment>
@@ -1665,52 +1777,74 @@ function DungeonEditor() {
                 }
                 if (shape.tool === "roundedRect") {
                   const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
+                  const center = getShapeCenter(shape);
                   return (
                     <React.Fragment key={i}>
                       <KonvaRect
-                        x={norm.x}
-                        y={norm.y}
+                        x={center.x}
+                        y={center.y}
                         width={norm.width}
                         height={norm.height}
                         cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
                         stroke={isSelected ? shape.color : undefined}
                         strokeWidth={isSelected ? shape.thickness || thickness : 0}
                         fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        offsetX={center.x - norm.x}
+                        offsetY={center.y - norm.y}
                       />
                       {isSelected && (
                         <KonvaRect
-                          x={norm.x - 3}
-                          y={norm.y - 3}
+                          x={center.x}
+                          y={center.y}
                           width={norm.width + 6}
                           height={norm.height + 6}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={Math.min(16, norm.width / 2, norm.height / 2) + 2}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          offsetX={center.x - (norm.x - 3)}
+                          offsetY={center.y - (norm.y - 3)}
                         />
                       )}
                     </React.Fragment>
                   );
                 }
                 if (shape.tool === "triangle") {
+                  const center = getShapeCenter(shape);
                   return (
                     <React.Fragment key={i}>
                       <KonvaLine
-                        points={shape.points.flatMap((p) => [p.x, p.y])}
+                        points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                         closed
                         stroke={isSelected ? shape.color : undefined}
                         strokeWidth={
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        x={center.x}
+                        y={center.y}
                       />
                       {isSelected && (
                         <KonvaLine
-                          points={shape.points.flatMap((p) => [p.x, p.y])}
+                          points={shape.points.flatMap((p) => {
+                            // Create slightly larger outline by expanding from center
+                            const px = p.x - center.x;
+                            const py = p.y - center.y;
+                            const distance = Math.sqrt(px * px + py * py);
+                            const expansion = 3; // pixels to expand
+                            const factor = distance > 0 ? (distance + expansion) / distance : 1;
+                            return [px * factor, py * factor];
+                          })}
                           closed
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          x={center.x}
+                          y={center.y}
                         />
                       )}
                     </React.Fragment>
@@ -1728,6 +1862,7 @@ function DungeonEditor() {
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       />
                       {isSelected && (
                         <KonvaCircle
@@ -1737,6 +1872,7 @@ function DungeonEditor() {
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                         />
                       )}
                     </React.Fragment>
@@ -1746,8 +1882,12 @@ function DungeonEditor() {
                   const poly = shape as Polygon;
                   const angle = (2 * Math.PI) / poly.sides;
                   const points = Array.from({ length: poly.sides }, (_, j) => [
-                    poly.x + poly.radius * Math.cos(j * angle - Math.PI / 2),
-                    poly.y + poly.radius * Math.sin(j * angle - Math.PI / 2),
+                    poly.radius * Math.cos(j * angle - Math.PI / 2),
+                    poly.radius * Math.sin(j * angle - Math.PI / 2),
+                  ]).flat();
+                  const outlinePoints = Array.from({ length: poly.sides }, (_, j) => [
+                    (poly.radius + 3) * Math.cos(j * angle - Math.PI / 2),
+                    (poly.radius + 3) * Math.sin(j * angle - Math.PI / 2),
                   ]).flat();
                   return (
                     <React.Fragment key={i}>
@@ -1759,24 +1899,77 @@ function DungeonEditor() {
                           isSelected ? poly.thickness || thickness : 0
                         }
                         fillEnabled={false}
+                        rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                        offsetX={0}
+                        offsetY={0}
+                        x={poly.x}
+                        y={poly.y}
                       />
                       {isSelected && (
                         <KonvaLine
-                          points={points}
+                          points={outlinePoints}
                           closed
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
+                          rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                          offsetX={0}
+                          offsetY={0}
+                          x={poly.x}
+                          y={poly.y}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                if (shape.tool === "line") {
+                  const center = getShapeCenter(shape);
+                  return (
+                    <React.Fragment key={i}>
+                      <KonvaLine
+                        points={[
+                          shape.points[0].x - center.x,
+                          shape.points[0].y - center.y,
+                          shape.points[1].x - center.x,
+                          shape.points[1].y - center.y,
+                        ]}
+                        stroke={isSelected ? shape.color : undefined}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
+                        lineCap="round"
+                        lineJoin="round"
+                        fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        x={center.x}
+                        y={center.y}
+                      />
+                      {isSelected && (
+                        <KonvaLine
+                          points={[
+                            shape.points[0].x - center.x,
+                            shape.points[0].y - center.y,
+                            shape.points[1].x - center.x,
+                            shape.points[1].y - center.y,
+                          ]}
+                          stroke="#1e90ff"
+                          strokeWidth={Math.max(4, (shape.thickness || thickness) + 2)}
+                          lineCap="round"
+                          lineJoin="round"
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          x={center.x}
+                          y={center.y}
                         />
                       )}
                     </React.Fragment>
                   );
                 }
                 if (shape.tool === "free") {
+                  const center = getShapeCenter(shape);
                   return (
                     <React.Fragment key={i}>
                       <KonvaLine
-                        points={shape.points.flatMap((p) => [p.x, p.y])}
+                        points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                         stroke={isSelected ? shape.color : undefined}
                         strokeWidth={
                           isSelected ? shape.thickness || thickness : 0
@@ -1785,16 +1978,21 @@ function DungeonEditor() {
                         lineJoin="round"
                         tension={0.5}
                         fillEnabled={false}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        x={center.x}
+                        y={center.y}
                       />
                       {isSelected && (
                         <KonvaLine
-                          points={shape.points.flatMap((p) => [p.x, p.y])}
+                          points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                           stroke="#1e90ff"
-                          strokeWidth={2}
-                          dash={[4, 4]}
+                          strokeWidth={Math.max(4, (shape.thickness || thickness) + 2)}
                           lineCap="round"
                           lineJoin="round"
                           tension={0.5}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          x={center.x}
+                          y={center.y}
                         />
                       )}
                     </React.Fragment>
@@ -1802,6 +2000,45 @@ function DungeonEditor() {
                 }
                 return null;
               })}
+              
+              {/* Rotation Handle */}
+              {tool === "select" && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && (
+                (() => {
+                  const shape = shapes[selectedIndex];
+                  if (!shape) return null; // Guard against undefined shape
+                  const handlePos = getRotationHandlePosition(shape);
+                  const center = getShapeCenter(shape);
+                  return (
+                    <React.Fragment>
+                      {/* Line from center to handle */}
+                      <KonvaLine
+                        points={[center.x, center.y, handlePos.x, handlePos.y]}
+                        stroke="#1e90ff"
+                        strokeWidth={1}
+                        dash={[2, 2]}
+                      />
+                      {/* Rotation handle circle */}
+                      <KonvaCircle
+                        x={handlePos.x}
+                        y={handlePos.y}
+                        radius={10}
+                        fill="#1e90ff"
+                        stroke="#fff"
+                        strokeWidth={3}
+                      />
+                      {/* Inner circle for better visibility */}
+                      <KonvaCircle
+                        x={handlePos.x}
+                        y={handlePos.y}
+                        radius={6}
+                        fill="#fff"
+                        stroke="#1e90ff"
+                        strokeWidth={1}
+                      />
+                    </React.Fragment>
+                  );
+                })()
+              )}
             </Layer>
           </Stage>
         </div>

@@ -27,6 +27,40 @@ export function normalizeRectCoords(x: number, y: number, width: number, height:
   return normalized;
 }
 
+// Rotation utilities
+export function getShapeCenter(shape: any): { x: number; y: number } {
+  if (shape.tool === "line") {
+    const [p1, p2] = shape.points;
+    return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  } else if (shape.tool === "triangle") {
+    const pts = shape.points;
+    return {
+      x: (pts[0].x + pts[1].x + pts[2].x) / 3,
+      y: (pts[0].y + pts[1].y + pts[2].y) / 3,
+    };
+  } else if (shape.tool === "free") {
+    if (shape.points.length === 0) return { x: 0, y: 0 };
+    const sum = shape.points.reduce((acc: { x: number; y: number }, p: { x: number; y: number }) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+    return { x: sum.x / shape.points.length, y: sum.y / shape.points.length };
+  } else if (shape.tool === "rect" || shape.tool === "roundedRect") {
+    const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
+    return { x: norm.x + norm.width / 2, y: norm.y + norm.height / 2 };
+  } else if ("x" in shape && "y" in shape) {
+    return { x: shape.x, y: shape.y };
+  }
+  return { x: 0, y: 0 };
+}
+
+export function getRotationHandlePosition(shape: any): { x: number; y: number } {
+  const center = getShapeCenter(shape);
+  const distance = 40; // Distance from center to rotation handle
+  return { x: center.x, y: center.y - distance };
+}
+
+export function calculateAngle(center: { x: number; y: number }, point: { x: number; y: number }): number {
+  return Math.atan2(point.y - center.y, point.x - center.x);
+}
+
 export function maybeSnap(val: number, snapTo: boolean, forDoor = false) {
   if (!snapTo) return val;
   if (forDoor) {
@@ -117,3 +151,17 @@ export const CustomGrid: React.FC<{
   }
   return React.createElement(React.Fragment, null, ...lines);
 };
+
+export function applyRotationTransform(shape: any, konvaComponent: any) {
+  if (!shape.rotation) return konvaComponent;
+  
+  const center = getShapeCenter(shape);
+  return React.cloneElement(konvaComponent, {
+    ...konvaComponent.props,
+    rotation: (shape.rotation * 180) / Math.PI,
+    offsetX: center.x - (konvaComponent.props.x || 0),
+    offsetY: center.y - (konvaComponent.props.y || 0),
+    x: center.x,
+    y: center.y,
+  });
+}
