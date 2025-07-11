@@ -87,6 +87,21 @@ export function calculateAngle(center: { x: number; y: number }, point: { x: num
   return Math.atan2(point.y - center.y, point.x - center.x);
 }
 
+// Snap rotation to 15-degree increments when snap-to-grid is enabled
+export function snapRotation(angle: number, snapToGrid: boolean): number {
+  if (!snapToGrid) return angle;
+  
+  // Convert radians to degrees
+  const degrees = (angle * 180) / Math.PI;
+  
+  // Snap to 15-degree increments
+  const snapIncrement = 15;
+  const snappedDegrees = Math.round(degrees / snapIncrement) * snapIncrement;
+  
+  // Convert back to radians
+  return (snappedDegrees * Math.PI) / 180;
+}
+
 // Helper function to rotate a point around a center
 function rotatePoint(point: { x: number; y: number }, center: { x: number; y: number }, angle: number): { x: number; y: number } {
   if (!angle) return point;

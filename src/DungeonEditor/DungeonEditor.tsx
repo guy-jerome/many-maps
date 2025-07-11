@@ -20,6 +20,7 @@ import {
   getShapeCenter,
   getRotationHandlePosition,
   calculateAngle,
+  snapRotation,
   getResizeHandles,
   getResizeHandleAtPoint,
   applyResize,
@@ -798,7 +799,10 @@ function DungeonEditor() {
       const center = getShapeCenter(shape);
       const currentAngle = calculateAngle(center, pointer);
       const deltaAngle = currentAngle - rotationStart.angle;
-      const newRotation = rotationStart.shapeRotation + deltaAngle;
+      let newRotation = rotationStart.shapeRotation + deltaAngle;
+      
+      // Apply rotation snapping when snap-to-grid is enabled
+      newRotation = snapRotation(newRotation, snapTo);
       
       setShapes((shapes) =>
         shapes.map((s, idx) => {
