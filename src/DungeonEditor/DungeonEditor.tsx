@@ -2313,31 +2313,6 @@ function DungeonEditor() {
                         globalCompositeOperation={getCompositeOperation()}
                       />
                     );
-                  } else if (drawing.tool === "door") {
-                    // Show door drawing preview with dash effect and orientation feedback
-                    const doorShape = drawing as DoorShape;
-                    const doorW = doorShape.orientation === "horizontal" ? Math.abs(doorShape.width || 32) : Math.abs(doorShape.height || 8);
-                    const doorH = doorShape.orientation === "horizontal" ? Math.abs(doorShape.height || 8) : Math.abs(doorShape.width || 32);
-                    
-                    // Ensure minimum visibility for preview
-                    const actualDoorW = Math.max(8, doorW);
-                    const actualDoorH = Math.max(4, doorH);
-                    
-                    return (
-                      <KonvaRect
-                        x={doorShape.x}
-                        y={doorShape.y}
-                        width={actualDoorW}
-                        height={actualDoorH}
-                        fill={getFillColor(drawing)}
-                        stroke={getStrokeColor(drawing)}
-                        strokeWidth={2}
-                        dash={[8, 8]}
-                        offsetX={actualDoorW / 2}
-                        offsetY={actualDoorH / 2}
-                        globalCompositeOperation={getCompositeOperation()}
-                      />
-                    );
                   }
                   return null;
                 })()}
@@ -2701,6 +2676,34 @@ function DungeonEditor() {
                 }
                 return null;
               })}
+              
+              {/* Door Preview (rendered in icon layer to appear above the cut away) */}
+              {drawing && drawing.tool === "door" && (
+                (() => {
+                  const doorW = drawing.orientation === "horizontal" ? Math.abs(drawing.width) : Math.abs(drawing.height);
+                  const doorH = drawing.orientation === "horizontal" ? Math.abs(drawing.height) : Math.abs(drawing.width);
+                  
+                  // Ensure minimum visibility
+                  const actualDoorW = Math.max(8, doorW);
+                  const actualDoorH = Math.max(4, doorH);
+                  
+                  return (
+                    <KonvaRect
+                      x={drawing.x}
+                      y={drawing.y}
+                      width={actualDoorW}
+                      height={actualDoorH}
+                      fill="#fff"
+                      stroke="#222"
+                      strokeWidth={2}
+                      dash={[8, 8]}
+                      offsetX={actualDoorW / 2}
+                      offsetY={actualDoorH / 2}
+                      rotation={drawing.rotation ? (drawing.rotation * 180) / Math.PI : 0}
+                    />
+                  );
+                })()
+              )}
               
               {/* Rotation Handle */}
               {tool === "select" && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && (
