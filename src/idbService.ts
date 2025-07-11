@@ -25,21 +25,42 @@ export interface MapRecord {
   pins: PinData[];
 }
 
+// New interface for dungeon work-in-progress projects
+export interface DungeonProject {
+  id: string;
+  name: string;
+  description?: string;
+  shapes: any[]; // The shapes array from DungeonEditor
+  canvasWidth: number;
+  canvasHeight: number;
+  gridSize: number;
+  lastModified: Date;
+  thumbnail?: Blob; // Optional thumbnail
+}
+
 interface MapGalleryDB extends DBSchema {
   maps: {
     key: string;
     value: MapRecord;
   };
+  dungeonProjects: {
+    key: string;
+    value: DungeonProject;
+  };
 }
 
 const DB_NAME = "map-gallery-db";
 const STORE = "maps";
+const DUNGEON_STORE = "dungeonProjects";
 
 async function getDB() {
-  return openDB<MapGalleryDB>(DB_NAME, 1, {
-    upgrade(db) {
+  return openDB<MapGalleryDB>(DB_NAME, 2, {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains(STORE)) {
         db.createObjectStore(STORE);
+      }
+      if (oldVersion < 2 && !db.objectStoreNames.contains(DUNGEON_STORE)) {
+        db.createObjectStore(DUNGEON_STORE);
       }
     },
   });
@@ -147,4 +168,41 @@ export async function deleteMap(id: string) {
   }
 
   await tx.done;
+}
+
+// ===== DUNGEON PROJECT FUNCTIONS =====
+
+export async function saveDungeonProject(project: DungeonProject) {
+  const db = await getDB();
+  project.lastModified = new Date();
+  await db.put(DUNGEON_STORE, project, project.id);
+}
+
+export async function getDungeonProject(id: string): Promise<DungeonProject | undefined> {
+  const db = await getDB();
+  return db.get(DUNGEON_STORE, id);
+}
+
+export async function getAllDungeonProjects(): Promise<DungeonProject[]> {
+  const db = await getDB();
+  const projects = await db.getAll(DUNGEON_STORE);
+  return projects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+}
+
+export async function deleteDungeonProject(id: string) {
+  const db = await getDB();
+  await db.delete(DUNGEON_STORE, id);
+}
+
+export async function exportDungeonToGallery(
+  projectId: string,
+  mapBlob: Blob,
+  mapName: string,
+  mapDescription?: string
+) {
+  // Save the dungeon as a regular map in the gallery
+  // Use projectId as part of the map ID to maintain some connection
+  const mapId = projectId ? `dungeon-${projectId}` : `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  await saveMap(mapId, mapBlob, mapName, mapDescription);
+  return mapId;
 }

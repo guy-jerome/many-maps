@@ -8,7 +8,7 @@ import {
   Text as KonvaText,
 } from "react-konva";
 import { SketchPicker } from "react-color";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Konva from "konva";
 import {
   GRID_SIZE,
@@ -24,6 +24,14 @@ import {
   getResizeHandleAtPoint,
   applyResize,
 } from "./dungeonUtils";
+import {
+  saveDungeonProject,
+  getDungeonProject,
+  getAllDungeonProjects,
+  deleteDungeonProject,
+  exportDungeonToGallery,
+  DungeonProject,
+} from "../idbService";
 
 // Tool types
 const TOOL_LIST = [
@@ -186,6 +194,7 @@ const ICONS = [
 ];
 
 function DungeonEditor() {
+  const { projectId } = useParams<{ projectId?: string }>();
   const [tool, setTool] = React.useState<ToolName>("line");
   const [drawing, setDrawing] = React.useState<Shape | null>(null);
   const [shapes, setShapes] = React.useState<Shape[]>([]);
@@ -227,6 +236,18 @@ function DungeonEditor() {
   const [pan, setPan] = React.useState({ x: 0, y: 0 });
   const isPanning = React.useRef(false);
   const lastPan = React.useRef({ x: 0, y: 0 });
+
+  // New state for project management
+  const [currentProjectId, setCurrentProjectId] = React.useState<string | null>(projectId || null);
+  const [currentProjectName, setCurrentProjectName] = React.useState<string>("Untitled Dungeon");
+  const [showSaveProjectModal, setShowSaveProjectModal] = React.useState(false);
+  const [showLoadProjectModal, setShowLoadProjectModal] = React.useState(false);
+  const [showExportModal, setShowExportModal] = React.useState(false);
+  const [savedProjects, setSavedProjects] = React.useState<DungeonProject[]>([]);
+  const [projectName, setProjectName] = React.useState(currentProjectName);
+  const [projectDescription, setProjectDescription] = React.useState<string>("");
+  const [exportName, setExportName] = React.useState<string>("");
+  const [exportDescription, setExportDescription] = React.useState<string>("");
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -277,6 +298,166 @@ function DungeonEditor() {
   function getStrokeColor(shape: any) {
     return addMode ? shape.color : "#fff";
   }
+
+  // Load project on mount if projectId is provided
+  React.useEffect(() => {
+    if (projectId) {
+      loadProject(projectId);
+    }
+    loadSavedProjects();
+  }, [projectId]);
+
+  // Sync projectName with currentProjectName when it changes
+  React.useEffect(() => {
+    setProjectName(currentProjectName);
+  }, [currentProjectName]);
+
+  // Load saved projects list
+  const loadSavedProjects = async () => {
+    try {
+      const projects = await getAllDungeonProjects();
+      setSavedProjects(projects);
+    } catch (error) {
+      console.error("Error loading saved projects:", error);
+      setSavedProjects([]); // Set empty array on error
+    }
+  };
+
+  // Load a specific project
+  const loadProject = async (id: string) => {
+    try {
+      const project = await getDungeonProject(id);
+      if (project) {
+        setCurrentProjectId(project.id);
+        setCurrentProjectName(project.name);
+        setProjectName(project.name);
+        setProjectDescription(project.description || "");
+        setShapes(project.shapes || []);
+        setCanvasWidth(project.canvasWidth || 1024);
+        setCanvasHeight(project.canvasHeight || 768);
+        setGridSize(project.gridSize || GRID_SIZE);
+        setHistory([]); // Reset history when loading
+        setFuture([]);
+        
+        // Update the URL to reflect the loaded project
+        navigate(`/dungeon/${project.id}`, { replace: true });
+      }
+    } catch (error) {
+      console.error("Error loading project:", error);
+      alert("Failed to load project. Please try again.");
+    }
+  };
+
+  // Save current project
+  const saveCurrentProject = async () => {
+    try {
+      const id = currentProjectId || `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Generate thumbnail
+      let thumbnail: Blob | undefined;
+      if (stageRef.current) {
+        const stage = stageRef.current;
+        const bgLayer = new Konva.Layer();
+        const bgRect = new Konva.Rect({
+          x: 0,
+          y: 0,
+          width: canvasWidth,
+          height: canvasHeight,
+          fill: "#f5ecd6",
+          listening: false,
+        });
+        bgLayer.add(bgRect);
+        stage.add(bgLayer);
+        bgLayer.moveToBottom();
+        stage.draw();
+        
+        const canvas = stage.toCanvas({ pixelRatio: 0.2 }); // Small thumbnail
+        thumbnail = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        
+        bgLayer.destroy();
+        stage.draw();
+      }
+
+      const project: DungeonProject = {
+        id,
+        name: projectName,
+        description: projectDescription,
+        shapes: shapes,
+        canvasWidth,
+        canvasHeight,
+        gridSize,
+        lastModified: new Date(),
+        thumbnail,
+      };
+
+      await saveDungeonProject(project);
+      setCurrentProjectId(id);
+      setCurrentProjectName(projectName);
+      setShowSaveProjectModal(false);
+      await loadSavedProjects(); // Refresh the list
+      
+      // Update URL to include project ID if it's a new project
+      if (!currentProjectId) {
+        navigate(`/dungeon/${id}`, { replace: true });
+      }
+      
+      alert(`Project "${projectName}" saved successfully!`);
+    } catch (error) {
+      console.error("Error saving project:", error);
+      alert("Failed to save project. Please try again.");
+    }
+  };
+
+  // Export to Map Gallery
+  const exportToGallery = async () => {
+    try {
+      if (stageRef.current) {
+        const stage = stageRef.current;
+        const bgLayer = new Konva.Layer();
+        const bgRect = new Konva.Rect({
+          x: 0,
+          y: 0,
+          width: canvasWidth,
+          height: canvasHeight,
+          fill: "#f5ecd6",
+          listening: false,
+        });
+        bgLayer.add(bgRect);
+        stage.add(bgLayer);
+        bgLayer.moveToBottom();
+        stage.draw();
+        
+        const blob = await new Promise<Blob>(resolve => stage.toCanvas().toBlob(resolve, 'image/jpeg', 0.95));
+        
+        bgLayer.destroy();
+        stage.draw();
+
+        if (blob) {
+          await exportDungeonToGallery(
+            currentProjectId || 'temp',
+            blob,
+            exportName,
+            exportDescription
+          );
+          setShowExportModal(false);
+          
+          // Clear export form
+          setExportName("");
+          setExportDescription("");
+          
+          alert(`Map "${exportName}" exported successfully to the gallery!`);
+          
+          // Optionally navigate to gallery
+          if (confirm("Would you like to view the map in the gallery now?")) {
+            navigate('/gallery');
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error exporting to gallery:", error);
+      alert("Failed to export to gallery. Please try again.");
+    }
+  };
 
   // Mouse events for drawing and selection
   const handleMouseDown = (e: any) => {
@@ -987,7 +1168,7 @@ function DungeonEditor() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, fontSize: 20 }}>Save as JPEG</h2>
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Save as JPEG</h2>
             <div
               style={{
                 fontSize: 14,
@@ -1002,7 +1183,7 @@ function DungeonEditor() {
                 your browser settings allow.
               </div>
             </div>
-            <label style={{ display: "block", marginBottom: 8, fontSize: 15 }}>
+            <label style={{ display: "block", marginBottom: 8, fontSize: 15, color: "#333" }}>
               Filename:
               <input
                 type="text"
@@ -1014,6 +1195,7 @@ function DungeonEditor() {
                   padding: 4,
                   fontSize: 15,
                   boxSizing: "border-box",
+                  color: "#333",
                 }}
               />
             </label>
@@ -1092,6 +1274,364 @@ function DungeonEditor() {
           </div>
         </div>
       )}
+
+      {/* Save Project Modal */}
+      {showSaveProjectModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowSaveProjectModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 24,
+              borderRadius: 8,
+              minWidth: 400,
+              maxWidth: 500,
+              boxShadow: "0 4px 24px #0003",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Save Dungeon Project</h2>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+                Project Name:
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    border: "1px solid #ccc",
+                    borderRadius: 4,
+                    color: "#333",
+                  }}
+                  placeholder="Enter project name..."
+                />
+              </label>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+                Description (optional):
+                <textarea
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    border: "1px solid #ccc",
+                    borderRadius: 4,
+                    minHeight: 60,
+                    resize: "vertical",
+                    color: "#333",
+                  }}
+                  placeholder="Enter project description..."
+                />
+              </label>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button
+                onClick={() => {
+                  setShowSaveProjectModal(false);
+                  setProjectName(currentProjectName); // Reset project name to current name on cancel
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  background: "#fff",
+                  color: "#333",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCurrentProject}
+                disabled={!projectName.trim()}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: projectName.trim() ? "#4CAF50" : "#ccc",
+                  color: "#fff",
+                  cursor: projectName.trim() ? "pointer" : "not-allowed",
+                  fontWeight: 600,
+                }}
+              >
+                Save Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Project Modal */}
+      {showLoadProjectModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowLoadProjectModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 24,
+              borderRadius: 8,
+              minWidth: 500,
+              maxWidth: 700,
+              maxHeight: "80vh",
+              boxShadow: "0 4px 24px #0003",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, fontSize: 20, marginBottom: 16, color: "#333" }}>Load Dungeon Project</h2>
+            {savedProjects.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center", color: "#666" }}>
+                <p style={{ color: "#666" }}>No saved projects found.</p>
+                <p style={{ color: "#666" }}>Create and save a project first!</p>
+              </div>
+            ) : (
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                {savedProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: 12,
+                      border: "1px solid #eee",
+                      borderRadius: 8,
+                      marginBottom: 12,
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    onClick={() => {
+                      loadProject(project.id);
+                      setShowLoadProjectModal(false);
+                    }}
+                  >
+                    {project.thumbnail && (
+                      <img
+                        src={URL.createObjectURL(project.thumbnail)}
+                        alt={project.name}
+                        style={{
+                          width: 60,
+                          height: 45,
+                          objectFit: "cover",
+                          borderRadius: 4,
+                          marginRight: 12,
+                          border: "1px solid #ddd",
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#333" }}>{project.name}</h3>
+                      {project.description && (
+                        <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#666" }}>
+                          {project.description}
+                        </p>
+                      )}
+                      <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "#999" }}>
+                        Last modified: {project.lastModified.toLocaleDateString()} at{" "}
+                        {project.lastModified.toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                          try {
+                            await deleteDungeonProject(project.id);
+                            await loadSavedProjects();
+                          } catch (error) {
+                            console.error("Error deleting project:", error);
+                            alert("Failed to delete project. Please try again.");
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 4,
+                        border: "1px solid #f44336",
+                        background: "#fff",
+                        color: "#f44336",
+                        cursor: "pointer",
+                        fontSize: 12,
+                      }}
+                      title="Delete project"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowLoadProjectModal(false)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  background: "#fff",
+                  color: "#333",
+                  cursor: "pointer",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export to Gallery Modal */}
+      {showExportModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowExportModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 24,
+              borderRadius: 8,
+              minWidth: 400,
+              maxWidth: 500,
+              boxShadow: "0 4px 24px #0003",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Export to Map Gallery</h2>
+            <p style={{ color: "#666", marginBottom: 16 }}>
+              Export your completed dungeon to the Map Gallery where it can be viewed and used for gameplay.
+            </p>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+                Map Name:
+                <input
+                  type="text"
+                  value={exportName}
+                  onChange={(e) => setExportName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    border: "1px solid #ccc",
+                    borderRadius: 4,
+                    color: "#333",
+                  }}
+                  placeholder="Enter map name..."
+                />
+              </label>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+                Description (optional):
+                <textarea
+                  value={exportDescription}
+                  onChange={(e) => setExportDescription(e.target.value)}
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: 8,
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    border: "1px solid #ccc",
+                    borderRadius: 4,
+                    minHeight: 60,
+                    resize: "vertical",
+                    color: "#333",
+                  }}
+                  placeholder="Describe your map for other users..."
+                />
+              </label>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportName(""); // Reset export name on cancel
+                  setExportDescription("");
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  background: "#fff",
+                  color: "#333",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={exportToGallery}
+                disabled={!exportName.trim()}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: exportName.trim() ? "#FF9800" : "#ccc",
+                  color: "#fff",
+                  cursor: exportName.trim() ? "pointer" : "not-allowed",
+                  fontWeight: 600,
+                }}
+              >
+                Export to Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="dungeon-upperbar">
         <button
           className="back-home-btn"
@@ -1108,6 +1648,55 @@ function DungeonEditor() {
           }}
         >
           ⟵ Home
+        </button>
+        
+        {/* Current Project Display */}
+        <div style={{
+          margin: 8,
+          padding: "4px 12px",
+          borderRadius: 4,
+          background: "#333",
+          color: "#fff",
+          fontSize: 14,
+          fontWeight: 500,
+        }}>
+          <span style={{ opacity: 0.7 }}>Project:</span> {currentProjectName}
+        </div>
+        
+        <button
+          onClick={() => {
+            if (shapes.length > 0 && 
+                confirm("Starting a new project will clear your current work. Continue?")) {
+              setShapes([]);
+              setHistory([]);
+              setFuture([]);
+              setCurrentProjectId(null);
+              setCurrentProjectName("Untitled Dungeon");
+              setProjectName("Untitled Dungeon");
+              setProjectDescription("");
+              navigate("/dungeon", { replace: true });
+            } else if (shapes.length === 0) {
+              setCurrentProjectId(null);
+              setCurrentProjectName("Untitled Dungeon");
+              setProjectName("Untitled Dungeon");
+              setProjectDescription("");
+              navigate("/dungeon", { replace: true });
+            }
+          }}
+          style={{
+            margin: 8,
+            padding: "4px 12px",
+            borderRadius: 4,
+            border: "none",
+            background: "#666",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontSize: 14,
+          }}
+          title="Start a new project"
+        >
+          📄 New
         </button>
         <button
           onClick={handleUndo}
@@ -1354,6 +1943,64 @@ function DungeonEditor() {
             +
           </button>
         </div>
+        {/* Project Management Buttons */}
+        <button
+          onClick={() => {
+            setProjectName(currentProjectName); // Ensure the modal has the current project name
+            setShowSaveProjectModal(true);
+          }}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#4CAF50",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+          title="Save Project"
+        >
+          💾 Save Project
+        </button>
+        <button
+          onClick={() => setShowLoadProjectModal(true)}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#2196F3",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+          title="Load Project"
+        >
+          📂 Load Project
+        </button>
+        <button
+          onClick={() => {
+            setExportName(currentProjectName);
+            setShowExportModal(true);
+          }}
+          style={{
+            margin: 8,
+            padding: "4px 16px",
+            borderRadius: 4,
+            border: "none",
+            background: "#FF9800",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+          title="Export to Gallery"
+        >
+          🖼️ Export to Gallery
+        </button>
         <button
           onClick={() => setShowSaveModal(true)}
           style={{
@@ -1361,15 +2008,15 @@ function DungeonEditor() {
             padding: "4px 16px",
             borderRadius: 4,
             border: "none",
-            background: "#2a7",
+            background: "#9C27B0",
             color: "#fff",
             fontWeight: 600,
             fontSize: 16,
             cursor: "pointer",
           }}
-          title="Save as JPEG"
+          title="Export as JPEG"
         >
-          💾 Save as JPEG
+          📸 Export Image
         </button>
         {/* Remove eraser size slider and logic */}
         {/* Add more settings here as needed */}
