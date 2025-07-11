@@ -1749,14 +1749,14 @@ function DungeonEditor() {
                         <KonvaRect
                           x={iconShape.x}
                           y={iconShape.y}
-                          width={iconSize + 4}
-                          height={iconSize + 4}
+                          width={iconSize + 6}
+                          height={iconSize + 6}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={8}
-                          offsetX={18}
-                          offsetY={18}
+                          offsetX={(iconSize + 6) / 2}
+                          offsetY={(iconSize + 6) / 2}
                           rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
                         />
                       )}
