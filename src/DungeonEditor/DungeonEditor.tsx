@@ -248,6 +248,7 @@ function DungeonEditor() {
   const [projectDescription, setProjectDescription] = React.useState<string>("");
   const [exportName, setExportName] = React.useState<string>("");
   const [exportDescription, setExportDescription] = React.useState<string>("");
+  const [showSettingsPanel, setShowSettingsPanel] = React.useState(false);
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -1633,395 +1634,280 @@ function DungeonEditor() {
       )}
 
       <div className="dungeon-upperbar">
-        <button
-          className="back-home-btn"
-          onClick={() => navigate("/")}
-          style={{
-            margin: 8,
-            // Remove large padding/font, let CSS handle size
-            borderRadius: 4,
-            border: "none",
-            background: "#444",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          ⟵ Home
-        </button>
-        
-        {/* Current Project Display */}
-        <div style={{
-          margin: 8,
-          padding: "4px 12px",
-          borderRadius: 4,
-          background: "#333",
-          color: "#fff",
-          fontSize: 14,
-          fontWeight: 500,
-        }}>
-          <span style={{ opacity: 0.7 }}>Project:</span> {currentProjectName}
-        </div>
-        
-        <button
-          onClick={() => {
-            if (shapes.length > 0 && 
-                confirm("Starting a new project will clear your current work. Continue?")) {
-              setShapes([]);
-              setHistory([]);
-              setFuture([]);
-              setCurrentProjectId(null);
-              setCurrentProjectName("Untitled Dungeon");
-              setProjectName("Untitled Dungeon");
-              setProjectDescription("");
-              navigate("/dungeon", { replace: true });
-            } else if (shapes.length === 0) {
-              setCurrentProjectId(null);
-              setCurrentProjectName("Untitled Dungeon");
-              setProjectName("Untitled Dungeon");
-              setProjectDescription("");
-              navigate("/dungeon", { replace: true });
-            }
-          }}
-          style={{
-            margin: 8,
-            padding: "4px 12px",
-            borderRadius: 4,
-            border: "none",
-            background: "#666",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: 14,
-          }}
-          title="Start a new project"
-        >
-          📄 New
-        </button>
-        <button
-          onClick={handleUndo}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: history.length === 0 ? "#888" : "#444",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: history.length === 0 ? "not-allowed" : "pointer",
-            opacity: history.length === 0 ? 0.5 : 1,
-          }}
-          disabled={history.length === 0}
-          title="Undo"
-        >
-          ↶ Undo
-        </button>
-        <button
-          onClick={handleRedo}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: future.length === 0 ? "#888" : "#444",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: future.length === 0 ? "not-allowed" : "pointer",
-            opacity: future.length === 0 ? 0.5 : 1,
-          }}
-          disabled={future.length === 0}
-          title="Redo"
-        >
-          ↷ Redo
-        </button>
-        <button
-          onClick={handleClearAll}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: "#c00",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          title="Clear all shapes"
-        >
-          🗑️ Clear All
-        </button>
-        <button
-          className={showGrid ? "active" : ""}
-          onClick={() => setShowGrid((v) => !v)}
-          style={{
-            margin: 8,
-            padding: "4px 12px",
-            borderRadius: 4,
-            border: "none",
-            background: showGrid ? "#444" : "#ccc",
-            color: showGrid ? "#fff" : "#222",
-            cursor: "pointer",
-          }}
-        >
-          {showGrid ? "Hide Grid" : "Show Grid"}
-        </button>
-        {/* Restore snap tool toggle */}
-        <button
-          className={snapTo ? "active" : ""}
-          onClick={() => setSnapTo((v) => !v)}
-          style={{
-            margin: 8,
-            padding: "4px 12px",
-            borderRadius: 4,
-            border: "none",
-            background: snapTo ? "#444" : "#ccc",
-            color: snapTo ? "#fff" : "#222",
-            cursor: "pointer",
-          }}
-        >
-          {snapTo ? "Snap On" : "Snap Off"}
-        </button>
-        {/* Add mode toggle */}
-        <button
-          className={addMode ? "active" : ""}
-          onClick={() => setAddMode((v) => !v)}
-          style={{
-            margin: 8,
-            padding: "4px 12px",
-            borderRadius: 4,
-            border: "none",
-            background: addMode ? "#444" : "#ccc",
-            color: addMode ? "#fff" : "#222",
-            cursor: "pointer",
-          }}
-        >
-          {addMode ? "Adding Shapes" : "Carving Shapes"}
-        </button>
-        {/* Grid size control */}
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label
-            htmlFor="grid-size-slider"
-            style={{ color: "#fff", marginRight: 8 }}
-          >
-            Grid Size
-          </label>
-          <input
-            id="grid-size-slider"
-            type="range"
-            min={8}
-            max={128}
-            step={8}
-            value={gridSize}
-            onChange={(e) => setGridSize(Number(e.target.value))}
-            style={{ marginRight: 8 }}
-          />
-          <span
-            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
-          >
-            {gridSize}
-          </span>
-        </div>
-        {/* Line thickness control */}
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label
-            htmlFor="thickness-slider"
-            style={{ color: "#fff", marginRight: 8 }}
-          >
-            Line Thickness
-          </label>
-          <input
-            id="thickness-slider"
-            type="range"
-            min={1}
-            max={24}
-            step={1}
-            value={thickness}
-            onChange={(e) => setThickness(Number(e.target.value))}
-            style={{ marginRight: 8 }}
-          />
-          <span
-            style={{ color: "#fff", minWidth: 24, display: "inline-block" }}
-          >
-            {thickness}
-          </span>
-        </div>
-        {/* Canvas size controls */}
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          <label
-            htmlFor="canvas-width-input"
-            style={{ color: "#fff", marginRight: 8 }}
-          >
-            Width
-          </label>
-          <input
-            id="canvas-width-input"
-            type="number"
-            min={256}
-            max={4096}
-            step={8}
-            value={canvasWidth}
-            onChange={(e) => setCanvasWidth(Number(e.target.value))}
-            style={{ width: 64, marginRight: 8 }}
-          />
-          <label
-            htmlFor="canvas-height-input"
-            style={{ color: "#fff", marginRight: 8 }}
-          >
-            Height
-          </label>
-          <input
-            id="canvas-height-input"
-            type="number"
-            min={256}
-            max={4096}
-            step={8}
-            value={canvasHeight}
-            onChange={(e) => setCanvasHeight(Number(e.target.value))}
-            style={{ width: 64, marginRight: 8 }}
-          />
-        </div>
-        {/* Zoom controls */}
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
+        {/* Left section - Navigation & Project */}
+        <div className="toolbar-section toolbar-left">
           <button
-            onClick={() => {
-              const stage = stageRef.current;
-              if (!stage) return;
-              // Center zoom on canvas center
-              const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
-              const oldScale = zoom;
-              const scaleBy = 1.1;
-              let newZoom = Math.max(0.25, Math.min(4, zoom - 0.1));
-              if (zoom > newZoom) newZoom = Math.max(0.25, zoom / scaleBy);
-              else newZoom = Math.max(0.25, zoom - 0.1);
-              const mousePointTo = {
-                x: (center.x - pan.x) / oldScale,
-                y: (center.y - pan.y) / oldScale,
-              };
-              const newPan = {
-                x: center.x - mousePointTo.x * newZoom,
-                y: center.y - mousePointTo.y * newZoom,
-              };
-              setZoom(newZoom);
-              setPan(newPan);
-            }}
-            style={{ marginRight: 4, padding: "2px 10px", fontSize: 18 }}
-            title="Zoom Out"
+            className="back-home-btn"
+            onClick={() => navigate("/")}
+            title="Back to Home"
           >
-            -
+            ⟵ Home
           </button>
-          <span style={{ color: "#fff", minWidth: 40, textAlign: "center" }}>
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => {
-              const stage = stageRef.current;
-              if (!stage) return;
-              // Center zoom on canvas center
-              const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
-              const oldScale = zoom;
-              const scaleBy = 1.1;
-              let newZoom = Math.min(4, Math.max(0.25, zoom + 0.1));
-              if (zoom < newZoom) newZoom = Math.min(4, zoom * scaleBy);
-              else newZoom = Math.min(4, zoom + 0.1);
-              const mousePointTo = {
-                x: (center.x - pan.x) / oldScale,
-                y: (center.y - pan.y) / oldScale,
-              };
-              const newPan = {
-                x: center.x - mousePointTo.x * newZoom,
-                y: center.y - mousePointTo.y * newZoom,
-              };
-              setZoom(newZoom);
-              setPan(newPan);
-            }}
-            style={{ marginLeft: 4, padding: "2px 10px", fontSize: 18 }}
-            title="Zoom In"
-          >
-            +
-          </button>
+          
+          <div className="project-info">
+            <span className="project-label">Project:</span>
+            <span className="project-name">{currentProjectName}</span>
+          </div>
         </div>
-        {/* Project Management Buttons */}
-        <button
-          onClick={() => {
-            setProjectName(currentProjectName); // Ensure the modal has the current project name
-            setShowSaveProjectModal(true);
-          }}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: "#4CAF50",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          title="Save Project"
-        >
-          💾 Save Project
-        </button>
-        <button
-          onClick={() => setShowLoadProjectModal(true)}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: "#2196F3",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          title="Load Project"
-        >
-          📂 Load Project
-        </button>
-        <button
-          onClick={() => {
-            setExportName(currentProjectName);
-            setShowExportModal(true);
-          }}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: "#FF9800",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          title="Export to Gallery"
-        >
-          🖼️ Export to Gallery
-        </button>
-        <button
-          onClick={() => setShowSaveModal(true)}
-          style={{
-            margin: 8,
-            padding: "4px 16px",
-            borderRadius: 4,
-            border: "none",
-            background: "#9C27B0",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          title="Export as JPEG"
-        >
-          📸 Export Image
-        </button>
-        {/* Remove eraser size slider and logic */}
-        {/* Add more settings here as needed */}
+
+        {/* Center section - Main actions and settings */}
+        <div className="toolbar-section toolbar-center">
+          {/* File Operations Group */}
+          <div className="button-group">
+            <button
+              onClick={() => {
+                if (shapes.length > 0 && 
+                    confirm("Starting a new project will clear your current work. Continue?")) {
+                  setShapes([]);
+                  setHistory([]);
+                  setFuture([]);
+                  setCurrentProjectId(null);
+                  setCurrentProjectName("Untitled Dungeon");
+                  setProjectName("Untitled Dungeon");
+                  setProjectDescription("");
+                  navigate("/dungeon", { replace: true });
+                } else if (shapes.length === 0) {
+                  setCurrentProjectId(null);
+                  setCurrentProjectName("Untitled Dungeon");
+                  setProjectName("Untitled Dungeon");
+                  setProjectDescription("");
+                  navigate("/dungeon", { replace: true });
+                }
+              }}
+              className="btn-secondary"
+              title="Start a new project"
+            >
+              📄 New
+            </button>
+            
+            <button
+              onClick={() => {
+                setProjectName(currentProjectName);
+                setShowSaveProjectModal(true);
+              }}
+              className="btn-success"
+              title="Save Project"
+            >
+              💾 Save
+            </button>
+            
+            <button
+              onClick={() => setShowLoadProjectModal(true)}
+              className="btn-primary"
+              title="Load Project"
+            >
+              📂 Load
+            </button>
+          </div>
+
+          {/* Edit Operations Group */}
+          <div className="button-group">
+            <button
+              onClick={handleUndo}
+              disabled={history.length === 0}
+              className={history.length === 0 ? "btn-disabled" : "btn-secondary"}
+              title="Undo"
+            >
+              ↶
+            </button>
+            
+            <button
+              onClick={handleRedo}
+              disabled={future.length === 0}
+              className={future.length === 0 ? "btn-disabled" : "btn-secondary"}
+              title="Redo"
+            >
+              ↷
+            </button>
+            
+            <button
+              onClick={handleClearAll}
+              className="btn-danger"
+              title="Clear all shapes"
+            >
+              🗑️
+            </button>
+          </div>
+
+          {/* Drawing Mode Toggle */}
+          <div className="button-group">
+            <button
+              onClick={() => setAddMode((v) => !v)}
+              className={addMode ? "btn-active" : "btn-inactive"}
+              title={addMode ? "Switch to Carving Mode" : "Switch to Adding Mode"}
+            >
+              {addMode ? "✏️ Adding" : "⛏️ Carving"}
+            </button>
+          </div>
+
+          {/* View Controls Group */}
+          <div className="button-group">
+            <button
+              onClick={() => setShowGrid((v) => !v)}
+              className={showGrid ? "btn-active" : "btn-inactive"}
+              title="Toggle Grid"
+            >
+              {showGrid ? "⬜" : "⬛"}
+            </button>
+            
+            <button
+              onClick={() => setSnapTo((v) => !v)}
+              className={snapTo ? "btn-active" : "btn-inactive"}
+              title="Toggle Snap to Grid"
+            >
+              {snapTo ? "🧲" : "🎯"}
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="zoom-controls">
+            <button
+              onClick={() => {
+                const stage = stageRef.current;
+                if (!stage) return;
+                const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+                const oldScale = zoom;
+                const scaleBy = 1.1;
+                let newZoom = Math.max(0.25, Math.min(4, zoom - 0.1));
+                if (zoom > newZoom) newZoom = Math.max(0.25, zoom / scaleBy);
+                else newZoom = Math.max(0.25, zoom - 0.1);
+                const mousePointTo = {
+                  x: (center.x - pan.x) / oldScale,
+                  y: (center.y - pan.y) / oldScale,
+                };
+                const newPan = {
+                  x: center.x - mousePointTo.x * newZoom,
+                  y: center.y - mousePointTo.y * newZoom,
+                };
+                setZoom(newZoom);
+                setPan(newPan);
+              }}
+              className="zoom-btn"
+              title="Zoom Out"
+            >
+              -
+            </button>
+            <span className="zoom-display">{Math.round(zoom * 100)}%</span>
+            <button
+              onClick={() => {
+                const stage = stageRef.current;
+                if (!stage) return;
+                const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+                const oldScale = zoom;
+                const scaleBy = 1.1;
+                let newZoom = Math.min(4, Math.max(0.25, zoom + 0.1));
+                if (zoom < newZoom) newZoom = Math.min(4, zoom * scaleBy);
+                else newZoom = Math.min(4, zoom + 0.1);
+                const mousePointTo = {
+                  x: (center.x - pan.x) / oldScale,
+                  y: (center.y - pan.y) / oldScale,
+                };
+                const newPan = {
+                  x: center.x - mousePointTo.x * newZoom,
+                  y: center.y - mousePointTo.y * newZoom,
+                };
+                setZoom(newZoom);
+                setPan(newPan);
+              }}
+              className="zoom-btn"
+              title="Zoom In"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Right section - Export actions and overflow menu */}
+        <div className="toolbar-section toolbar-right">
+          <div className="button-group">
+            <button
+              onClick={() => {
+                setExportName(currentProjectName);
+                setShowExportModal(true);
+              }}
+              className="btn-warning"
+              title="Export to Gallery"
+            >
+              🖼️ Gallery
+            </button>
+            
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="btn-purple"
+              title="Export as JPEG"
+            >
+              📸 Image
+            </button>
+          </div>
+
+          {/* Settings Dropdown */}
+          <div className="settings-dropdown">
+            <button
+              onClick={() => setShowSettingsPanel((v) => !v)}
+              className="btn-secondary settings-toggle"
+              title="Settings & Tools"
+            >
+              ⚙️
+            </button>
+            
+            {showSettingsPanel && (
+              <div className="settings-panel">
+                <div className="settings-group">
+                  <label htmlFor="grid-size-slider">Grid Size: {gridSize}</label>
+                  <input
+                    id="grid-size-slider"
+                    type="range"
+                    min={8}
+                    max={128}
+                    step={8}
+                    value={gridSize}
+                    onChange={(e) => setGridSize(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div className="settings-group">
+                  <label htmlFor="thickness-slider">Line Thickness: {thickness}</label>
+                  <input
+                    id="thickness-slider"
+                    type="range"
+                    min={1}
+                    max={24}
+                    step={1}
+                    value={thickness}
+                    onChange={(e) => setThickness(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div className="settings-group canvas-size">
+                  <label>Canvas Size</label>
+                  <div className="size-inputs">
+                    <input
+                      type="number"
+                      min={256}
+                      max={4096}
+                      step={8}
+                      value={canvasWidth}
+                      onChange={(e) => setCanvasWidth(Number(e.target.value))}
+                      placeholder="Width"
+                    />
+                    <span>×</span>
+                    <input
+                      type="number"
+                      min={256}
+                      max={4096}
+                      step={8}
+                      value={canvasHeight}
+                      onChange={(e) => setCanvasHeight(Number(e.target.value))}
+                      placeholder="Height"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <div style={{ display: "flex", flex: 1, height: "100%" }}>
+      <div className="dungeon-editor-main" style={{ display: "flex" }}>
         <div
           className="dungeon-toolbar"
           style={{
@@ -2124,14 +2010,7 @@ function DungeonEditor() {
             </div>
           )}
         </div>
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <div className="canvas-container">
           <Stage
             ref={stageRef}
             width={canvasWidth}

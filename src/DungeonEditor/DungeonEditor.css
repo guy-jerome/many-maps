@@ -10,11 +10,325 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   background: #232323;
-  padding: 0 16px;
+  padding: 8px 16px;
   min-height: 56px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
+  flex-wrap: wrap;
+  gap: 8px;
+  /* Ensure toolbar expands to accommodate wrapped content */
+  flex-shrink: 0;
+}
+
+/* Toolbar sections */
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-left {
+  flex: 0 0 auto;
+}
+
+.toolbar-center {
+  flex: 1 1 auto;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+/* Button groups */
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Project info display */
+.project-info {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: #333;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.project-label {
+  opacity: 0.7;
+  margin-right: 6px;
+}
+
+.project-name {
+  font-weight: 600;
+}
+
+/* Button styles */
+.dungeon-upperbar button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #2196F3;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1976D2;
+}
+
+.btn-success {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.btn-success:hover {
+  background: #388E3C;
+}
+
+.btn-secondary {
+  background: #666;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: #555;
+}
+
+.btn-warning {
+  background: #FF9800;
+  color: #fff;
+}
+
+.btn-warning:hover {
+  background: #F57C00;
+}
+
+.btn-purple {
+  background: #9C27B0;
+  color: #fff;
+}
+
+.btn-purple:hover {
+  background: #7B1FA2;
+}
+
+.btn-danger {
+  background: #f44336;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+}
+
+.btn-active {
+  background: #444;
+  color: #fff;
+}
+
+.btn-active:hover {
+  background: #555;
+}
+
+.btn-inactive {
+  background: #ccc;
+  color: #222;
+}
+
+.btn-inactive:hover {
+  background: #aaa;
+}
+
+.btn-disabled {
+  background: #888 !important;
+  color: #bbb !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.zoom-btn {
+  padding: 4px 10px !important;
+  font-size: 18px !important;
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 32px;
+}
+
+.zoom-btn:hover {
+  background: #555;
+}
+
+.zoom-display {
+  color: #fff;
+  min-width: 50px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Settings dropdown */
+.settings-dropdown {
+  position: relative;
+}
+
+.settings-toggle {
+  font-size: 16px !important;
+  padding: 6px 10px !important;
+}
+
+.settings-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 250px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.settings-group {
+  margin-bottom: 16px;
+}
+
+.settings-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.settings-group input[type="range"] {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.canvas-size .size-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.canvas-size .size-inputs input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.canvas-size .size-inputs span {
+  color: #666;
+  font-weight: bold;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .dungeon-upperbar {
+    /* Add more padding when content wraps */
+    padding: 8px 16px 12px 16px;
+  }
+  
+  .toolbar-center {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-top: 8px;
+    /* Add bottom margin to prevent overlap */
+    margin-bottom: 4px;
+  }
+  
+  .button-group {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .dungeon-upperbar {
+    padding: 8px 12px 12px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    /* Increase minimum height on mobile */
+    min-height: 64px;
+  }
+  
+  .toolbar-section {
+    justify-content: center;
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    justify-content: space-between;
+  }
+  
+  .toolbar-center {
+    order: unset;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  .project-info {
+    text-align: center;
+  }
+  
+  .button-group {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .zoom-controls {
+    justify-content: center;
+  }
+  
+  .settings-panel {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 .dungeon-upperbar button.active {
@@ -79,6 +393,17 @@
 
 /* Center the main editor area using flex */
 .dungeon-editor-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  background: #181818;
+  min-height: 0;
+  min-width: 0;
+  /* Allow flex to properly calculate remaining space */
+  overflow: hidden;
+}
+
+.canvas-container {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
