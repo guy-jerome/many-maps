@@ -265,6 +265,41 @@ export function getResizeHandles(shape: any): Array<{ x: number; y: number; curs
     return handles;
   }
   
+  if (shape.tool === 'door') {
+    // Door has resize handles for width and height adjustment
+    const doorW = shape.orientation === "horizontal" ? Math.abs(shape.width) : Math.abs(shape.height);
+    const doorH = shape.orientation === "horizontal" ? Math.abs(shape.height) : Math.abs(shape.width);
+    
+    // Ensure minimum handle positioning
+    const actualDoorW = Math.max(8, doorW);
+    const actualDoorH = Math.max(4, doorH);
+    
+    const handles = [
+      // Corner handles
+      { x: shape.x - actualDoorW/2, y: shape.y - actualDoorH/2, cursor: 'nw-resize', type: 'door-nw' },
+      { x: shape.x + actualDoorW/2, y: shape.y - actualDoorH/2, cursor: 'ne-resize', type: 'door-ne' },
+      { x: shape.x + actualDoorW/2, y: shape.y + actualDoorH/2, cursor: 'se-resize', type: 'door-se' },
+      { x: shape.x - actualDoorW/2, y: shape.y + actualDoorH/2, cursor: 'sw-resize', type: 'door-sw' },
+      // Edge handles
+      { x: shape.x, y: shape.y - actualDoorH/2, cursor: 'ns-resize', type: 'door-n' },
+      { x: shape.x + actualDoorW/2, y: shape.y, cursor: 'ew-resize', type: 'door-e' },
+      { x: shape.x, y: shape.y + actualDoorH/2, cursor: 'ns-resize', type: 'door-s' },
+      { x: shape.x - actualDoorW/2, y: shape.y, cursor: 'ew-resize', type: 'door-w' }
+    ];
+    
+    // Apply rotation if the shape has rotation
+    if (shape.rotation) {
+      const center = { x: shape.x, y: shape.y };
+      return handles.map((handle: any) => ({
+        ...handle,
+        ...rotatePoint(handle, center, shape.rotation),
+        cursor: getRotatedCursor(handle.cursor, shape.rotation)
+      }));
+    }
+    
+    return handles;
+  }
+  
   if (shape.tool === 'free') {
     // Free form shapes could have handles at key points, but for simplicity we'll skip
     return [];
@@ -415,6 +450,81 @@ export function applyResize(originalShape: any, handleType: string, deltaX: numb
     }
     
     return { ...originalShape, points: newPoints };
+  }
+  
+  if (originalShape.tool === 'door') {
+    // Door resizing - doors are center-positioned, so we need to adjust both size and position
+    let newWidth = originalShape.width;
+    let newHeight = originalShape.height;
+    let newX = originalShape.x;
+    let newY = originalShape.y;
+    
+    // Reasonable minimum sizes for doors
+    const minWidth = 8;
+    const minHeight = 4;
+    
+    switch (handleType) {
+      case 'door-nw':
+        // Top-left corner: decrease width/height, adjust center position
+        newWidth = Math.max(minWidth, originalShape.width - deltaX);
+        newHeight = Math.max(minHeight, originalShape.height - deltaY);
+        newX = originalShape.x - (newWidth - originalShape.width) / 2;
+        newY = originalShape.y - (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-ne':
+        // Top-right corner: increase width, decrease height, adjust center position
+        newWidth = Math.max(minWidth, originalShape.width + deltaX);
+        newHeight = Math.max(minHeight, originalShape.height - deltaY);
+        newX = originalShape.x + (newWidth - originalShape.width) / 2;
+        newY = originalShape.y - (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-se':
+        // Bottom-right corner: increase both, adjust center position
+        newWidth = Math.max(minWidth, originalShape.width + deltaX);
+        newHeight = Math.max(minHeight, originalShape.height + deltaY);
+        newX = originalShape.x + (newWidth - originalShape.width) / 2;
+        newY = originalShape.y + (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-sw':
+        // Bottom-left corner: decrease width, increase height, adjust center position
+        newWidth = Math.max(minWidth, originalShape.width - deltaX);
+        newHeight = Math.max(minHeight, originalShape.height + deltaY);
+        newX = originalShape.x - (newWidth - originalShape.width) / 2;
+        newY = originalShape.y + (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-n':
+        // Top edge: decrease height, adjust center Y
+        newHeight = Math.max(minHeight, originalShape.height - deltaY);
+        newY = originalShape.y - (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-s':
+        // Bottom edge: increase height, adjust center Y
+        newHeight = Math.max(minHeight, originalShape.height + deltaY);
+        newY = originalShape.y + (newHeight - originalShape.height) / 2;
+        break;
+      case 'door-e':
+        // Right edge: increase width, adjust center X
+        newWidth = Math.max(minWidth, originalShape.width + deltaX);
+        newX = originalShape.x + (newWidth - originalShape.width) / 2;
+        break;
+      case 'door-w':
+        // Left edge: decrease width, adjust center X
+        newWidth = Math.max(minWidth, originalShape.width - deltaX);
+        newX = originalShape.x - (newWidth - originalShape.width) / 2;
+        break;
+    }
+    
+    // Ensure the final values are valid (positive numbers)
+    const finalWidth = Math.max(minWidth, newWidth);
+    const finalHeight = Math.max(minHeight, newHeight);
+    
+    return { 
+      ...originalShape, 
+      x: snap(newX),
+      y: snap(newY),
+      width: snap(finalWidth), 
+      height: snap(finalHeight) 
+    };
   }
   
   if (['pentagon', 'hexagon', 'octagon'].includes(originalShape.tool)) {

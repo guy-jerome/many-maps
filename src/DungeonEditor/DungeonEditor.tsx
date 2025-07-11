@@ -264,13 +264,15 @@ function DungeonEditor() {
     orientation: "horizontal" | "vertical"
   ) {
     if (orientation === "horizontal") {
+      // For horizontal doors, snap to center of grid cell horizontally, and to grid line (middle) vertically
       return {
         x: Math.floor(pointer.x / gridSize) * gridSize + gridSize / 2,
-        y: Math.floor(pointer.y / gridSize) * gridSize + gridSize,
+        y: Math.round(pointer.y / gridSize) * gridSize,
       };
     } else {
+      // For vertical doors, snap to grid line (middle) horizontally, and center of grid cell vertically
       return {
-        x: Math.floor(pointer.x / gridSize) * gridSize + gridSize,
+        x: Math.round(pointer.x / gridSize) * gridSize,
         y: Math.floor(pointer.y / gridSize) * gridSize + gridSize / 2,
       };
     }
@@ -569,25 +571,21 @@ function DungeonEditor() {
           if (Math.sqrt(dx * dx + dy * dy) <= poly.radius) hit = true;
         } else if (shape.tool === "door") {
           // Door hit test: check if pointer is inside door rect
-          const doorX =
-            shape.x -
-            (shape.orientation === "horizontal"
-              ? shape.width / 2
-              : shape.height / 2);
-          const doorY =
-            shape.y -
-            (shape.orientation === "vertical"
-              ? shape.width / 2
-              : shape.height / 2);
-          const doorW =
-            shape.orientation === "horizontal" ? shape.width : shape.height;
-          const doorH =
-            shape.orientation === "vertical" ? shape.width : shape.height;
+          const doorW = shape.orientation === "horizontal" ? Math.abs(shape.width) : Math.abs(shape.height);
+          const doorH = shape.orientation === "horizontal" ? Math.abs(shape.height) : Math.abs(shape.width);
+          
+          // Ensure minimum hit area
+          const actualDoorW = Math.max(8, doorW);
+          const actualDoorH = Math.max(4, doorH);
+          
+          const doorX = shape.x - actualDoorW / 2;
+          const doorY = shape.y - actualDoorH / 2;
+          
           if (
             x >= doorX &&
-            x <= doorX + doorW &&
+            x <= doorX + actualDoorW &&
             y >= doorY &&
-            y <= doorY + doorH
+            y <= doorY + actualDoorH
           )
             hit = true;
         }
@@ -744,7 +742,7 @@ function DungeonEditor() {
     } else if (tool === "free") {
       setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
     } else if (tool === "door") {
-      // Place a door at snapped x/y, default orientation horizontal, size 20x8
+      // Place a door at snapped x/y, default orientation horizontal, size 32x8
       let doorX: number, doorY: number, orientation: "horizontal" | "vertical";
       if (!snapTo) {
         // Free placement
@@ -762,7 +760,7 @@ function DungeonEditor() {
         x: doorX,
         y: doorY,
         orientation: orientation,
-        width: 20,
+        width: 32,  // Consistent door size
         height: 8,
       });
       return;
@@ -828,19 +826,12 @@ function DungeonEditor() {
                 y: pointer.y,
               };
             } else {
-              // Snap to grid: use getDoorSnap and orientation
-              let orientation = s.orientation;
-              // Optionally, allow orientation to change on drag (like drawing)
-              const dx = Math.abs(pointer.x - s.x);
-              const dy = Math.abs(pointer.y - s.y);
-              if (dx > dy) orientation = "horizontal";
-              else if (dy > dx) orientation = "vertical";
-              const snapped = getDoorSnap(pointer, orientation);
+              // Snap to grid: use getDoorSnap with current orientation
+              const snapped = getDoorSnap(pointer, s.orientation);
               return {
                 ...s,
                 x: snapped.x,
                 y: snapped.y,
-                orientation,
               };
             }
           } else if (s.tool === "triangle") {
@@ -928,12 +919,20 @@ function DungeonEditor() {
     } else if (drawing.tool === "free") {
       setDrawing({ ...drawing, points: [...drawing.points, { x, y }] });
     } else if (drawing.tool === "door") {
-      // Toggle orientation if user drags far enough vertically or horizontally
+      // Allow orientation change based on drag direction
       let orientation = drawing.orientation;
       const dx = Math.abs(pointer.x - drawing.x);
       const dy = Math.abs(pointer.y - drawing.y);
-      if (dx > dy) orientation = "horizontal";
-      else if (dy > dx) orientation = "vertical";
+      
+      // More sensitive orientation change - smaller threshold
+      if (dx > 10 || dy > 10) {
+        if (dx > dy * 1.2) {
+          orientation = "horizontal";
+        } else if (dy > dx * 1.2) {
+          orientation = "vertical";
+        }
+      }
+      
       let doorX = pointer.x;
       let doorY = pointer.y;
       if (snapTo) {
@@ -1014,6 +1013,7 @@ function DungeonEditor() {
       tool === "roundedRect" ||
       tool === "triangle" ||
       tool === "circle" ||
+      tool === "door" ||
       ["pentagon", "hexagon", "octagon"].includes(tool)
     ) {
       cursor = "crosshair";
@@ -2276,6 +2276,31 @@ function DungeonEditor() {
                         globalCompositeOperation={getCompositeOperation()}
                       />
                     );
+                  } else if (drawing.tool === "door") {
+                    // Show door drawing preview with dash effect and orientation feedback
+                    const doorShape = drawing as DoorShape;
+                    const doorW = doorShape.orientation === "horizontal" ? Math.abs(doorShape.width || 32) : Math.abs(doorShape.height || 8);
+                    const doorH = doorShape.orientation === "horizontal" ? Math.abs(doorShape.height || 8) : Math.abs(doorShape.width || 32);
+                    
+                    // Ensure minimum visibility for preview
+                    const actualDoorW = Math.max(8, doorW);
+                    const actualDoorH = Math.max(4, doorH);
+                    
+                    return (
+                      <KonvaRect
+                        x={doorShape.x}
+                        y={doorShape.y}
+                        width={actualDoorW}
+                        height={actualDoorH}
+                        fill={getFillColor(drawing)}
+                        stroke={getStrokeColor(drawing)}
+                        strokeWidth={2}
+                        dash={[8, 8]}
+                        offsetX={actualDoorW / 2}
+                        offsetY={actualDoorH / 2}
+                        globalCompositeOperation={getCompositeOperation()}
+                      />
+                    );
                   }
                   return null;
                 })()}
@@ -2338,65 +2363,40 @@ function DungeonEditor() {
                 }
                 if (shape.tool === "door") {
                   // Draw a filled rectangle for the door (above mask)
+                  const doorW = shape.orientation === "horizontal" ? Math.abs(shape.width) : Math.abs(shape.height);
+                  const doorH = shape.orientation === "horizontal" ? Math.abs(shape.height) : Math.abs(shape.width);
+                  
+                  // Ensure minimum visibility
+                  const actualDoorW = Math.max(8, doorW);
+                  const actualDoorH = Math.max(4, doorH);
+                  
                   return (
                     <React.Fragment key={i}>
                       <KonvaRect
-                        x={
-                          shape.x -
-                          (shape.orientation === "horizontal"
-                            ? shape.width / 2
-                            : shape.height / 2)
-                        }
-                        y={
-                          shape.y -
-                          (shape.orientation === "vertical"
-                            ? shape.width / 2
-                            : shape.height / 2)
-                        }
-                        width={
-                          shape.orientation === "horizontal"
-                            ? shape.width
-                            : shape.height
-                        }
-                        height={
-                          shape.orientation === "vertical"
-                            ? shape.width
-                            : shape.height
-                        }
+                        x={shape.x}
+                        y={shape.y}
+                        width={actualDoorW}
+                        height={actualDoorH}
                         fill="#fff"
                         stroke="#222"
                         strokeWidth={2}
+                        offsetX={actualDoorW / 2}
+                        offsetY={actualDoorH / 2}
+                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       />
                       {isSelected && (
                         <KonvaRect
-                          x={
-                            shape.x -
-                            (shape.orientation === "horizontal"
-                              ? shape.width / 2
-                              : shape.height / 2) -
-                            3
-                          }
-                          y={
-                            shape.y -
-                            (shape.orientation === "vertical"
-                              ? shape.width / 2
-                              : shape.height / 2) -
-                            3
-                          }
-                          width={
-                            (shape.orientation === "horizontal"
-                              ? shape.width
-                              : shape.height) + 6
-                          }
-                          height={
-                            (shape.orientation === "vertical"
-                              ? shape.width
-                              : shape.height) + 6
-                          }
+                          x={shape.x}
+                          y={shape.y}
+                          width={actualDoorW + 6}
+                          height={actualDoorH + 6}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={6}
+                          offsetX={(actualDoorW + 6) / 2}
+                          offsetY={(actualDoorH + 6) / 2}
+                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                         />
                       )}
                     </React.Fragment>
