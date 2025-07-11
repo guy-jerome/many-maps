@@ -68,6 +68,7 @@ interface RoundedRect {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 interface Triangle {
   tool: "triangle";
@@ -75,6 +76,7 @@ interface Triangle {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 interface Circle {
   tool: "circle";
@@ -84,6 +86,7 @@ interface Circle {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support (for consistency)
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 interface Polygon {
   tool: "pentagon" | "hexagon" | "octagon";
@@ -94,6 +97,7 @@ interface Polygon {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 
 // Existing interfaces
@@ -108,6 +112,7 @@ interface Line {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 
 interface Rect {
@@ -119,6 +124,7 @@ interface Rect {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 
 interface Free {
@@ -127,6 +133,7 @@ interface Free {
   color: string;
   thickness?: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 
 // Add icon shape type
@@ -136,6 +143,7 @@ interface IconShape {
   y: number;
   icon: string;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 interface TextShape {
   tool: "text";
@@ -144,6 +152,7 @@ interface TextShape {
   text: string;
   color: string;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 interface DoorShape {
   tool: "door";
@@ -153,6 +162,7 @@ interface DoorShape {
   width: number;
   height: number;
   rotation?: number; // Add rotation support
+  drawingMode?: boolean; // Add drawing mode tracking
 }
 
 type Shape =
@@ -186,6 +196,7 @@ function DungeonEditor() {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
+  const [addMode, setAddMode] = React.useState(false); // false = carve mode, true = add mode
   const [thickness, setThickness] = React.useState(4);
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
   const [dragOffset, setDragOffset] = React.useState<{
@@ -251,6 +262,20 @@ function DungeonEditor() {
       x: (pointer.x - pan.x) / zoom,
       y: (pointer.y - pan.y) / zoom,
     };
+  }
+
+  // Helper function to get the composite operation based on mode
+  function getCompositeOperation() {
+    return addMode ? "source-over" : "destination-out";
+  }
+
+  // Helper function to get fill/stroke color based on mode
+  function getFillColor(shape: any) {
+    return addMode ? shape.color : "#fff";
+  }
+
+  function getStrokeColor(shape: any) {
+    return addMode ? shape.color : "#fff";
   }
 
   // Mouse events for drawing and selection
@@ -483,7 +508,7 @@ function DungeonEditor() {
     if (tool === "icon") {
       pushHistoryAndSetShapes([
         ...shapes,
-        { tool: "icon", x, y, icon: ICONS[iconIndex].icon } as IconShape,
+        { tool: "icon", x, y, icon: ICONS[iconIndex].icon, drawingMode: addMode } as IconShape,
       ]);
       return;
     }
@@ -758,11 +783,12 @@ function DungeonEditor() {
     }
     if (drawing) {
       if (drawing.tool === "door") {
-        pushHistoryAndSetShapes([...shapes, drawing]);
+        pushHistoryAndSetShapes([...shapes, { ...drawing, drawingMode: addMode }]);
         setDrawing(null);
         return;
       }
-      pushHistoryAndSetShapes([...shapes, drawing]);
+      // Add drawingMode property to remember what mode the shape was drawn in
+      pushHistoryAndSetShapes([...shapes, { ...drawing, drawingMode: addMode }]);
       setDrawing(null);
     }
   };
@@ -1169,6 +1195,22 @@ function DungeonEditor() {
         >
           {snapTo ? "Snap On" : "Snap Off"}
         </button>
+        {/* Add mode toggle */}
+        <button
+          className={addMode ? "active" : ""}
+          onClick={() => setAddMode((v) => !v)}
+          style={{
+            margin: 8,
+            padding: "4px 12px",
+            borderRadius: 4,
+            border: "none",
+            background: addMode ? "#444" : "#ccc",
+            color: addMode ? "#fff" : "#222",
+            cursor: "pointer",
+          }}
+        >
+          {addMode ? "Adding Shapes" : "Carving Shapes"}
+        </button>
         {/* Grid size control */}
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
           <label
@@ -1458,7 +1500,7 @@ function DungeonEditor() {
             onMouseMove={handleStageMouseMove}
             onMouseUp={handleStageMouseUp}
           >
-            {/* Underground + Mask Layer: solid base, then carve-out shapes using destination-out */}
+            {/* Underground + Mask Layer: always show background, existing shapes always carve */}
             <Layer id="underground-mask-layer">
               <KonvaRect
                 x={0}
@@ -1469,8 +1511,13 @@ function DungeonEditor() {
                 listening={false}
               />
               {shapes.map((shape, i) => {
-                // Only carve-out shapes (not icons/text)
+                // Only carve-out shapes (not icons/text) - use their original drawing mode
                 if (shape.tool === "icon" || shape.tool === "text") return null;
+                
+                // Determine composite operation based on shape's original drawing mode
+                const shapeOperation = (shape as any).drawingMode ? "source-over" : "destination-out";
+                const shapeColor = (shape as any).drawingMode ? (shape as any).color : "#fff";
+                
                 if (shape.tool === "line") {
                   const center = getShapeCenter(shape);
                   return (
@@ -1482,11 +1529,11 @@ function DungeonEditor() {
                         shape.points[1].x - center.x,
                         shape.points[1].y - center.y,
                       ]}
-                      stroke="#fff"
+                      stroke={shapeColor}
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
-                      globalCompositeOperation="destination-out"
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       x={center.x}
                       y={center.y}
@@ -1501,8 +1548,8 @@ function DungeonEditor() {
                       y={center.y}
                       width={shape.width}
                       height={shape.height}
-                      fill="#fff"
-                      globalCompositeOperation="destination-out"
+                      fill={shapeColor}
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       offsetX={center.x - shape.x}
                       offsetY={center.y - shape.y}
@@ -1519,8 +1566,8 @@ function DungeonEditor() {
                       width={norm.width}
                       height={norm.height}
                       cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
-                      fill="#fff"
-                      globalCompositeOperation="destination-out"
+                      fill={shapeColor}
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       offsetX={center.x - norm.x}
                       offsetY={center.y - norm.y}
@@ -1533,8 +1580,8 @@ function DungeonEditor() {
                       key={i}
                       points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
                       closed
-                      fill="#fff"
-                      globalCompositeOperation="destination-out"
+                      fill={shapeColor}
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       x={center.x}
                       y={center.y}
@@ -1547,8 +1594,8 @@ function DungeonEditor() {
                       x={shape.x}
                       y={shape.y}
                       radius={shape.radius}
-                      fill="#fff"
-                      globalCompositeOperation="destination-out"
+                      fill={shapeColor}
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                     />
                   );
@@ -1566,25 +1613,25 @@ function DungeonEditor() {
                       key={i}
                       points={points}
                       closed
-                      fill="#fff"
-                      globalCompositeOperation="destination-out"
+                      fill={shapeColor}
+                      globalCompositeOperation={shapeOperation}
                       rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
                       x={poly.x}
                       y={poly.y}
                     />
                   );
-                } else if (shape.tool === "free") {
+                  } else if (shape.tool === "free") {
                   const center = getShapeCenter(shape);
                   return (
                     <KonvaLine
                       key={i}
                       points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
-                      stroke="#fff"
+                      stroke={shapeColor}
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
                       tension={0.5}
-                      globalCompositeOperation="destination-out"
+                      globalCompositeOperation={shapeOperation}
                       rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
                       x={center.x}
                       y={center.y}
@@ -1593,7 +1640,7 @@ function DungeonEditor() {
                 }
                 return null;
               })}
-              {/* Render current drawing shape as carve-out preview */}
+              {/* Render current drawing shape with mode-aware behavior */}
               {drawing &&
                 drawing.tool !== "icon" &&
                 drawing.tool !== "text" &&
@@ -1607,12 +1654,12 @@ function DungeonEditor() {
                           drawing.points[1].x,
                           drawing.points[1].y,
                         ]}
-                        stroke="#fff"
+                        stroke={getStrokeColor(drawing)}
                         strokeWidth={drawing.thickness || thickness}
                         dash={[8, 8]}
                         lineCap="round"
                         lineJoin="round"
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (drawing.tool === "rect") {
@@ -1622,9 +1669,9 @@ function DungeonEditor() {
                         y={drawing.y}
                         width={drawing.width}
                         height={drawing.height}
-                        fill="#fff"
+                        fill={getFillColor(drawing)}
                         dash={[8, 8]}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (drawing.tool === "roundedRect") {
@@ -1641,9 +1688,9 @@ function DungeonEditor() {
                         width={norm.width}
                         height={norm.height}
                         cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
-                        fill="#fff"
+                        fill={getFillColor(drawing)}
                         dash={[8, 8]}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (drawing.tool === "triangle") {
@@ -1651,9 +1698,9 @@ function DungeonEditor() {
                       <KonvaLine
                         points={drawing.points.flatMap((p) => [p.x, p.y])}
                         closed
-                        fill="#fff"
+                        fill={getFillColor(drawing)}
                         dash={[8, 8]}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (drawing.tool === "circle") {
@@ -1662,9 +1709,9 @@ function DungeonEditor() {
                         x={drawing.x}
                         y={drawing.y}
                         radius={drawing.radius}
-                        fill="#fff"
+                        fill={getFillColor(drawing)}
                         dash={[8, 8]}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (
@@ -1685,22 +1732,22 @@ function DungeonEditor() {
                       <KonvaLine
                         points={points}
                         closed
-                        fill="#fff"
+                        fill={getFillColor(drawing)}
                         dash={[8, 8]}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   } else if (drawing.tool === "free") {
                     return (
                       <KonvaLine
                         points={drawing.points.flatMap((p) => [p.x, p.y])}
-                        stroke="#fff"
+                        stroke={getStrokeColor(drawing)}
                         strokeWidth={drawing.thickness || thickness}
                         dash={[4, 4]}
                         lineCap="round"
                         lineJoin="round"
                         tension={0.5}
-                        globalCompositeOperation="destination-out"
+                        globalCompositeOperation={getCompositeOperation()}
                       />
                     );
                   }
@@ -1829,7 +1876,7 @@ function DungeonEditor() {
                     </React.Fragment>
                   );
                 }
-                // Render visible outlines for selected shapes
+                // Render visible outlines for selected shapes (always use original shape color)
                 if (shape.tool === "rect") {
                   const center = getShapeCenter(shape);
                   return (
