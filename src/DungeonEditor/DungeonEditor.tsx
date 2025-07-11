@@ -1152,6 +1152,24 @@ function DungeonEditor() {
     return () => window.removeEventListener("mouseup", up);
   }, []);
 
+  // Keyboard event listener for delete key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+          // Delete the selected shape
+          pushHistoryAndSetShapes(shapes.filter((_, idx) => idx !== selectedIndex));
+          setSelectedIndex(null);
+          setDragOffset(null);
+          e.preventDefault(); // Prevent default browser behavior
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIndex, shapes]);
+
   return (
     <div className="dungeon-editor-container">
       {/* Save as JPEG Modal */}
