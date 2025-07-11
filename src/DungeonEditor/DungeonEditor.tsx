@@ -2316,24 +2316,19 @@ function DungeonEditor() {
                   }
                   return null;
                 })()}
-            </Layer>
-            {/* Grid Layer (top, only visible in carved-out areas) */}
-            {showGrid && (
-              <Layer
-                listening={false}
-                hitStrokeWidth={0}
-                perfectDrawEnabled={false}
-                id="grid-layer"
-              >
+              
+              {/* Grid - only visible in carved-out areas (underneath the black stone) */}
+              {showGrid && (
                 <React.Fragment>
                   <CustomGrid
                     gridSize={gridSize}
                     width={canvasWidth}
                     height={canvasHeight}
+                    globalCompositeOperation="destination-over"
                   />
                 </React.Fragment>
-              </Layer>
-            )}
+              )}
+            </Layer>
             {/* Icon/Text Layer (above mask) */}
             <Layer id="icon-layer">
               {shapes.map((shape, i) => {

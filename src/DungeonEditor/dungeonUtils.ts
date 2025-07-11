@@ -557,7 +557,8 @@ export const CustomGrid: React.FC<{
   gridSize: number;
   width: number;
   height: number;
-}> = ({ gridSize, width, height }) => {
+  globalCompositeOperation?: string;
+}> = ({ gridSize, width, height, globalCompositeOperation }) => {
   const lines = [];
   for (let x = 0; x <= width; x += gridSize) {
     lines.push(
@@ -567,6 +568,7 @@ export const CustomGrid: React.FC<{
         stroke: "#888",
         strokeWidth: 1,
         listening: false,
+        globalCompositeOperation: globalCompositeOperation as any,
       })
     );
   }
@@ -578,6 +580,7 @@ export const CustomGrid: React.FC<{
         stroke: "#888",
         strokeWidth: 1,
         listening: false,
+        globalCompositeOperation: globalCompositeOperation as any,
       })
     );
   }
