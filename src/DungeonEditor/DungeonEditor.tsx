@@ -20,7 +20,6 @@ import {
   getShapeCenter,
   getRotationHandlePosition,
   calculateAngle,
-  snapRotation,
   getResizeHandles,
   getResizeHandleAtPoint,
   applyResize,
@@ -678,6 +677,21 @@ function DungeonEditor() {
             poly.radius + (poly.thickness || thickness) / 2
           )
             hit = true;
+        } else if (shape.tool === "door") {
+          // Door deletion: check if pointer is inside door rect
+          const actualDoorW = Math.max(8, Math.abs(shape.width));
+          const actualDoorH = Math.max(4, Math.abs(shape.height));
+          
+          const doorX = shape.x - actualDoorW / 2;
+          const doorY = shape.y - actualDoorH / 2;
+          
+          if (
+            x >= doorX &&
+            x <= doorX + actualDoorW &&
+            y >= doorY &&
+            y <= doorY + actualDoorH
+          )
+            hit = true;
         }
         if (hit) {
           pushHistoryAndSetShapes(shapes.filter((_, idx) => idx !== i));
@@ -799,10 +813,7 @@ function DungeonEditor() {
       const center = getShapeCenter(shape);
       const currentAngle = calculateAngle(center, pointer);
       const deltaAngle = currentAngle - rotationStart.angle;
-      let newRotation = rotationStart.shapeRotation + deltaAngle;
-      
-      // Apply rotation snapping when snap-to-grid is enabled
-      newRotation = snapRotation(newRotation, snapTo);
+      const newRotation = rotationStart.shapeRotation + deltaAngle;
       
       setShapes((shapes) =>
         shapes.map((s, idx) => {
