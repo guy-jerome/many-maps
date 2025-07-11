@@ -20,6 +20,9 @@ import {
   getShapeCenter,
   getRotationHandlePosition,
   calculateAngle,
+  getResizeHandles,
+  getResizeHandleAtPoint,
+  applyResize,
 } from "./dungeonUtils";
 
 // Tool types
@@ -194,6 +197,13 @@ function DungeonEditor() {
     angle: number;
     shapeRotation: number;
   } | null>(null);
+  const [isResizing, setIsResizing] = React.useState(false);
+  const [resizeStart, setResizeStart] = React.useState<{
+    handleType: string;
+    originalShape: Shape;
+    startX: number;
+    startY: number;
+  } | null>(null);
   const stageRef = React.useRef<any>(null);
   const navigate = useNavigate();
   const [showSaveModal, setShowSaveModal] = React.useState(false);
@@ -256,6 +266,21 @@ function DungeonEditor() {
       if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
         const shape = shapes[selectedIndex];
         if (!shape) return; // Guard against undefined shape
+        
+        // Check for resize handle first
+        const resizeHandle = getResizeHandleAtPoint(shape, pointer.x, pointer.y, 10);
+        if (resizeHandle) {
+          setIsResizing(true);
+          setResizeStart({
+            handleType: resizeHandle.type,
+            originalShape: { ...shape },
+            startX: pointer.x,
+            startY: pointer.y,
+          });
+          return;
+        }
+        
+        // Then check for rotation handle
         const handlePos = getRotationHandlePosition(shape);
         const distance = Math.sqrt(
           Math.pow(pointer.x - handlePos.x, 2) + Math.pow(pointer.y - handlePos.y, 2)
@@ -278,11 +303,13 @@ function DungeonEditor() {
         const shape = shapes[i];
         let hit = false;
         if (shape.tool === "icon") {
+          const iconSize = (shape as any).size || 32;
+          const halfSize = iconSize / 2;
           if (
-            x >= shape.x - 16 &&
-            x <= shape.x + 16 &&
-            y >= shape.y - 16 &&
-            y <= shape.y + 16
+            x >= shape.x - halfSize &&
+            x <= shape.x + halfSize &&
+            y >= shape.y - halfSize &&
+            y <= shape.y + halfSize
           )
             hit = true;
         } else if (shape.tool === "line") {
@@ -390,11 +417,13 @@ function DungeonEditor() {
         const shape = shapes[i];
         let hit = false;
         if (shape.tool === "icon") {
+          const iconSize = (shape as any).size || 32;
+          const halfSize = iconSize / 2;
           if (
-            x >= shape.x - 16 &&
-            x <= shape.x + 16 &&
-            y >= shape.y - 16 &&
-            y <= shape.y + 16
+            x >= shape.x - halfSize &&
+            x <= shape.x + halfSize &&
+            y >= shape.y - halfSize &&
+            y <= shape.y + halfSize
           )
             hit = true;
         } else if (shape.tool === "line") {
@@ -534,6 +563,26 @@ function DungeonEditor() {
   };
 
   const handleMouseMove = (e: any) => {
+    if (isResizing && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && resizeStart) {
+      const stage = e.target.getStage();
+      const pointer = getLogicalPointerPosition(stage);
+      if (!pointer) return;
+      
+      const deltaX = pointer.x - resizeStart.startX;
+      const deltaY = pointer.y - resizeStart.startY;
+      const originalShape = resizeStart.originalShape;
+      
+      setShapes((shapes) =>
+        shapes.map((s, idx) => {
+          if (idx !== selectedIndex) return s;
+          
+          // Apply resize based on handle type
+          return applyResize(originalShape, resizeStart.handleType, deltaX, deltaY, snapTo);
+        })
+      );
+      return;
+    }
+    
     if (isRotating && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && rotationStart) {
       const stage = e.target.getStage();
       const pointer = getLogicalPointerPosition(stage);
@@ -691,6 +740,12 @@ function DungeonEditor() {
   };
 
   const handleMouseUp = () => {
+    if (isResizing) {
+      setIsResizing(false);
+      setResizeStart(null);
+      return;
+    }
+    
     if (isRotating) {
       setIsRotating(false);
       setRotationStart(null);
@@ -763,11 +818,46 @@ function DungeonEditor() {
     } else if (tool === "icon") {
       cursor = "pointer";
     } else if (tool === "select") {
+      // Dynamic cursor for select tool based on what's under the mouse
       cursor = "pointer";
+      
+      // Add hover detection for resize handles when in select mode
+      const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
+      if (canvas) {
+        const handleMouseMove = (e: MouseEvent) => {
+          if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+            const shape = shapes[selectedIndex];
+            if (shape) {
+              const rect = canvas.getBoundingClientRect();
+              const x = (e.clientX - rect.left - pan.x) / zoom;
+              const y = (e.clientY - rect.top - pan.y) / zoom;
+              
+              const resizeHandle = getResizeHandleAtPoint(shape, x, y, 10);
+              if (resizeHandle) {
+                canvas.style.cursor = resizeHandle.cursor;
+                return;
+              }
+              
+              const handlePos = getRotationHandlePosition(shape);
+              const distance = Math.sqrt(
+                Math.pow(x - handlePos.x, 2) + Math.pow(y - handlePos.y, 2)
+              );
+              if (distance <= 15) {
+                canvas.style.cursor = 'grab';
+                return;
+              }
+            }
+          }
+          canvas.style.cursor = "pointer";
+        };
+        
+        canvas.addEventListener('mousemove', handleMouseMove);
+        return () => canvas.removeEventListener('mousemove', handleMouseMove);
+      }
     }
     const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
     if (canvas) canvas.style.cursor = cursor;
-  }, [tool]);
+  }, [tool, selectedIndex, shapes, pan, zoom]);
 
   // Mouse wheel zoom (centered on mouse)
   const handleWheel = (e: any) => {
@@ -1641,25 +1731,26 @@ function DungeonEditor() {
                 // Render icons, doors, and all visible shapes
                 if (shape.tool === "icon") {
                   const iconShape = shape as IconShape;
+                  const iconSize = (iconShape as any).size || 32; // Use size property or default to 32
                   return (
                     <React.Fragment key={i}>
                       <KonvaText
                         x={iconShape.x}
                         y={iconShape.y}
                         text={iconShape.icon}
-                        fontSize={32}
+                        fontSize={iconSize}
                         fontStyle="bold"
                         fill="#222"
-                        offsetX={16}
-                        offsetY={16}
+                        offsetX={iconSize / 2}
+                        offsetY={iconSize / 2}
                         rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
                       />
                       {isSelected && (
                         <KonvaRect
                           x={iconShape.x}
                           y={iconShape.y}
-                          width={36}
-                          height={36}
+                          width={iconSize + 4}
+                          height={iconSize + 4}
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
@@ -2035,6 +2126,32 @@ function DungeonEditor() {
                         stroke="#1e90ff"
                         strokeWidth={1}
                       />
+                    </React.Fragment>
+                  );
+                })()
+              )}
+              
+              {/* Resize Handles */}
+              {tool === "select" && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && (
+                (() => {
+                  const shape = shapes[selectedIndex];
+                  if (!shape) return null; // Guard against undefined shape
+                  const handles = getResizeHandles(shape);
+                  
+                  return (
+                    <React.Fragment>
+                      {handles.map((handle, index) => (
+                        <KonvaRect
+                          key={`resize-handle-${index}`}
+                          x={handle.x - 4}
+                          y={handle.y - 4}
+                          width={8}
+                          height={8}
+                          fill="#fff"
+                          stroke="#1e90ff"
+                          strokeWidth={2}
+                        />
+                      ))}
                     </React.Fragment>
                   );
                 })()
