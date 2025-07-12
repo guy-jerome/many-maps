@@ -34,6 +34,8 @@ export interface DungeonProject {
   canvasWidth: number;
   canvasHeight: number;
   gridSize: number;
+  backgroundColor: string; // Background color for the canvas
+  underlayerColor: string; // Color for the stone layer
   lastModified: Date;
   thumbnail?: Blob; // Optional thumbnail
 }

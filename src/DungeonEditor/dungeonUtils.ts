@@ -558,14 +558,15 @@ export const CustomGrid: React.FC<{
   width: number;
   height: number;
   globalCompositeOperation?: string;
-}> = ({ gridSize, width, height, globalCompositeOperation }) => {
+  strokeColor?: string;
+}> = ({ gridSize, width, height, globalCompositeOperation, strokeColor = "#888" }) => {
   const lines = [];
   for (let x = 0; x <= width; x += gridSize) {
     lines.push(
       React.createElement(KonvaLine, {
         key: "v-" + x,
         points: [x, 0, x, height],
-        stroke: "#888",
+        stroke: strokeColor,
         strokeWidth: 1,
         listening: false,
         globalCompositeOperation: globalCompositeOperation as any,
@@ -577,7 +578,7 @@ export const CustomGrid: React.FC<{
       React.createElement(KonvaLine, {
         key: "h-" + y,
         points: [0, y, width, y],
-        stroke: "#888",
+        stroke: strokeColor,
         strokeWidth: 1,
         listening: false,
         globalCompositeOperation: globalCompositeOperation as any,

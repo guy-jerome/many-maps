@@ -201,8 +201,13 @@ function DungeonEditor() {
   const [shapes, setShapes] = React.useState<Shape[]>([]);
   const [history, setHistory] = React.useState<Shape[][]>([]);
   const [future, setFuture] = React.useState<Shape[][]>([]);
-  const [color, setColor] = React.useState<string>("#222");
+  const [backgroundColor, setBackgroundColor] = React.useState<string>("#f5ecd6");
+  const [underlayerColor, setUnderlayerColor] = React.useState<string>("#222");
+  const [colorPickerMode, setColorPickerMode] = React.useState<"background" | "underlayer">("background");
   const [iconIndex, setIconIndex] = React.useState(0);
+  
+  // Fixed color for drawing shapes (since we removed the shape color picker)
+  const shapeColor = "#222";
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
@@ -340,6 +345,8 @@ function DungeonEditor() {
         setCanvasWidth(project.canvasWidth || 1024);
         setCanvasHeight(project.canvasHeight || 768);
         setGridSize(project.gridSize || GRID_SIZE);
+        setBackgroundColor(project.backgroundColor || "#f5ecd6");
+        setUnderlayerColor(project.underlayerColor || "#222");
         setHistory([]); // Reset history when loading
         setFuture([]);
         
@@ -367,7 +374,7 @@ function DungeonEditor() {
           y: 0,
           width: canvasWidth,
           height: canvasHeight,
-          fill: "#f5ecd6",
+          fill: backgroundColor,
           listening: false,
         });
         bgLayer.add(bgRect);
@@ -390,6 +397,8 @@ function DungeonEditor() {
         canvasWidth,
         canvasHeight,
         gridSize,
+        backgroundColor,
+        underlayerColor,
         lastModified: new Date(),
         thumbnail,
       };
@@ -423,7 +432,7 @@ function DungeonEditor() {
           y: 0,
           width: canvasWidth,
           height: canvasHeight,
-          fill: "#f5ecd6",
+          fill: backgroundColor,
           listening: false,
         });
         bgLayer.add(bgRect);
@@ -715,11 +724,11 @@ function DungeonEditor() {
           { x, y },
           { x, y },
         ],
-        color,
+        color: shapeColor,
         thickness,
       });
     } else if (tool === "rect") {
-      setDrawing({ tool: "rect", x, y, width: 0, height: 0, color, thickness });
+      setDrawing({ tool: "rect", x, y, width: 0, height: 0, color: shapeColor, thickness });
     } else if (tool === "roundedRect") {
       // Start drawing from anchor point, width/height 0
       setDrawing({
@@ -729,7 +738,7 @@ function DungeonEditor() {
         width: 0,
         height: 0,
         radius: 0,
-        color,
+        color: shapeColor,
         thickness,
       });
     } else if (tool === "triangle") {
@@ -740,11 +749,11 @@ function DungeonEditor() {
           { x, y },
           { x, y },
         ],
-        color,
+        color: shapeColor,
         thickness,
       });
     } else if (tool === "circle") {
-      setDrawing({ tool: "circle", x, y, radius: 0, color, thickness });
+      setDrawing({ tool: "circle", x, y, radius: 0, color: shapeColor, thickness });
     } else if (["pentagon", "hexagon", "octagon"].includes(tool)) {
       setDrawing({
         tool: tool as "pentagon" | "hexagon" | "octagon",
@@ -752,11 +761,11 @@ function DungeonEditor() {
         y,
         radius: 0,
         sides: tool === "pentagon" ? 5 : tool === "hexagon" ? 6 : 8,
-        color,
+        color: shapeColor,
         thickness,
       });
     } else if (tool === "free") {
-      setDrawing({ tool: "free", points: [{ x, y }], color, thickness });
+      setDrawing({ tool: "free", points: [{ x, y }], color: shapeColor, thickness });
     } else if (tool === "door") {
       // Place a door at snapped x/y, default orientation horizontal, size 32x8
       let doorX: number, doorY: number, orientation: "horizontal" | "vertical";
@@ -1269,7 +1278,7 @@ function DungeonEditor() {
                       y: 0,
                       width: CANVAS_WIDTH,
                       height: CANVAS_HEIGHT,
-                      fill: "#f5ecd6",
+                      fill: backgroundColor,
                       listening: false,
                     });
                     bgLayer.add(bgRect);
@@ -1553,6 +1562,100 @@ function DungeonEditor() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Picker Modal */}
+      {showColorPicker && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowColorPicker(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 24,
+              borderRadius: 8,
+              boxShadow: "0 4px 24px #0003",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: 0, color: "#333" }}>
+              {colorPickerMode === "background" ? "Canvas Background Color" : 
+               "Stone & Grid Color"}
+            </h3>
+            
+            <SketchPicker
+              color={colorPickerMode === "background" ? backgroundColor : 
+                     underlayerColor}
+              onChange={(newColor) => {
+                if (colorPickerMode === "background") {
+                  setBackgroundColor(newColor.hex);
+                } else {
+                  setUnderlayerColor(newColor.hex);
+                }
+              }}
+              disableAlpha={true}
+            />
+            
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setColorPickerMode("background")}
+                style={{
+                  padding: "8px 16px",
+                  background: colorPickerMode === "background" ? "#4CAF50" : "#666",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              >
+                Canvas
+              </button>
+              <button
+                onClick={() => setColorPickerMode("underlayer")}
+                style={{
+                  padding: "8px 16px",
+                  background: colorPickerMode === "underlayer" ? "#4CAF50" : "#666",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              >
+                Stone
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setShowColorPicker(false)}
+              style={{
+                padding: "8px 24px",
+                background: "#333",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -1960,7 +2063,7 @@ function DungeonEditor() {
           {/* Color picker at the very top */}
           <button
             style={{
-              background: color,
+              background: colorPickerMode === "background" ? backgroundColor : underlayerColor,
               width: 36,
               height: 36,
               border: "2px solid #fff",
@@ -1968,30 +2071,46 @@ function DungeonEditor() {
               margin: 8,
               cursor: "pointer",
             }}
-            title="Pick color"
+            title={colorPickerMode === "background" ? "Background Color" : "Underlayer Color"}
             onClick={() => setShowColorPicker((v) => !v)}
           >
             🎨
           </button>
-          {showColorPicker && (
-            <div
-              style={{ position: "fixed", zIndex: 1000, left: 140, top: 80 }}
+
+          {/* Color mode toggle buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 8px 8px 8px" }}>
+            <button
+              onClick={() => setColorPickerMode("background")}
+              style={{
+                padding: "4px 8px",
+                fontSize: 12,
+                background: colorPickerMode === "background" ? "#444" : "#666",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+              title="Background Color Mode"
             >
-              <SketchPicker
-                color={color}
-                onChange={(c: { hex: string }) => {
-                  setColor(c.hex);
-                }}
-                disableAlpha
-              />
-              <button
-                style={{ marginTop: 4, width: "100%" }}
-                onClick={() => setShowColorPicker(false)}
-              >
-                Close
-              </button>
-            </div>
-          )}
+              Canvas
+            </button>
+            <button
+              onClick={() => setColorPickerMode("underlayer")}
+              style={{
+                padding: "4px 8px",
+                fontSize: 12,
+                background: colorPickerMode === "underlayer" ? "#444" : "#666",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+              title="Stone/Grid Color Mode"
+            >
+              Stone
+            </button>
+          </div>
+
           {/* Double wide tool grid */}
           <div
             style={{
@@ -2057,7 +2176,7 @@ function DungeonEditor() {
             x={pan.x}
             y={pan.y}
             className="dungeon-canvas"
-            style={{ background: "#f5ecd6", border: "1px solid #ccc" }}
+            style={{ background: backgroundColor, border: "1px solid #ccc" }}
             onWheel={handleWheel}
             onMouseDown={handleStageMouseDown}
             onMouseMove={handleStageMouseMove}
@@ -2070,7 +2189,7 @@ function DungeonEditor() {
                 y={0}
                 width={canvasWidth}
                 height={canvasHeight}
-                fill="#222"
+                fill={underlayerColor}
                 listening={false}
               />
               {shapes.map((shape, i) => {
@@ -2325,6 +2444,7 @@ function DungeonEditor() {
                     width={canvasWidth}
                     height={canvasHeight}
                     globalCompositeOperation="destination-over"
+                    strokeColor={underlayerColor}
                   />
                 </React.Fragment>
               )}
