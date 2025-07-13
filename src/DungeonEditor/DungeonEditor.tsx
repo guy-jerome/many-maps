@@ -194,7 +194,7 @@ const ICONS = [
   { name: "coffin", icon: "⚰" },
   { name: "rubble", icon: "▪" },
   { name: "pillar", icon: "●" },
-  { name: "statue", icon: "◉" },
+  { name: "statue", icon: "✪" },
   { name: "altar", icon: "⊔" },
   { name: "well", icon: "○" },
   { name: "fountain", icon: "◎" },
@@ -3088,10 +3088,15 @@ function DungeonEditor() {
                         y={iconShape.y}
                         text={iconShape.icon}
                         fontSize={iconSize}
+                        fontFamily="Courier New, monospace"
                         fontStyle="bold"
                         fill="#222"
                         offsetX={iconSize / 2}
                         offsetY={iconSize / 2}
+                        width={iconSize}
+                        height={iconSize}
+                        align="center"
+                        verticalAlign="middle"
                         rotation={
                           iconShape.rotation
                             ? (iconShape.rotation * 180) / Math.PI
