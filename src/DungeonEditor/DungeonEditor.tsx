@@ -200,7 +200,7 @@ const ICONS = [
   { name: "fountain", icon: "◎" },
   { name: "fire", icon: "※" },
   { name: "torch", icon: "†" },
-  
+
   // Doors and passages
   { name: "secret_door", icon: "◌" },
   { name: "portcullis", icon: "≡" },
@@ -208,7 +208,7 @@ const ICONS = [
   { name: "curtain", icon: "∿" },
   { name: "bars", icon: "|||" },
   { name: "gate", icon: "╬" },
-  
+
   // Stairs and elevation
   { name: "stairs_up", icon: "△" },
   { name: "stairs_down", icon: "▽" },
@@ -218,7 +218,7 @@ const ICONS = [
   { name: "ramp", icon: "⟋" },
   { name: "balcony", icon: "⌐" },
   { name: "ledge", icon: "⌊" },
-  
+
   // Traps and hazards
   { name: "trap_door", icon: "⬜" },
   { name: "pit", icon: "⬛" },
@@ -230,7 +230,7 @@ const ICONS = [
   { name: "pendulum", icon: "⏞" },
   { name: "buzzsaw", icon: "◎" },
   { name: "spear_trap", icon: "↑" },
-  
+
   // Mechanisms
   { name: "lever", icon: "⚹" },
   { name: "button", icon: "◉" },
@@ -241,7 +241,7 @@ const ICONS = [
   { name: "rope", icon: "∿" },
   { name: "winch", icon: "◐" },
   { name: "crank", icon: "⟲" },
-  
+
   // Water features
   { name: "pool", icon: "◊" },
   { name: "stream", icon: "≈" },
@@ -250,7 +250,7 @@ const ICONS = [
   { name: "ford", icon: "~" },
   { name: "drain", icon: "◎" },
   { name: "grating", icon: "▦" },
-  
+
   // Furniture and objects
   { name: "chest", icon: "◫" },
   { name: "table", icon: "⬜" },
@@ -261,7 +261,7 @@ const ICONS = [
   { name: "throne", icon: "◈" },
   { name: "bench", icon: "━" },
   { name: "cabinet", icon: "▢" },
-  
+
   // Storage and containers
   { name: "barrel", icon: "◯" },
   { name: "crate", icon: "▢" },
@@ -271,7 +271,7 @@ const ICONS = [
   { name: "cauldron", icon: "◉" },
   { name: "anvil", icon: "■" },
   { name: "forge", icon: "▣" },
-  
+
   // Treasures and valuables
   { name: "treasure", icon: "◊" },
   { name: "gem", icon: "◆" },
@@ -281,7 +281,7 @@ const ICONS = [
   { name: "crown", icon: "◉" },
   { name: "orb", icon: "●" },
   { name: "relic", icon: "✚" },
-  
+
   // Weapons and armor
   { name: "sword", icon: "†" },
   { name: "shield", icon: "⬟" },
@@ -293,7 +293,7 @@ const ICONS = [
   { name: "dagger", icon: "†" },
   { name: "mace", icon: "⚉" },
   { name: "armor", icon: "◈" },
-  
+
   // Magic and mystical
   { name: "scroll", icon: "⟐" },
   { name: "book", icon: "▣" },
@@ -305,7 +305,7 @@ const ICONS = [
   { name: "circle", icon: "◯" },
   { name: "pentagram", icon: "★" },
   { name: "eye", icon: "◉" },
-  
+
   // Creatures and remains
   { name: "skeleton", icon: "☠" },
   { name: "corpse", icon: "⚰" },
@@ -315,7 +315,7 @@ const ICONS = [
   { name: "nest", icon: "◐" },
   { name: "tracks", icon: "⋯" },
   { name: "claw_marks", icon: "≋" },
-  
+
   // Environmental features
   { name: "mushroom", icon: "♠" },
   { name: "moss", icon: "▪" },
@@ -325,7 +325,7 @@ const ICONS = [
   { name: "stalagmite", icon: "▲" },
   { name: "cave_in", icon: "▪" },
   { name: "crack", icon: "⟋" },
-  
+
   // Lighting and sounds
   { name: "lantern", icon: "◎" },
   { name: "candle", icon: "†" },
@@ -335,7 +335,7 @@ const ICONS = [
   { name: "gong", icon: "◎" },
   { name: "horn", icon: ")" },
   { name: "chime", icon: "♫" },
-  
+
   // Special markers
   { name: "entrance", icon: "◈" },
   { name: "exit", icon: "◇" },
@@ -345,7 +345,7 @@ const ICONS = [
   { name: "monument", icon: "▲" },
   { name: "obelisk", icon: "▼" },
   { name: "gravestone", icon: "⬛" },
-  
+
   // Utility items
   { name: "key", icon: "⚿" },
   { name: "lock", icon: "◉" },
@@ -3625,4 +3625,4 @@ function DungeonEditor() {
 }
 
 export default DungeonEditor;
-"// Icon symbols updated" 
+("// Icon symbols updated");
