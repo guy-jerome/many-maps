@@ -1372,6 +1372,18 @@ function DungeonEditor() {
           e.preventDefault(); // Prevent default browser behavior
         }
       }
+      
+      // Undo (Ctrl+Z)
+      if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      
+      // Redo (Ctrl+Y or Ctrl+Shift+Z)
+      if (e.ctrlKey && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        handleRedo();
+      }
 
       // Copy (Ctrl+C)
       if (e.ctrlKey && e.key === "c") {
