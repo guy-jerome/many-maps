@@ -264,6 +264,7 @@ function DungeonEditor() {
   const [exportName, setExportName] = React.useState<string>("");
   const [exportDescription, setExportDescription] = React.useState<string>("");
   const [showSettingsPanel, setShowSettingsPanel] = React.useState(false);
+  const [copiedShape, setCopiedShape] = React.useState<Shape | null>(null);
 
   function maybeSnap(val: number, forDoor = false) {
     if (!snapTo) return val;
@@ -1117,6 +1118,96 @@ function DungeonEditor() {
     }
   }
 
+  // Copy and paste functions
+  const handleCopy = () => {
+    if (
+      selectedIndex !== null &&
+      selectedIndex >= 0 &&
+      selectedIndex < shapes.length
+    ) {
+      const shapeToCopy = shapes[selectedIndex];
+      setCopiedShape(shapeToCopy);
+    }
+  };
+
+  const handlePaste = () => {
+    if (!copiedShape) return;
+
+    // Create a copy of the shape with slight offset that snaps to grid
+    const offset = 32; // Use grid size as offset for better alignment
+    let newShape: Shape;
+
+    if (copiedShape.tool === "line") {
+      const lineShape = copiedShape as Line;
+      newShape = {
+        ...lineShape,
+        points: [
+          {
+            x: maybeSnap(lineShape.points[0].x + offset),
+            y: maybeSnap(lineShape.points[0].y + offset),
+          },
+          {
+            x: maybeSnap(lineShape.points[1].x + offset),
+            y: maybeSnap(lineShape.points[1].y + offset),
+          },
+        ] as [Point, Point],
+      };
+    } else if (copiedShape.tool === "triangle") {
+      const triangleShape = copiedShape as Triangle;
+      newShape = {
+        ...triangleShape,
+        points: [
+          {
+            x: maybeSnap(triangleShape.points[0].x + offset),
+            y: maybeSnap(triangleShape.points[0].y + offset),
+          },
+          {
+            x: maybeSnap(triangleShape.points[1].x + offset),
+            y: maybeSnap(triangleShape.points[1].y + offset),
+          },
+          {
+            x: maybeSnap(triangleShape.points[2].x + offset),
+            y: maybeSnap(triangleShape.points[2].y + offset),
+          },
+        ] as [Point, Point, Point],
+      };
+    } else if (copiedShape.tool === "free") {
+      const freeShape = copiedShape as Free;
+      newShape = {
+        ...freeShape,
+        points: freeShape.points.map((p) => ({
+          x: maybeSnap(p.x + offset),
+          y: maybeSnap(p.y + offset),
+        })),
+      };
+    } else if (copiedShape.tool === "door") {
+      // For doors, use special door snapping
+      const doorShape = copiedShape as DoorShape;
+      const snappedPos = getDoorSnap(
+        { x: doorShape.x + offset, y: doorShape.y + offset },
+        doorShape.orientation
+      );
+      newShape = {
+        ...doorShape,
+        x: snappedPos.x,
+        y: snappedPos.y,
+      };
+    } else {
+      // For shapes with x,y properties (most shapes)
+      newShape = {
+        ...copiedShape,
+        x: maybeSnap((copiedShape as any).x + offset),
+        y: maybeSnap((copiedShape as any).y + offset),
+      };
+    }
+
+    // Add the new shape and select it
+    const newShapes = [...shapes, newShape];
+    pushHistoryAndSetShapes(newShapes);
+    setSelectedIndex(newShapes.length - 1);
+    setTool("select"); // Switch to select tool to show the new shape is selected
+  };
+
   // Set cursor style based on tool
   React.useEffect(() => {
     let cursor = "default";
@@ -1254,9 +1345,18 @@ function DungeonEditor() {
     return () => window.removeEventListener("mouseup", up);
   }, []);
 
-  // Keyboard event listener for delete key
+  // Keyboard event listener for delete key, copy, and paste
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default behavior when focused on input elements
+      if (
+        e.target &&
+        ((e.target as HTMLElement).tagName === "INPUT" ||
+          (e.target as HTMLElement).tagName === "TEXTAREA")
+      ) {
+        return;
+      }
+
       if (e.key === "Delete" || e.key === "Backspace") {
         if (
           selectedIndex !== null &&
@@ -1272,11 +1372,23 @@ function DungeonEditor() {
           e.preventDefault(); // Prevent default browser behavior
         }
       }
+
+      // Copy (Ctrl+C)
+      if (e.ctrlKey && e.key === "c") {
+        e.preventDefault();
+        handleCopy();
+      }
+
+      // Paste (Ctrl+V)
+      if (e.ctrlKey && e.key === "v") {
+        e.preventDefault();
+        handlePaste();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIndex, shapes]);
+  }, [selectedIndex, shapes, copiedShape]);
 
   return (
     <div className="dungeon-editor-container">
@@ -2048,7 +2160,7 @@ function DungeonEditor() {
               className={
                 history.length === 0 ? "btn-disabled" : "btn-secondary"
               }
-              title="Undo"
+              title="Undo (Ctrl+Z)"
             >
               ↶
             </button>
@@ -2057,9 +2169,29 @@ function DungeonEditor() {
               onClick={handleRedo}
               disabled={future.length === 0}
               className={future.length === 0 ? "btn-disabled" : "btn-secondary"}
-              title="Redo"
+              title="Redo (Ctrl+Y)"
             >
               ↷
+            </button>
+
+            <button
+              onClick={handleCopy}
+              disabled={selectedIndex === null}
+              className={
+                selectedIndex === null ? "btn-disabled" : "btn-secondary"
+              }
+              title="Copy (Ctrl+C)"
+            >
+              📋
+            </button>
+
+            <button
+              onClick={handlePaste}
+              disabled={!copiedShape}
+              className={!copiedShape ? "btn-disabled" : "btn-secondary"}
+              title="Paste (Ctrl+V)"
+            >
+              📄
             </button>
 
             <button
@@ -2296,7 +2428,7 @@ function DungeonEditor() {
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexDirection: "row",
               gap: 4,
               margin: "0 8px 8px 8px",
             }}
