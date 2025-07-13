@@ -201,13 +201,16 @@ function DungeonEditor() {
   const [shapes, setShapes] = React.useState<Shape[]>([]);
   const [history, setHistory] = React.useState<Shape[][]>([]);
   const [future, setFuture] = React.useState<Shape[][]>([]);
-  const [backgroundColor, setBackgroundColor] = React.useState<string>("#f5ecd6");
+  const [backgroundColor, setBackgroundColor] =
+    React.useState<string>("#f5ecd6");
   const [underlayerColor, setUnderlayerColor] = React.useState<string>("#222");
-  const [colorPickerMode, setColorPickerMode] = React.useState<"background" | "underlayer">("background");
+  const [colorPickerMode, setColorPickerMode] = React.useState<
+    "background" | "underlayer"
+  >("background");
   const [iconIndex, setIconIndex] = React.useState(0);
-  
-  // Fixed color for drawing shapes (since we removed the shape color picker)
-  const shapeColor = "#222";
+
+  // Shape color matches the stone/grid color (underlayerColor)
+  const shapeColor = underlayerColor;
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const [showGrid, setShowGrid] = React.useState(true);
   const [snapTo, setSnapTo] = React.useState(true);
@@ -244,14 +247,20 @@ function DungeonEditor() {
   const lastPan = React.useRef({ x: 0, y: 0 });
 
   // New state for project management
-  const [currentProjectId, setCurrentProjectId] = React.useState<string | null>(projectId || null);
-  const [currentProjectName, setCurrentProjectName] = React.useState<string>("Untitled Dungeon");
+  const [currentProjectId, setCurrentProjectId] = React.useState<string | null>(
+    projectId || null
+  );
+  const [currentProjectName, setCurrentProjectName] =
+    React.useState<string>("Untitled Dungeon");
   const [showSaveProjectModal, setShowSaveProjectModal] = React.useState(false);
   const [showLoadProjectModal, setShowLoadProjectModal] = React.useState(false);
   const [showExportModal, setShowExportModal] = React.useState(false);
-  const [savedProjects, setSavedProjects] = React.useState<DungeonProject[]>([]);
+  const [savedProjects, setSavedProjects] = React.useState<DungeonProject[]>(
+    []
+  );
   const [projectName, setProjectName] = React.useState(currentProjectName);
-  const [projectDescription, setProjectDescription] = React.useState<string>("");
+  const [projectDescription, setProjectDescription] =
+    React.useState<string>("");
   const [exportName, setExportName] = React.useState<string>("");
   const [exportDescription, setExportDescription] = React.useState<string>("");
   const [showSettingsPanel, setShowSettingsPanel] = React.useState(false);
@@ -349,7 +358,7 @@ function DungeonEditor() {
         setUnderlayerColor(project.underlayerColor || "#222");
         setHistory([]); // Reset history when loading
         setFuture([]);
-        
+
         // Update the URL to reflect the loaded project
         navigate(`/dungeon/${project.id}`, { replace: true });
       }
@@ -362,8 +371,10 @@ function DungeonEditor() {
   // Save current project
   const saveCurrentProject = async () => {
     try {
-      const id = currentProjectId || `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+      const id =
+        currentProjectId ||
+        `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
       // Generate thumbnail
       let thumbnail: Blob | undefined;
       if (stageRef.current) {
@@ -381,10 +392,12 @@ function DungeonEditor() {
         stage.add(bgLayer);
         bgLayer.moveToBottom();
         stage.draw();
-        
+
         const canvas = stage.toCanvas({ pixelRatio: 0.2 }); // Small thumbnail
-        thumbnail = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-        
+        thumbnail = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", 0.8)
+        );
+
         bgLayer.destroy();
         stage.draw();
       }
@@ -408,12 +421,12 @@ function DungeonEditor() {
       setCurrentProjectName(projectName);
       setShowSaveProjectModal(false);
       await loadSavedProjects(); // Refresh the list
-      
+
       // Update URL to include project ID if it's a new project
       if (!currentProjectId) {
         navigate(`/dungeon/${id}`, { replace: true });
       }
-      
+
       alert(`Project "${projectName}" saved successfully!`);
     } catch (error) {
       console.error("Error saving project:", error);
@@ -439,30 +452,32 @@ function DungeonEditor() {
         stage.add(bgLayer);
         bgLayer.moveToBottom();
         stage.draw();
-        
-        const blob = await new Promise<Blob>(resolve => stage.toCanvas().toBlob(resolve, 'image/jpeg', 0.95));
-        
+
+        const blob = await new Promise<Blob>((resolve) =>
+          stage.toCanvas().toBlob(resolve, "image/jpeg", 0.95)
+        );
+
         bgLayer.destroy();
         stage.draw();
 
         if (blob) {
           await exportDungeonToGallery(
-            currentProjectId || 'temp',
+            currentProjectId || "temp",
             blob,
             exportName,
             exportDescription
           );
           setShowExportModal(false);
-          
+
           // Clear export form
           setExportName("");
           setExportDescription("");
-          
+
           alert(`Map "${exportName}" exported successfully to the gallery!`);
-          
+
           // Optionally navigate to gallery
           if (confirm("Would you like to view the map in the gallery now?")) {
-            navigate('/gallery');
+            navigate("/gallery");
           }
         }
       }
@@ -479,15 +494,24 @@ function DungeonEditor() {
     if (!pointer) return;
     const x = maybeSnap(pointer.x);
     const y = maybeSnap(pointer.y);
-    
+
     if (tool === "select") {
       // Check if clicking on rotation handle first - use raw coordinates for better precision
-      if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+      if (
+        selectedIndex !== null &&
+        selectedIndex >= 0 &&
+        selectedIndex < shapes.length
+      ) {
         const shape = shapes[selectedIndex];
         if (!shape) return; // Guard against undefined shape
-        
+
         // Check for resize handle first
-        const resizeHandle = getResizeHandleAtPoint(shape, pointer.x, pointer.y, 10);
+        const resizeHandle = getResizeHandleAtPoint(
+          shape,
+          pointer.x,
+          pointer.y,
+          10
+        );
         if (resizeHandle) {
           setIsResizing(true);
           setResizeStart({
@@ -498,16 +522,21 @@ function DungeonEditor() {
           });
           return;
         }
-        
+
         // Then check for rotation handle
         const handlePos = getRotationHandlePosition(shape);
         const distance = Math.sqrt(
-          Math.pow(pointer.x - handlePos.x, 2) + Math.pow(pointer.y - handlePos.y, 2)
+          Math.pow(pointer.x - handlePos.x, 2) +
+            Math.pow(pointer.y - handlePos.y, 2)
         );
-        if (distance <= 15) { // Even larger hit area for better usability
+        if (distance <= 15) {
+          // Even larger hit area for better usability
           // Starting rotation
           const center = getShapeCenter(shape);
-          const startAngle = calculateAngle(center, { x: pointer.x, y: pointer.y });
+          const startAngle = calculateAngle(center, {
+            x: pointer.x,
+            y: pointer.y,
+          });
           setIsRotating(true);
           setRotationStart({
             angle: startAngle,
@@ -581,16 +610,22 @@ function DungeonEditor() {
           if (Math.sqrt(dx * dx + dy * dy) <= poly.radius) hit = true;
         } else if (shape.tool === "door") {
           // Door hit test: check if pointer is inside door rect
-          const doorW = shape.orientation === "horizontal" ? Math.abs(shape.width) : Math.abs(shape.height);
-          const doorH = shape.orientation === "horizontal" ? Math.abs(shape.height) : Math.abs(shape.width);
-          
+          const doorW =
+            shape.orientation === "horizontal"
+              ? Math.abs(shape.width)
+              : Math.abs(shape.height);
+          const doorH =
+            shape.orientation === "horizontal"
+              ? Math.abs(shape.height)
+              : Math.abs(shape.width);
+
           // Ensure minimum hit area
           const actualDoorW = Math.max(8, doorW);
           const actualDoorH = Math.max(4, doorH);
-          
+
           const doorX = shape.x - actualDoorW / 2;
           const doorY = shape.y - actualDoorH / 2;
-          
+
           if (
             x >= doorX &&
             x <= doorX + actualDoorW &&
@@ -691,10 +726,10 @@ function DungeonEditor() {
           // Door deletion: check if pointer is inside door rect
           const actualDoorW = Math.max(8, Math.abs(shape.width));
           const actualDoorH = Math.max(4, Math.abs(shape.height));
-          
+
           const doorX = shape.x - actualDoorW / 2;
           const doorY = shape.y - actualDoorH / 2;
-          
+
           if (
             x >= doorX &&
             x <= doorX + actualDoorW &&
@@ -713,7 +748,13 @@ function DungeonEditor() {
     if (tool === "icon") {
       pushHistoryAndSetShapes([
         ...shapes,
-        { tool: "icon", x, y, icon: ICONS[iconIndex].icon, drawingMode: addMode } as IconShape,
+        {
+          tool: "icon",
+          x,
+          y,
+          icon: ICONS[iconIndex].icon,
+          drawingMode: addMode,
+        } as IconShape,
       ]);
       return;
     }
@@ -728,7 +769,15 @@ function DungeonEditor() {
         thickness,
       });
     } else if (tool === "rect") {
-      setDrawing({ tool: "rect", x, y, width: 0, height: 0, color: shapeColor, thickness });
+      setDrawing({
+        tool: "rect",
+        x,
+        y,
+        width: 0,
+        height: 0,
+        color: shapeColor,
+        thickness,
+      });
     } else if (tool === "roundedRect") {
       // Start drawing from anchor point, width/height 0
       setDrawing({
@@ -753,7 +802,14 @@ function DungeonEditor() {
         thickness,
       });
     } else if (tool === "circle") {
-      setDrawing({ tool: "circle", x, y, radius: 0, color: shapeColor, thickness });
+      setDrawing({
+        tool: "circle",
+        x,
+        y,
+        radius: 0,
+        color: shapeColor,
+        thickness,
+      });
     } else if (["pentagon", "hexagon", "octagon"].includes(tool)) {
       setDrawing({
         tool: tool as "pentagon" | "hexagon" | "octagon",
@@ -765,7 +821,12 @@ function DungeonEditor() {
         thickness,
       });
     } else if (tool === "free") {
-      setDrawing({ tool: "free", points: [{ x, y }], color: shapeColor, thickness });
+      setDrawing({
+        tool: "free",
+        points: [{ x, y }],
+        color: shapeColor,
+        thickness,
+      });
     } else if (tool === "door") {
       // Place a door at snapped x/y, default orientation horizontal, size 32x8
       let doorX: number, doorY: number, orientation: "horizontal" | "vertical";
@@ -785,7 +846,7 @@ function DungeonEditor() {
         x: doorX,
         y: doorY,
         orientation: orientation,
-        width: 32,  // Consistent door size
+        width: 32, // Consistent door size
         height: 8,
       });
       return;
@@ -793,41 +854,59 @@ function DungeonEditor() {
   };
 
   const handleMouseMove = (e: any) => {
-    if (isResizing && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && resizeStart) {
+    if (
+      isResizing &&
+      selectedIndex !== null &&
+      selectedIndex >= 0 &&
+      selectedIndex < shapes.length &&
+      resizeStart
+    ) {
       const stage = e.target.getStage();
       const pointer = getLogicalPointerPosition(stage);
       if (!pointer) return;
-      
+
       const deltaX = pointer.x - resizeStart.startX;
       const deltaY = pointer.y - resizeStart.startY;
       const originalShape = resizeStart.originalShape;
-      
+
       setShapes((shapes) =>
         shapes.map((s, idx) => {
           if (idx !== selectedIndex) return s;
-          
+
           // Apply resize based on handle type
-          return applyResize(originalShape, resizeStart.handleType, deltaX, deltaY, snapTo);
+          return applyResize(
+            originalShape,
+            resizeStart.handleType,
+            deltaX,
+            deltaY,
+            snapTo
+          );
         })
       );
       return;
     }
-    
-    if (isRotating && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && rotationStart) {
+
+    if (
+      isRotating &&
+      selectedIndex !== null &&
+      selectedIndex >= 0 &&
+      selectedIndex < shapes.length &&
+      rotationStart
+    ) {
       const stage = e.target.getStage();
       const pointer = getLogicalPointerPosition(stage);
       if (!pointer) return;
-      
+
       const shape = shapes[selectedIndex];
       if (!shape) return; // Guard against undefined shape
       const center = getShapeCenter(shape);
       const currentAngle = calculateAngle(center, pointer);
       const deltaAngle = currentAngle - rotationStart.angle;
       let newRotation = rotationStart.shapeRotation + deltaAngle;
-      
+
       // Apply rotation snapping when snap-to-grid is enabled
       newRotation = snapRotation(newRotation, snapTo);
-      
+
       setShapes((shapes) =>
         shapes.map((s, idx) => {
           if (idx !== selectedIndex) return s;
@@ -951,7 +1030,7 @@ function DungeonEditor() {
       let orientation = drawing.orientation;
       const dx = Math.abs(pointer.x - drawing.x);
       const dy = Math.abs(pointer.y - drawing.y);
-      
+
       // More sensitive orientation change - smaller threshold
       if (dx > 10 || dy > 10) {
         if (dx > dy * 1.2) {
@@ -960,7 +1039,7 @@ function DungeonEditor() {
           orientation = "vertical";
         }
       }
-      
+
       let doorX = pointer.x;
       let doorY = pointer.y;
       if (snapTo) {
@@ -979,25 +1058,31 @@ function DungeonEditor() {
       setResizeStart(null);
       return;
     }
-    
+
     if (isRotating) {
       setIsRotating(false);
       setRotationStart(null);
       return;
     }
-    
+
     if (tool === "select") {
       setDragOffset(null);
       return;
     }
     if (drawing) {
       if (drawing.tool === "door") {
-        pushHistoryAndSetShapes([...shapes, { ...drawing, drawingMode: addMode }]);
+        pushHistoryAndSetShapes([
+          ...shapes,
+          { ...drawing, drawingMode: addMode },
+        ]);
         setDrawing(null);
         return;
       }
       // Add drawingMode property to remember what mode the shape was drawn in
-      pushHistoryAndSetShapes([...shapes, { ...drawing, drawingMode: addMode }]);
+      pushHistoryAndSetShapes([
+        ...shapes,
+        { ...drawing, drawingMode: addMode },
+      ]);
       setDrawing(null);
     }
   };
@@ -1056,39 +1141,43 @@ function DungeonEditor() {
     } else if (tool === "select") {
       // Dynamic cursor for select tool based on what's under the mouse
       cursor = "pointer";
-      
+
       // Add hover detection for resize handles when in select mode
       const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
       if (canvas) {
         const handleMouseMove = (e: MouseEvent) => {
-          if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+          if (
+            selectedIndex !== null &&
+            selectedIndex >= 0 &&
+            selectedIndex < shapes.length
+          ) {
             const shape = shapes[selectedIndex];
             if (shape) {
               const rect = canvas.getBoundingClientRect();
               const x = (e.clientX - rect.left - pan.x) / zoom;
               const y = (e.clientY - rect.top - pan.y) / zoom;
-              
+
               const resizeHandle = getResizeHandleAtPoint(shape, x, y, 10);
               if (resizeHandle) {
                 canvas.style.cursor = resizeHandle.cursor;
                 return;
               }
-              
+
               const handlePos = getRotationHandlePosition(shape);
               const distance = Math.sqrt(
                 Math.pow(x - handlePos.x, 2) + Math.pow(y - handlePos.y, 2)
               );
               if (distance <= 15) {
-                canvas.style.cursor = 'grab';
+                canvas.style.cursor = "grab";
                 return;
               }
             }
           }
           canvas.style.cursor = "pointer";
         };
-        
-        canvas.addEventListener('mousemove', handleMouseMove);
-        return () => canvas.removeEventListener('mousemove', handleMouseMove);
+
+        canvas.addEventListener("mousemove", handleMouseMove);
+        return () => canvas.removeEventListener("mousemove", handleMouseMove);
       }
     }
     const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
@@ -1169,9 +1258,15 @@ function DungeonEditor() {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length) {
+        if (
+          selectedIndex !== null &&
+          selectedIndex >= 0 &&
+          selectedIndex < shapes.length
+        ) {
           // Delete the selected shape
-          pushHistoryAndSetShapes(shapes.filter((_, idx) => idx !== selectedIndex));
+          pushHistoryAndSetShapes(
+            shapes.filter((_, idx) => idx !== selectedIndex)
+          );
           setSelectedIndex(null);
           setDragOffset(null);
           e.preventDefault(); // Prevent default browser behavior
@@ -1215,7 +1310,9 @@ function DungeonEditor() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Save as JPEG</h2>
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>
+              Save as JPEG
+            </h2>
             <div
               style={{
                 fontSize: 14,
@@ -1230,7 +1327,14 @@ function DungeonEditor() {
                 your browser settings allow.
               </div>
             </div>
-            <label style={{ display: "block", marginBottom: 8, fontSize: 15, color: "#333" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontSize: 15,
+                color: "#333",
+              }}
+            >
               Filename:
               <input
                 type="text"
@@ -1350,9 +1454,18 @@ function DungeonEditor() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Save Dungeon Project</h2>
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>
+              Save Dungeon Project
+            </h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#333",
+                }}
+              >
                 Project Name:
                 <input
                   type="text"
@@ -1373,7 +1486,14 @@ function DungeonEditor() {
               </label>
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#333",
+                }}
+              >
                 Description (optional):
                 <textarea
                   value={projectDescription}
@@ -1394,7 +1514,9 @@ function DungeonEditor() {
                 />
               </label>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}
+            >
               <button
                 onClick={() => {
                   setShowSaveProjectModal(false);
@@ -1463,11 +1585,22 @@ function DungeonEditor() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, fontSize: 20, marginBottom: 16, color: "#333" }}>Load Dungeon Project</h2>
+            <h2
+              style={{
+                marginTop: 0,
+                fontSize: 20,
+                marginBottom: 16,
+                color: "#333",
+              }}
+            >
+              Load Dungeon Project
+            </h2>
             {savedProjects.length === 0 ? (
               <div style={{ padding: 40, textAlign: "center", color: "#666" }}>
                 <p style={{ color: "#666" }}>No saved projects found.</p>
-                <p style={{ color: "#666" }}>Create and save a project first!</p>
+                <p style={{ color: "#666" }}>
+                  Create and save a project first!
+                </p>
               </div>
             ) : (
               <div style={{ overflowY: "auto", flex: 1 }}>
@@ -1484,8 +1617,12 @@ function DungeonEditor() {
                       cursor: "pointer",
                       transition: "background-color 0.2s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f5f5f5")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "transparent")
+                    }
                     onClick={() => {
                       loadProject(project.id);
                       setShowLoadProjectModal(false);
@@ -1506,27 +1643,55 @@ function DungeonEditor() {
                       />
                     )}
                     <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#333" }}>{project.name}</h3>
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: "#333",
+                        }}
+                      >
+                        {project.name}
+                      </h3>
                       {project.description && (
-                        <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#666" }}>
+                        <p
+                          style={{
+                            margin: "4px 0 0 0",
+                            fontSize: 14,
+                            color: "#666",
+                          }}
+                        >
                           {project.description}
                         </p>
                       )}
-                      <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "#999" }}>
-                        Last modified: {project.lastModified.toLocaleDateString()} at{" "}
+                      <p
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: 12,
+                          color: "#999",
+                        }}
+                      >
+                        Last modified:{" "}
+                        {project.lastModified.toLocaleDateString()} at{" "}
                         {project.lastModified.toLocaleTimeString()}
                       </p>
                     </div>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                        if (
+                          confirm(
+                            `Are you sure you want to delete "${project.name}"?`
+                          )
+                        ) {
                           try {
                             await deleteDungeonProject(project.id);
                             await loadSavedProjects();
                           } catch (error) {
                             console.error("Error deleting project:", error);
-                            alert("Failed to delete project. Please try again.");
+                            alert(
+                              "Failed to delete project. Please try again."
+                            );
                           }
                         }
                       }}
@@ -1547,7 +1712,13 @@ function DungeonEditor() {
                 ))}
               </div>
             )}
-            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                marginTop: 16,
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 onClick={() => setShowLoadProjectModal(false)}
                 style={{
@@ -1597,13 +1768,17 @@ function DungeonEditor() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: 0, color: "#333" }}>
-              {colorPickerMode === "background" ? "Canvas Background Color" : 
-               "Stone & Grid Color"}
+              {colorPickerMode === "background"
+                ? "Canvas Background Color"
+                : "Stone & Grid Color"}
             </h3>
-            
+
             <SketchPicker
-              color={colorPickerMode === "background" ? backgroundColor : 
-                     underlayerColor}
+              color={
+                colorPickerMode === "background"
+                  ? backgroundColor
+                  : underlayerColor
+              }
               onChange={(newColor) => {
                 if (colorPickerMode === "background") {
                   setBackgroundColor(newColor.hex);
@@ -1613,13 +1788,14 @@ function DungeonEditor() {
               }}
               disableAlpha={true}
             />
-            
+
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={() => setColorPickerMode("background")}
                 style={{
                   padding: "8px 16px",
-                  background: colorPickerMode === "background" ? "#4CAF50" : "#666",
+                  background:
+                    colorPickerMode === "background" ? "#4CAF50" : "#666",
                   color: "#fff",
                   border: "none",
                   borderRadius: 4,
@@ -1632,7 +1808,8 @@ function DungeonEditor() {
                 onClick={() => setColorPickerMode("underlayer")}
                 style={{
                   padding: "8px 16px",
-                  background: colorPickerMode === "underlayer" ? "#4CAF50" : "#666",
+                  background:
+                    colorPickerMode === "underlayer" ? "#4CAF50" : "#666",
                   color: "#fff",
                   border: "none",
                   borderRadius: 4,
@@ -1642,7 +1819,7 @@ function DungeonEditor() {
                 Stone
               </button>
             </div>
-            
+
             <button
               onClick={() => setShowColorPicker(false)}
               style={{
@@ -1688,12 +1865,22 @@ function DungeonEditor() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>Export to Map Gallery</h2>
+            <h2 style={{ marginTop: 0, fontSize: 20, color: "#333" }}>
+              Export to Map Gallery
+            </h2>
             <p style={{ color: "#666", marginBottom: 16 }}>
-              Export your completed dungeon to the Map Gallery where it can be viewed and used for gameplay.
+              Export your completed dungeon to the Map Gallery where it can be
+              viewed and used for gameplay.
             </p>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#333",
+                }}
+              >
                 Map Name:
                 <input
                   type="text"
@@ -1714,7 +1901,14 @@ function DungeonEditor() {
               </label>
             </div>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600, color: "#333" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#333",
+                }}
+              >
                 Description (optional):
                 <textarea
                   value={exportDescription}
@@ -1735,7 +1929,9 @@ function DungeonEditor() {
                 />
               </label>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}
+            >
               <button
                 onClick={() => {
                   setShowExportModal(false);
@@ -1783,7 +1979,7 @@ function DungeonEditor() {
           >
             ⟵ Home
           </button>
-          
+
           <div className="project-info">
             <span className="project-label">Project:</span>
             <span className="project-name">{currentProjectName}</span>
@@ -1796,8 +1992,12 @@ function DungeonEditor() {
           <div className="button-group">
             <button
               onClick={() => {
-                if (shapes.length > 0 && 
-                    confirm("Starting a new project will clear your current work. Continue?")) {
+                if (
+                  shapes.length > 0 &&
+                  confirm(
+                    "Starting a new project will clear your current work. Continue?"
+                  )
+                ) {
                   setShapes([]);
                   setHistory([]);
                   setFuture([]);
@@ -1819,7 +2019,7 @@ function DungeonEditor() {
             >
               📄 New
             </button>
-            
+
             <button
               onClick={() => {
                 setProjectName(currentProjectName);
@@ -1830,7 +2030,7 @@ function DungeonEditor() {
             >
               💾 Save
             </button>
-            
+
             <button
               onClick={() => setShowLoadProjectModal(true)}
               className="btn-primary"
@@ -1845,12 +2045,14 @@ function DungeonEditor() {
             <button
               onClick={handleUndo}
               disabled={history.length === 0}
-              className={history.length === 0 ? "btn-disabled" : "btn-secondary"}
+              className={
+                history.length === 0 ? "btn-disabled" : "btn-secondary"
+              }
               title="Undo"
             >
               ↶
             </button>
-            
+
             <button
               onClick={handleRedo}
               disabled={future.length === 0}
@@ -1859,7 +2061,7 @@ function DungeonEditor() {
             >
               ↷
             </button>
-            
+
             <button
               onClick={handleClearAll}
               className="btn-danger"
@@ -1874,7 +2076,9 @@ function DungeonEditor() {
             <button
               onClick={() => setAddMode((v) => !v)}
               className={addMode ? "btn-active" : "btn-inactive"}
-              title={addMode ? "Switch to Carving Mode" : "Switch to Adding Mode"}
+              title={
+                addMode ? "Switch to Carving Mode" : "Switch to Adding Mode"
+              }
             >
               {addMode ? "✏️ Adding" : "⛏️ Carving"}
             </button>
@@ -1889,7 +2093,7 @@ function DungeonEditor() {
             >
               {showGrid ? "⬜" : "⬛"}
             </button>
-            
+
             <button
               onClick={() => setSnapTo((v) => !v)}
               className={snapTo ? "btn-active" : "btn-inactive"}
@@ -1970,7 +2174,7 @@ function DungeonEditor() {
             >
               🖼️ Gallery
             </button>
-            
+
             <button
               onClick={() => setShowSaveModal(true)}
               className="btn-purple"
@@ -1989,11 +2193,13 @@ function DungeonEditor() {
             >
               ⚙️
             </button>
-            
+
             {showSettingsPanel && (
               <div className="settings-panel">
                 <div className="settings-group">
-                  <label htmlFor="grid-size-slider">Grid Size: {gridSize}</label>
+                  <label htmlFor="grid-size-slider">
+                    Grid Size: {gridSize}
+                  </label>
                   <input
                     id="grid-size-slider"
                     type="range"
@@ -2004,9 +2210,11 @@ function DungeonEditor() {
                     onChange={(e) => setGridSize(Number(e.target.value))}
                   />
                 </div>
-                
+
                 <div className="settings-group">
-                  <label htmlFor="thickness-slider">Line Thickness: {thickness}</label>
+                  <label htmlFor="thickness-slider">
+                    Line Thickness: {thickness}
+                  </label>
                   <input
                     id="thickness-slider"
                     type="range"
@@ -2017,7 +2225,7 @@ function DungeonEditor() {
                     onChange={(e) => setThickness(Number(e.target.value))}
                   />
                 </div>
-                
+
                 <div className="settings-group canvas-size">
                   <label>Canvas Size</label>
                   <div className="size-inputs">
@@ -2063,7 +2271,10 @@ function DungeonEditor() {
           {/* Color picker at the very top */}
           <button
             style={{
-              background: colorPickerMode === "background" ? backgroundColor : underlayerColor,
+              background:
+                colorPickerMode === "background"
+                  ? backgroundColor
+                  : underlayerColor,
               width: 36,
               height: 36,
               border: "2px solid #fff",
@@ -2071,14 +2282,25 @@ function DungeonEditor() {
               margin: 8,
               cursor: "pointer",
             }}
-            title={colorPickerMode === "background" ? "Background Color" : "Underlayer Color"}
+            title={
+              colorPickerMode === "background"
+                ? "Background Color"
+                : "Underlayer Color"
+            }
             onClick={() => setShowColorPicker((v) => !v)}
           >
             🎨
           </button>
 
           {/* Color mode toggle buttons */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 8px 8px 8px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              margin: "0 8px 8px 8px",
+            }}
+          >
             <button
               onClick={() => setColorPickerMode("background")}
               style={{
@@ -2195,11 +2417,15 @@ function DungeonEditor() {
               {shapes.map((shape, i) => {
                 // Only carve-out shapes (not icons/text) - use their original drawing mode
                 if (shape.tool === "icon" || shape.tool === "text") return null;
-                
+
                 // Determine composite operation based on shape's original drawing mode
-                const shapeOperation = (shape as any).drawingMode ? "source-over" : "destination-out";
-                const shapeColor = (shape as any).drawingMode ? (shape as any).color : "#fff";
-                
+                const shapeOperation = (shape as any).drawingMode
+                  ? "source-over"
+                  : "destination-out";
+                const shapeColor = (shape as any).drawingMode
+                  ? (shape as any).color
+                  : "#fff";
+
                 if (shape.tool === "line") {
                   const center = getShapeCenter(shape);
                   return (
@@ -2216,7 +2442,9 @@ function DungeonEditor() {
                       lineCap="round"
                       lineJoin="round"
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                       x={center.x}
                       y={center.y}
                     />
@@ -2232,13 +2460,20 @@ function DungeonEditor() {
                       height={shape.height}
                       fill={shapeColor}
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                       offsetX={center.x - shape.x}
                       offsetY={center.y - shape.y}
                     />
                   );
                 } else if (shape.tool === "roundedRect") {
-                  const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
+                  const norm = normalizeRectCoords(
+                    shape.x,
+                    shape.y,
+                    shape.width,
+                    shape.height
+                  );
                   const center = getShapeCenter(shape);
                   return (
                     <KonvaRect
@@ -2247,10 +2482,16 @@ function DungeonEditor() {
                       y={center.y}
                       width={norm.width}
                       height={norm.height}
-                      cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
+                      cornerRadius={Math.min(
+                        16,
+                        norm.width / 2,
+                        norm.height / 2
+                      )}
                       fill={shapeColor}
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                       offsetX={center.x - norm.x}
                       offsetY={center.y - norm.y}
                     />
@@ -2260,11 +2501,16 @@ function DungeonEditor() {
                   return (
                     <KonvaLine
                       key={i}
-                      points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
+                      points={shape.points.flatMap((p) => [
+                        p.x - center.x,
+                        p.y - center.y,
+                      ])}
                       closed
                       fill={shapeColor}
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                       x={center.x}
                       y={center.y}
                     />
@@ -2278,7 +2524,9 @@ function DungeonEditor() {
                       radius={shape.radius}
                       fill={shapeColor}
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                     />
                   );
                 } else if (
@@ -2297,24 +2545,31 @@ function DungeonEditor() {
                       closed
                       fill={shapeColor}
                       globalCompositeOperation={shapeOperation}
-                      rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        poly.rotation ? (poly.rotation * 180) / Math.PI : 0
+                      }
                       x={poly.x}
                       y={poly.y}
                     />
                   );
-                  } else if (shape.tool === "free") {
+                } else if (shape.tool === "free") {
                   const center = getShapeCenter(shape);
                   return (
                     <KonvaLine
                       key={i}
-                      points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
+                      points={shape.points.flatMap((p) => [
+                        p.x - center.x,
+                        p.y - center.y,
+                      ])}
                       stroke={shapeColor}
                       strokeWidth={shape.thickness || thickness}
                       lineCap="round"
                       lineJoin="round"
                       tension={0.5}
                       globalCompositeOperation={shapeOperation}
-                      rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                      }
                       x={center.x}
                       y={center.y}
                     />
@@ -2369,7 +2624,11 @@ function DungeonEditor() {
                         y={norm.y}
                         width={norm.width}
                         height={norm.height}
-                        cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
+                        cornerRadius={Math.min(
+                          16,
+                          norm.width / 2,
+                          norm.height / 2
+                        )}
                         fill={getFillColor(drawing)}
                         dash={[8, 8]}
                         globalCompositeOperation={getCompositeOperation()}
@@ -2435,7 +2694,7 @@ function DungeonEditor() {
                   }
                   return null;
                 })()}
-              
+
               {/* Grid - only visible in carved-out areas (underneath the black stone) */}
               {showGrid && (
                 <React.Fragment>
@@ -2468,7 +2727,11 @@ function DungeonEditor() {
                         fill="#222"
                         offsetX={iconSize / 2}
                         offsetY={iconSize / 2}
-                        rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          iconShape.rotation
+                            ? (iconShape.rotation * 180) / Math.PI
+                            : 0
+                        }
                       />
                       {isSelected && (
                         <KonvaRect
@@ -2482,7 +2745,11 @@ function DungeonEditor() {
                           cornerRadius={8}
                           offsetX={(iconSize + 6) / 2}
                           offsetY={(iconSize + 6) / 2}
-                          rotation={iconShape.rotation ? (iconShape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            iconShape.rotation
+                              ? (iconShape.rotation * 180) / Math.PI
+                              : 0
+                          }
                         />
                       )}
                     </React.Fragment>
@@ -2490,13 +2757,19 @@ function DungeonEditor() {
                 }
                 if (shape.tool === "door") {
                   // Draw a filled rectangle for the door (above mask)
-                  const doorW = shape.orientation === "horizontal" ? Math.abs(shape.width) : Math.abs(shape.height);
-                  const doorH = shape.orientation === "horizontal" ? Math.abs(shape.height) : Math.abs(shape.width);
-                  
+                  const doorW =
+                    shape.orientation === "horizontal"
+                      ? Math.abs(shape.width)
+                      : Math.abs(shape.height);
+                  const doorH =
+                    shape.orientation === "horizontal"
+                      ? Math.abs(shape.height)
+                      : Math.abs(shape.width);
+
                   // Ensure minimum visibility
                   const actualDoorW = Math.max(8, doorW);
                   const actualDoorH = Math.max(4, doorH);
-                  
+
                   return (
                     <React.Fragment key={i}>
                       <KonvaRect
@@ -2509,7 +2782,9 @@ function DungeonEditor() {
                         strokeWidth={2}
                         offsetX={actualDoorW / 2}
                         offsetY={actualDoorH / 2}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                       />
                       {isSelected && (
                         <KonvaRect
@@ -2523,7 +2798,11 @@ function DungeonEditor() {
                           cornerRadius={6}
                           offsetX={(actualDoorW + 6) / 2}
                           offsetY={(actualDoorH + 6) / 2}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                         />
                       )}
                     </React.Fragment>
@@ -2544,7 +2823,9 @@ function DungeonEditor() {
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                         offsetX={center.x - shape.x}
                         offsetY={center.y - shape.y}
                       />
@@ -2558,7 +2839,11 @@ function DungeonEditor() {
                           strokeWidth={2}
                           dash={[4, 4]}
                           cornerRadius={4}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                           offsetX={center.x - (shape.x - 3)}
                           offsetY={center.y - (shape.y - 3)}
                         />
@@ -2567,7 +2852,12 @@ function DungeonEditor() {
                   );
                 }
                 if (shape.tool === "roundedRect") {
-                  const norm = normalizeRectCoords(shape.x, shape.y, shape.width, shape.height);
+                  const norm = normalizeRectCoords(
+                    shape.x,
+                    shape.y,
+                    shape.width,
+                    shape.height
+                  );
                   const center = getShapeCenter(shape);
                   return (
                     <React.Fragment key={i}>
@@ -2576,11 +2866,19 @@ function DungeonEditor() {
                         y={center.y}
                         width={norm.width}
                         height={norm.height}
-                        cornerRadius={Math.min(16, norm.width / 2, norm.height / 2)}
+                        cornerRadius={Math.min(
+                          16,
+                          norm.width / 2,
+                          norm.height / 2
+                        )}
                         stroke={isSelected ? shape.color : undefined}
-                        strokeWidth={isSelected ? shape.thickness || thickness : 0}
+                        strokeWidth={
+                          isSelected ? shape.thickness || thickness : 0
+                        }
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                         offsetX={center.x - norm.x}
                         offsetY={center.y - norm.y}
                       />
@@ -2593,8 +2891,14 @@ function DungeonEditor() {
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
-                          cornerRadius={Math.min(16, norm.width / 2, norm.height / 2) + 2}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          cornerRadius={
+                            Math.min(16, norm.width / 2, norm.height / 2) + 2
+                          }
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                           offsetX={center.x - (norm.x - 3)}
                           offsetY={center.y - (norm.y - 3)}
                         />
@@ -2607,14 +2911,19 @@ function DungeonEditor() {
                   return (
                     <React.Fragment key={i}>
                       <KonvaLine
-                        points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
+                        points={shape.points.flatMap((p) => [
+                          p.x - center.x,
+                          p.y - center.y,
+                        ])}
                         closed
                         stroke={isSelected ? shape.color : undefined}
                         strokeWidth={
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                         x={center.x}
                         y={center.y}
                       />
@@ -2626,14 +2935,21 @@ function DungeonEditor() {
                             const py = p.y - center.y;
                             const distance = Math.sqrt(px * px + py * py);
                             const expansion = 3; // pixels to expand
-                            const factor = distance > 0 ? (distance + expansion) / distance : 1;
+                            const factor =
+                              distance > 0
+                                ? (distance + expansion) / distance
+                                : 1;
                             return [px * factor, py * factor];
                           })}
                           closed
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                           x={center.x}
                           y={center.y}
                         />
@@ -2653,7 +2969,9 @@ function DungeonEditor() {
                           isSelected ? shape.thickness || thickness : 0
                         }
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                       />
                       {isSelected && (
                         <KonvaCircle
@@ -2663,7 +2981,11 @@ function DungeonEditor() {
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                         />
                       )}
                     </React.Fragment>
@@ -2676,10 +2998,13 @@ function DungeonEditor() {
                     poly.radius * Math.cos(j * angle - Math.PI / 2),
                     poly.radius * Math.sin(j * angle - Math.PI / 2),
                   ]).flat();
-                  const outlinePoints = Array.from({ length: poly.sides }, (_, j) => [
-                    (poly.radius + 3) * Math.cos(j * angle - Math.PI / 2),
-                    (poly.radius + 3) * Math.sin(j * angle - Math.PI / 2),
-                  ]).flat();
+                  const outlinePoints = Array.from(
+                    { length: poly.sides },
+                    (_, j) => [
+                      (poly.radius + 3) * Math.cos(j * angle - Math.PI / 2),
+                      (poly.radius + 3) * Math.sin(j * angle - Math.PI / 2),
+                    ]
+                  ).flat();
                   return (
                     <React.Fragment key={i}>
                       <KonvaLine
@@ -2690,7 +3015,9 @@ function DungeonEditor() {
                           isSelected ? poly.thickness || thickness : 0
                         }
                         fillEnabled={false}
-                        rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          poly.rotation ? (poly.rotation * 180) / Math.PI : 0
+                        }
                         offsetX={0}
                         offsetY={0}
                         x={poly.x}
@@ -2703,7 +3030,9 @@ function DungeonEditor() {
                           stroke="#1e90ff"
                           strokeWidth={2}
                           dash={[4, 4]}
-                          rotation={poly.rotation ? (poly.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            poly.rotation ? (poly.rotation * 180) / Math.PI : 0
+                          }
                           offsetX={0}
                           offsetY={0}
                           x={poly.x}
@@ -2731,7 +3060,9 @@ function DungeonEditor() {
                         lineCap="round"
                         lineJoin="round"
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                         x={center.x}
                         y={center.y}
                       />
@@ -2744,10 +3075,17 @@ function DungeonEditor() {
                             shape.points[1].y - center.y,
                           ]}
                           stroke="#1e90ff"
-                          strokeWidth={Math.max(4, (shape.thickness || thickness) + 2)}
+                          strokeWidth={Math.max(
+                            4,
+                            (shape.thickness || thickness) + 2
+                          )}
                           lineCap="round"
                           lineJoin="round"
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                           x={center.x}
                           y={center.y}
                         />
@@ -2760,7 +3098,10 @@ function DungeonEditor() {
                   return (
                     <React.Fragment key={i}>
                       <KonvaLine
-                        points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
+                        points={shape.points.flatMap((p) => [
+                          p.x - center.x,
+                          p.y - center.y,
+                        ])}
                         stroke={isSelected ? shape.color : undefined}
                         strokeWidth={
                           isSelected ? shape.thickness || thickness : 0
@@ -2769,19 +3110,31 @@ function DungeonEditor() {
                         lineJoin="round"
                         tension={0.5}
                         fillEnabled={false}
-                        rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                        rotation={
+                          shape.rotation ? (shape.rotation * 180) / Math.PI : 0
+                        }
                         x={center.x}
                         y={center.y}
                       />
                       {isSelected && (
                         <KonvaLine
-                          points={shape.points.flatMap((p) => [p.x - center.x, p.y - center.y])}
+                          points={shape.points.flatMap((p) => [
+                            p.x - center.x,
+                            p.y - center.y,
+                          ])}
                           stroke="#1e90ff"
-                          strokeWidth={Math.max(4, (shape.thickness || thickness) + 2)}
+                          strokeWidth={Math.max(
+                            4,
+                            (shape.thickness || thickness) + 2
+                          )}
                           lineCap="round"
                           lineJoin="round"
                           tension={0.5}
-                          rotation={shape.rotation ? (shape.rotation * 180) / Math.PI : 0}
+                          rotation={
+                            shape.rotation
+                              ? (shape.rotation * 180) / Math.PI
+                              : 0
+                          }
                           x={center.x}
                           y={center.y}
                         />
@@ -2791,17 +3144,24 @@ function DungeonEditor() {
                 }
                 return null;
               })}
-              
+
               {/* Door Preview (rendered in icon layer to appear above the cut away) */}
-              {drawing && drawing.tool === "door" && (
+              {drawing &&
+                drawing.tool === "door" &&
                 (() => {
-                  const doorW = drawing.orientation === "horizontal" ? Math.abs(drawing.width) : Math.abs(drawing.height);
-                  const doorH = drawing.orientation === "horizontal" ? Math.abs(drawing.height) : Math.abs(drawing.width);
-                  
+                  const doorW =
+                    drawing.orientation === "horizontal"
+                      ? Math.abs(drawing.width)
+                      : Math.abs(drawing.height);
+                  const doorH =
+                    drawing.orientation === "horizontal"
+                      ? Math.abs(drawing.height)
+                      : Math.abs(drawing.width);
+
                   // Ensure minimum visibility
                   const actualDoorW = Math.max(8, doorW);
                   const actualDoorH = Math.max(4, doorH);
-                  
+
                   return (
                     <KonvaRect
                       x={drawing.x}
@@ -2814,14 +3174,20 @@ function DungeonEditor() {
                       dash={[8, 8]}
                       offsetX={actualDoorW / 2}
                       offsetY={actualDoorH / 2}
-                      rotation={drawing.rotation ? (drawing.rotation * 180) / Math.PI : 0}
+                      rotation={
+                        drawing.rotation
+                          ? (drawing.rotation * 180) / Math.PI
+                          : 0
+                      }
                     />
                   );
-                })()
-              )}
-              
+                })()}
+
               {/* Rotation Handle */}
-              {tool === "select" && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && (
+              {tool === "select" &&
+                selectedIndex !== null &&
+                selectedIndex >= 0 &&
+                selectedIndex < shapes.length &&
                 (() => {
                   const shape = shapes[selectedIndex];
                   if (!shape) return null; // Guard against undefined shape
@@ -2856,16 +3222,18 @@ function DungeonEditor() {
                       />
                     </React.Fragment>
                   );
-                })()
-              )}
-              
+                })()}
+
               {/* Resize Handles */}
-              {tool === "select" && selectedIndex !== null && selectedIndex >= 0 && selectedIndex < shapes.length && (
+              {tool === "select" &&
+                selectedIndex !== null &&
+                selectedIndex >= 0 &&
+                selectedIndex < shapes.length &&
                 (() => {
                   const shape = shapes[selectedIndex];
                   if (!shape) return null; // Guard against undefined shape
                   const handles = getResizeHandles(shape);
-                  
+
                   return (
                     <React.Fragment>
                       {handles.map((handle, index) => (
@@ -2882,8 +3250,7 @@ function DungeonEditor() {
                       ))}
                     </React.Fragment>
                   );
-                })()
-              )}
+                })()}
             </Layer>
           </Stage>
         </div>
