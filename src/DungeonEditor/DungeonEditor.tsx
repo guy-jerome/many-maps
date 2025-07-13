@@ -34,7 +34,7 @@ import {
   DungeonProject,
 } from "../idbService";
 
-// Tool types
+// Tool types - moved icon to bottom
 const TOOL_LIST = [
   { name: "select", icon: "🖱️" },
   { name: "line", icon: "📏" },
@@ -47,8 +47,8 @@ const TOOL_LIST = [
   { name: "hexagon", icon: "⬢" },
   { name: "octagon", icon: "⯃" },
   { name: "erase", icon: "🧹" },
-  { name: "icon", icon: "⭐" },
   { name: "door", icon: "🚪" },
+  { name: "icon", icon: "⭐" },
 ];
 
 type ToolName =
@@ -186,12 +186,48 @@ type Shape =
   | TextShape
   | DoorShape;
 
-// ICONS array must be defined before use
+// ICONS array with old-school D&D dungeon features
 const ICONS = [
-  { name: "stairs", icon: "🪜" },
-  { name: "chest", icon: "🧰" },
-  { name: "trap", icon: "☠️" },
-  { name: "door", icon: "🚪" },
+  { name: "bones", icon: "🦴" },
+  { name: "skull", icon: "💀" },
+  { name: "trap_door", icon: "🕳️" },
+  { name: "ladder", icon: "🪜" },
+  { name: "altar", icon: "⛩️" },
+  { name: "coffin", icon: "⚰️" },
+  { name: "rubble", icon: "🧱" },
+  { name: "chest", icon: "📦" },
+  { name: "treasure", icon: "💰" },
+  { name: "spiral_stairs", icon: "🌀" },
+  { name: "trap", icon: "⚡" },
+  { name: "statue", icon: "🗿" },
+  { name: "pillar", icon: "⬜" },
+  { name: "well", icon: "⭕" },
+  { name: "fountain", icon: "⛲" },
+  { name: "fire", icon: "🔥" },
+  { name: "torch", icon: "🕯️" },
+  { name: "crystal", icon: "💎" },
+  { name: "mushroom", icon: "🍄" },
+  { name: "web", icon: "🕸️" },
+  { name: "key", icon: "🗝️" },
+  { name: "scroll", icon: "📜" },
+  { name: "book", icon: "📚" },
+  { name: "potion", icon: "🧪" },
+  { name: "shield", icon: "🛡️" },
+  { name: "sword", icon: "⚔️" },
+  { name: "bow", icon: "🏹" },
+  { name: "hammer", icon: "🔨" },
+  { name: "anvil", icon: "⚒️" },
+  { name: "cauldron", icon: "�" },
+  { name: "bed", icon: "🛏️" },
+  { name: "table", icon: "�" },
+  { name: "barrel", icon: "🛢️" },
+  { name: "crate", icon: "📦" },
+  { name: "lever", icon: "🕹️" },
+  { name: "gear", icon: "⚙️" },
+  { name: "chain", icon: "⛓️" },
+  { name: "rope", icon: "🪢" },
+  { name: "bell", icon: "🔔" },
+  { name: "horn", icon: "�" },
 ];
 
 function DungeonEditor() {
@@ -2507,28 +2543,86 @@ function DungeonEditor() {
               </button>
             ))}
           </div>
-          {/* Icon selector for icon tool */}
+
+          {/* Icon selector panel - shown when icon tool is selected */}
           {tool === "icon" && (
-            <div style={{ margin: 8 }}>
-              {ICONS.map((ic, idx) => (
-                <button
-                  key={ic.name}
+            <div style={{ margin: "8px 8px 16px 8px" }}>
+              {/* Current selection indicator - outside scrollable area */}
+              <div
+                style={{
+                  marginBottom: 8,
+                  padding: "4px 8px",
+                  background: "#222",
+                  borderRadius: 4,
+                  fontSize: 12,
+                  color: "#ccc",
+                  textAlign: "center",
+                }}
+              >
+                Selected: {ICONS[iconIndex].name.replace(/_/g, " ")}
+              </div>
+
+              {/* Scrollable icon grid */}
+              <div
+                className="icon-panel"
+                style={{
+                  background: "#333",
+                  borderRadius: 6,
+                  padding: 8,
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <div
                   style={{
-                    fontSize: 20,
-                    margin: 2,
-                    background: iconIndex === idx ? "#888" : "#222",
-                    color: "#fff",
-                    border: "none",
-                    cursor: "pointer",
-                    width: 32,
-                    height: 32,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 4,
+                    justifyContent: "center",
                   }}
-                  onClick={() => setIconIndex(idx)}
-                  title={ic.name}
                 >
-                  {ic.icon}
-                </button>
-              ))}
+                  {ICONS.map((ic, idx) => (
+                    <button
+                      key={ic.name}
+                      style={{
+                        fontSize: 18,
+                        background: iconIndex === idx ? "#666" : "#444",
+                        color: "#fff",
+                        border:
+                          iconIndex === idx
+                            ? "2px solid #888"
+                            : "1px solid #555",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        width: "100%",
+                        height: 32,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s ease",
+                        minWidth: 0,
+                      }}
+                      onClick={() => setIconIndex(idx)}
+                      title={ic.name.replace(/_/g, " ")}
+                      onMouseEnter={(e) => {
+                        if (iconIndex !== idx) {
+                          e.currentTarget.style.background = "#555";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (iconIndex !== idx) {
+                          e.currentTarget.style.background = "#444";
+                        }
+                      }}
+                    >
+                      {ic.icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
