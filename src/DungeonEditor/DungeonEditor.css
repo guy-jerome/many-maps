@@ -462,6 +462,27 @@
   background: #888;
 }
 
+/* Old-school D&D icon styling */
+.icon-panel button {
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0;
+}
+
+/* Make icon symbols look more like old-school dungeon map symbols */
+.icon-panel button:hover {
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+/* Ensure consistent icon sizing and alignment */
+.dungeon-canvas text[data-icon="true"] {
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
 @media (max-width: 900px) {
   .dungeon-canvas {
     width: 100vw;

@@ -186,48 +186,175 @@ type Shape =
   | TextShape
   | DoorShape;
 
-// ICONS array with old-school D&D dungeon features
+// ICONS array with comprehensive old-school D&D dungeon features
 const ICONS = [
-  { name: "bones", icon: "🦴" },
-  { name: "skull", icon: "💀" },
-  { name: "trap_door", icon: "🕳️" },
-  { name: "ladder", icon: "🪜" },
-  { name: "altar", icon: "⛩️" },
-  { name: "coffin", icon: "⚰️" },
-  { name: "rubble", icon: "🧱" },
-  { name: "chest", icon: "📦" },
-  { name: "treasure", icon: "💰" },
-  { name: "spiral_stairs", icon: "🌀" },
-  { name: "trap", icon: "⚡" },
-  { name: "statue", icon: "🗿" },
-  { name: "pillar", icon: "⬜" },
-  { name: "well", icon: "⭕" },
-  { name: "fountain", icon: "⛲" },
-  { name: "fire", icon: "🔥" },
-  { name: "torch", icon: "🕯️" },
-  { name: "crystal", icon: "💎" },
-  { name: "mushroom", icon: "🍄" },
-  { name: "web", icon: "🕸️" },
-  { name: "key", icon: "🗝️" },
-  { name: "scroll", icon: "📜" },
-  { name: "book", icon: "📚" },
-  { name: "potion", icon: "🧪" },
-  { name: "shield", icon: "🛡️" },
-  { name: "sword", icon: "⚔️" },
-  { name: "bow", icon: "🏹" },
-  { name: "hammer", icon: "🔨" },
-  { name: "anvil", icon: "⚒️" },
-  { name: "cauldron", icon: "�" },
-  { name: "bed", icon: "🛏️" },
-  { name: "table", icon: "�" },
-  { name: "barrel", icon: "🛢️" },
-  { name: "crate", icon: "📦" },
-  { name: "lever", icon: "🕹️" },
-  { name: "gear", icon: "⚙️" },
-  { name: "chain", icon: "⛓️" },
-  { name: "rope", icon: "🪢" },
-  { name: "bell", icon: "🔔" },
-  { name: "horn", icon: "�" },
+  // Basic dungeon elements
+  { name: "bones", icon: "⚗" },
+  { name: "skull", icon: "☠" },
+  { name: "coffin", icon: "⚰" },
+  { name: "rubble", icon: "▪" },
+  { name: "pillar", icon: "●" },
+  { name: "statue", icon: "◉" },
+  { name: "altar", icon: "⊔" },
+  { name: "well", icon: "○" },
+  { name: "fountain", icon: "◎" },
+  { name: "fire", icon: "※" },
+  { name: "torch", icon: "†" },
+  
+  // Doors and passages
+  { name: "secret_door", icon: "◌" },
+  { name: "portcullis", icon: "≡" },
+  { name: "archway", icon: "∩" },
+  { name: "curtain", icon: "∿" },
+  { name: "bars", icon: "|||" },
+  { name: "gate", icon: "╬" },
+  
+  // Stairs and elevation
+  { name: "stairs_up", icon: "△" },
+  { name: "stairs_down", icon: "▽" },
+  { name: "spiral_stairs", icon: "◯" },
+  { name: "ladder_up", icon: "‖" },
+  { name: "ladder_down", icon: "∥" },
+  { name: "ramp", icon: "⟋" },
+  { name: "balcony", icon: "⌐" },
+  { name: "ledge", icon: "⌊" },
+  
+  // Traps and hazards
+  { name: "trap_door", icon: "⬜" },
+  { name: "pit", icon: "⬛" },
+  { name: "spike_trap", icon: "▲" },
+  { name: "pressure_plate", icon: "◈" },
+  { name: "dart_trap", icon: "→" },
+  { name: "poison_gas", icon: "☁" },
+  { name: "rolling_stone", icon: "●" },
+  { name: "pendulum", icon: "⏞" },
+  { name: "buzzsaw", icon: "◎" },
+  { name: "spear_trap", icon: "↑" },
+  
+  // Mechanisms
+  { name: "lever", icon: "⚹" },
+  { name: "button", icon: "◉" },
+  { name: "switch", icon: "⚌" },
+  { name: "gear", icon: "⚙" },
+  { name: "pulley", icon: "◯" },
+  { name: "chain", icon: "⧖" },
+  { name: "rope", icon: "∿" },
+  { name: "winch", icon: "◐" },
+  { name: "crank", icon: "⟲" },
+  
+  // Water features
+  { name: "pool", icon: "◊" },
+  { name: "stream", icon: "≈" },
+  { name: "waterfall", icon: "⫸" },
+  { name: "bridge", icon: "═" },
+  { name: "ford", icon: "~" },
+  { name: "drain", icon: "◎" },
+  { name: "grating", icon: "▦" },
+  
+  // Furniture and objects
+  { name: "chest", icon: "◫" },
+  { name: "table", icon: "⬜" },
+  { name: "chair", icon: "⌐" },
+  { name: "bed", icon: "▬" },
+  { name: "bookshelf", icon: "▣" },
+  { name: "desk", icon: "⬛" },
+  { name: "throne", icon: "◈" },
+  { name: "bench", icon: "━" },
+  { name: "cabinet", icon: "▢" },
+  
+  // Storage and containers
+  { name: "barrel", icon: "◯" },
+  { name: "crate", icon: "▢" },
+  { name: "urn", icon: "◈" },
+  { name: "jar", icon: "◯" },
+  { name: "sack", icon: "◐" },
+  { name: "cauldron", icon: "◉" },
+  { name: "anvil", icon: "■" },
+  { name: "forge", icon: "▣" },
+  
+  // Treasures and valuables
+  { name: "treasure", icon: "◊" },
+  { name: "gem", icon: "◆" },
+  { name: "crystal", icon: "◆" },
+  { name: "coins", icon: "◎" },
+  { name: "jewelry", icon: "◈" },
+  { name: "crown", icon: "◉" },
+  { name: "orb", icon: "●" },
+  { name: "relic", icon: "✚" },
+  
+  // Weapons and armor
+  { name: "sword", icon: "†" },
+  { name: "shield", icon: "⬟" },
+  { name: "bow", icon: ")" },
+  { name: "arrow", icon: "→" },
+  { name: "spear", icon: "↑" },
+  { name: "axe", icon: "⚔" },
+  { name: "hammer", icon: "⚒" },
+  { name: "dagger", icon: "†" },
+  { name: "mace", icon: "⚉" },
+  { name: "armor", icon: "◈" },
+  
+  // Magic and mystical
+  { name: "scroll", icon: "⟐" },
+  { name: "book", icon: "▣" },
+  { name: "tome", icon: "■" },
+  { name: "potion", icon: "♦" },
+  { name: "wand", icon: "⚹" },
+  { name: "staff", icon: "⚐" },
+  { name: "rune", icon: "◈" },
+  { name: "circle", icon: "◯" },
+  { name: "pentagram", icon: "★" },
+  { name: "eye", icon: "◉" },
+  
+  // Creatures and remains
+  { name: "skeleton", icon: "☠" },
+  { name: "corpse", icon: "⚰" },
+  { name: "egg", icon: "◯" },
+  { name: "cocoon", icon: "◈" },
+  { name: "web", icon: "✱" },
+  { name: "nest", icon: "◐" },
+  { name: "tracks", icon: "⋯" },
+  { name: "claw_marks", icon: "≋" },
+  
+  // Environmental features
+  { name: "mushroom", icon: "♠" },
+  { name: "moss", icon: "▪" },
+  { name: "vine", icon: "∿" },
+  { name: "crystal_growth", icon: "◆" },
+  { name: "stalactite", icon: "▼" },
+  { name: "stalagmite", icon: "▲" },
+  { name: "cave_in", icon: "▪" },
+  { name: "crack", icon: "⟋" },
+  
+  // Lighting and sounds
+  { name: "lantern", icon: "◎" },
+  { name: "candle", icon: "†" },
+  { name: "brazier", icon: "※" },
+  { name: "crystal_light", icon: "◆" },
+  { name: "bell", icon: "♪" },
+  { name: "gong", icon: "◎" },
+  { name: "horn", icon: ")" },
+  { name: "chime", icon: "♫" },
+  
+  // Special markers
+  { name: "entrance", icon: "◈" },
+  { name: "exit", icon: "◇" },
+  { name: "teleporter", icon: "◯" },
+  { name: "portal", icon: "◈" },
+  { name: "shrine", icon: "✚" },
+  { name: "monument", icon: "▲" },
+  { name: "obelisk", icon: "▼" },
+  { name: "gravestone", icon: "⬛" },
+  
+  // Utility items
+  { name: "key", icon: "⚿" },
+  { name: "lock", icon: "◉" },
+  { name: "chain_link", icon: "○" },
+  { name: "rope_coil", icon: "◯" },
+  { name: "bucket", icon: "◐" },
+  { name: "tool", icon: "⚒" },
+  { name: "pickaxe", icon: "⚐" },
+  { name: "shovel", icon: "⚹" },
 ];
 
 function DungeonEditor() {
@@ -3498,3 +3625,4 @@ function DungeonEditor() {
 }
 
 export default DungeonEditor;
+"// Icon symbols updated" 
