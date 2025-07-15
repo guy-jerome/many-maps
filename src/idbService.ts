@@ -15,6 +15,15 @@ export interface PinData {
   extraSections: ExtraSection[];
   linkedMapId?: string;
   tags: string[];
+  pinType: PinType; // Add pin type
+}
+
+export interface PinType {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  category: 'location' | 'encounter' | 'treasure' | 'npc' | 'hazard' | 'custom';
 }
 
 export interface MapRecord {

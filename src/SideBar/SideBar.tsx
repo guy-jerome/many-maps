@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { ChevronDown, ChevronUp, Plus, Tag } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ExtraSection, getAllMaps, getMapRecord, PinData } from "../idbService";
+import { ExtraSection, getAllMaps, getMapRecord, PinData, PinType } from "../idbService";
 
 interface SelectedLabelType {
   label: string;
@@ -11,6 +11,7 @@ interface SelectedLabelType {
   extraSections: ExtraSection[];
   linkedMapId?: string;
   tags?: string[];
+  pinType?: PinType;
 }
 
 interface SideBarProps {
@@ -300,6 +301,28 @@ export const SideBar: React.FC<SideBarProps> = ({
                 <p>
                   <strong>Pin:</strong> {selectedLabel.label}
                 </p>
+
+                {/* Pin Type Display */}
+                {selectedLabel.pinType && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    marginBottom: '12px',
+                    padding: '8px',
+                    backgroundColor: selectedLabel.pinType.color,
+                    borderRadius: '6px',
+                    color: '#fff'
+                  }}>
+                    <span style={{ fontSize: '18px' }}>{selectedLabel.pinType.icon}</span>
+                    <div>
+                      <strong>{selectedLabel.pinType.name}</strong>
+                      <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'capitalize' }}>
+                        {selectedLabel.pinType.category}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <h3>Area Name:</h3>
                 {isEditing ? (

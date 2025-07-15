@@ -70,6 +70,193 @@
   width: 160px;
   text-align: center;
 }
+
+/* New Pin Toolbar */
+.ci-pin-toolbar {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(24, 28, 36, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid #495057;
+}
+
+.ci-mode-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ci-mode-btn {
+  background: #343a40;
+  color: #fff;
+  border: 2px solid #495057;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ci-mode-btn:hover {
+  background: #495057;
+  border-color: #6c757d;
+}
+
+.ci-mode-btn.active {
+  background: #28a745;
+  border-color: #34ce57;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+.ci-pin-panel {
+  background: rgba(52, 58, 64, 0.95);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 320px;
+  max-width: 500px;
+  border: 1px solid #6c757d;
+}
+
+.ci-pin-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #6c757d;
+}
+
+.ci-pin-panel-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ci-category-filter {
+  background: #495057;
+  color: #fff;
+  border: 1px solid #6c757d;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.ci-pin-search {
+  margin-bottom: 12px;
+}
+
+.ci-search-input {
+  width: 100%;
+  background: #495057;
+  color: #fff;
+  border: 1px solid #6c757d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.ci-search-input::placeholder {
+  color: #adb5bd;
+}
+
+.ci-search-input:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+}
+
+.ci-pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ci-pin-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  font-size: 11px;
+  min-height: 60px;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  border: none;
+}
+
+.ci-pin-type-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ci-pin-type-btn.selected {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.ci-pin-icon {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.ci-pin-name {
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.ci-pin-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.ci-pin-instructions {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(40, 167, 69, 0.2);
+  border: 1px solid #28a745;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.ci-pin-instructions p {
+  margin: 4px 0;
+}
+
+.ci-pin-instructions strong {
+  color: #34ce57;
+}
 .ci-btn {
   background-color: #444;
   color: white;

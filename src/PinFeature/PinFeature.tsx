@@ -9,6 +9,14 @@ interface ExtraSection {
   content: string;
 }
 
+interface PinType {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  category: 'location' | 'encounter' | 'treasure' | 'npc' | 'hazard' | 'custom';
+}
+
 interface PinFeatureProps {
   source: VectorSource;
   x: number;
@@ -18,13 +26,13 @@ interface PinFeatureProps {
     info: string;
     areaName: string;
     extraSections: ExtraSection[];
+    pinType: PinType;
   };
 }
 
 /**
- * We no longer set a fixed Style here. The VectorLayer in
- * CenteredImage.tsx will supply a style function that reads
- * the map's zoom and decides how large each pin should be.
+ * Pin feature component that creates OpenLayers features for map pins.
+ * The styling is handled by the VectorLayer in CenteredImage.tsx.
  */
 const PinFeature: React.FC<PinFeatureProps> = ({ source, x, y, pin }) => {
   useEffect(() => {
@@ -32,7 +40,7 @@ const PinFeature: React.FC<PinFeatureProps> = ({ source, x, y, pin }) => {
       geometry: new Point([x, y]),
     });
 
-    // Store only the label on the feature
+    // Store the label on the feature for identification
     feature.set("pin", pin.label);
 
     source.addFeature(feature);
