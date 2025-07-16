@@ -1393,49 +1393,52 @@ function DungeonEditor() {
     } else if (tool === "icon") {
       cursor = "pointer";
     } else if (tool === "select") {
-      // Dynamic cursor for select tool based on what's under the mouse
       cursor = "pointer";
-
-      // Add hover detection for resize handles when in select mode
-      const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
-      if (canvas) {
-        const handleMouseMove = (e: MouseEvent) => {
-          if (
-            selectedIndex !== null &&
-            selectedIndex >= 0 &&
-            selectedIndex < shapes.length
-          ) {
-            const shape = shapes[selectedIndex];
-            if (shape) {
-              const rect = canvas.getBoundingClientRect();
-              const x = (e.clientX - rect.left - pan.x) / zoom;
-              const y = (e.clientY - rect.top - pan.y) / zoom;
-
-              const resizeHandle = getResizeHandleAtPoint(shape, x, y, 10);
-              if (resizeHandle) {
-                canvas.style.cursor = resizeHandle.cursor;
-                return;
-              }
-
-              const handlePos = getRotationHandlePosition(shape);
-              const distance = Math.sqrt(
-                Math.pow(x - handlePos.x, 2) + Math.pow(y - handlePos.y, 2)
-              );
-              if (distance <= 15) {
-                canvas.style.cursor = "grab";
-                return;
-              }
-            }
-          }
-          canvas.style.cursor = "pointer";
-        };
-
-        canvas.addEventListener("mousemove", handleMouseMove);
-        return () => canvas.removeEventListener("mousemove", handleMouseMove);
-      }
     }
     const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
     if (canvas) canvas.style.cursor = cursor;
+  }, [tool]);
+
+  // Separate effect for select tool hover interactions
+  React.useEffect(() => {
+    if (tool !== "select") return;
+
+    const canvas = document.querySelector(".dungeon-canvas") as HTMLElement;
+    if (!canvas) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (
+        selectedIndex !== null &&
+        selectedIndex >= 0 &&
+        selectedIndex < shapes.length
+      ) {
+        const shape = shapes[selectedIndex];
+        if (shape) {
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX - rect.left - pan.x) / zoom;
+          const y = (e.clientY - rect.top - pan.y) / zoom;
+
+          const resizeHandle = getResizeHandleAtPoint(shape, x, y, 10);
+          if (resizeHandle) {
+            canvas.style.cursor = resizeHandle.cursor;
+            return;
+          }
+
+          const handlePos = getRotationHandlePosition(shape);
+          const distance = Math.sqrt(
+            Math.pow(x - handlePos.x, 2) + Math.pow(y - handlePos.y, 2)
+          );
+          if (distance <= 15) {
+            canvas.style.cursor = "grab";
+            return;
+          }
+        }
+      }
+      canvas.style.cursor = "pointer";
+    };
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+    return () => canvas.removeEventListener("mousemove", handleMouseMove);
   }, [tool, selectedIndex, shapes, pan, zoom]);
 
   // Mouse wheel zoom (centered on mouse)
