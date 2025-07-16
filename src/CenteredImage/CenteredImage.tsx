@@ -196,9 +196,8 @@ const CenteredImage: React.FC = () => {
         const lbl = feature.get("pin") as string;
         const isSel = selectedPinLabelRef.current === lbl;
         
-        // Find the pin data to get the pin type
-        const pinData = pins.find(p => p.label === lbl);
-        const pinType = pinData?.pinType || DND_PIN_TYPES[0];
+        // Get the pin type directly from the feature properties
+        const pinType = feature.get("pinType") || DND_PIN_TYPES[0];
         
         return new Style({
           image: new CircleStyle({
@@ -243,7 +242,14 @@ const CenteredImage: React.FC = () => {
       map.setTarget(undefined);
       map.dispose?.();
     };
-  }, [vectorSource, mapUrl, pins]);
+  }, [vectorSource, mapUrl]); // Removed pins from dependencies to prevent map re-initialization
+
+  // ─── update vector layer style when pins change ─────────────────────
+  useEffect(() => {
+    if (vectorLayerRef.current) {
+      vectorLayerRef.current.changed(); // Trigger style refresh when pins change
+    }
+  }, [pins]);
 
   // ─── click to add / delete / select pins ─────────────────────────
   useEffect(() => {
