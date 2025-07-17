@@ -16,6 +16,9 @@ interface SelectedLabelType {
 
 interface SideBarProps {
   selectedLabel: SelectedLabelType | null;
+  allPins?: PinData[]; // Add all pins for search functionality
+  onSelectPin?: (pinLabel: string) => void; // Callback to select a pin from search
+  onCenterPin?: (pinLabel: string) => void; // Callback to center map on pin
   updateInfo: (
     label: string,
     newInfo: string,
@@ -64,6 +67,9 @@ const emptyStyle: React.CSSProperties = {
 
 export const SideBar: React.FC<SideBarProps> = ({
   selectedLabel,
+  allPins = [],
+  onSelectPin,
+  onCenterPin,
   updateInfo,
 }) => {
   const navigate = useNavigate();
@@ -81,6 +87,10 @@ export const SideBar: React.FC<SideBarProps> = ({
   const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>(
     []
   );
+
+  // Pin search functionality
+  const [pinSearchQuery, setPinSearchQuery] = useState<string>("");
+  const [showPinSearch, setShowPinSearch] = useState(false);
 
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -227,6 +237,19 @@ export const SideBar: React.FC<SideBarProps> = ({
     setEditTags((prev) => prev.filter((t) => t !== tag));
   };
 
+  // Filter pins based on search query
+  const filteredPins = allPins.filter(pin => {
+    if (!pinSearchQuery.trim()) return false;
+    const query = pinSearchQuery.toLowerCase();
+    return (
+      pin.label.toLowerCase().includes(query) ||
+      (pin.areaName && pin.areaName.toLowerCase().includes(query)) ||
+      pin.info.toLowerCase().includes(query) ||
+      (pin.tags && pin.tags.some(tag => tag.toLowerCase().includes(query))) ||
+      (pin.pinType && pin.pinType.name.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div
       ref={sidebarRef}
@@ -271,6 +294,193 @@ export const SideBar: React.FC<SideBarProps> = ({
 
         {!isCollapsed && (
           <>
+            {/* Pin Search Section - above Parent Maps */}
+            <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <h3 style={{ margin: 0 }}>Pin Search</h3>
+                <button
+                  onClick={() => setShowPinSearch(!showPinSearch)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label={showPinSearch ? "Hide search" : "Show search"}
+                >
+                  {showPinSearch ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              </div>
+              
+              {showPinSearch && (
+                <div style={{ marginBottom: "12px" }}>
+                  <input
+                    type="text"
+                    placeholder="Search pins by name, area, description, or tags..."
+                    value={pinSearchQuery}
+                    onChange={(e) => setPinSearchQuery(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      marginBottom: "8px",
+                      boxSizing: "border-box",
+                      borderRadius: "4px",
+                      border: "1px solid #495057",
+                      backgroundColor: "#495057",
+                      color: "#fff",
+                    }}
+                  />
+                  
+                  {pinSearchQuery.trim() && (
+                    <div style={{ 
+                      maxHeight: "200px", 
+                      overflowY: "auto",
+                      border: "1px solid #495057",
+                      borderRadius: "4px",
+                      backgroundColor: "#495057"
+                    }}>
+                      <div style={{ 
+                        padding: "8px", 
+                        borderBottom: "1px solid #6c757d",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "#adb5bd"
+                      }}>
+                        {filteredPins.length} pin{filteredPins.length !== 1 ? 's' : ''} found
+                      </div>
+                      
+                      {filteredPins.length > 0 ? (
+                        filteredPins.map((pin, index) => (
+                          <div
+                            key={`${pin.label}-${index}`}
+                            onClick={() => onSelectPin?.(pin.label)}
+                            style={{
+                              padding: "8px",
+                              borderBottom: index < filteredPins.length - 1 ? "1px solid #6c757d" : "none",
+                              cursor: "pointer",
+                              transition: "background-color 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#6c757d";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              {pin.pinType && (
+                                <span style={{ 
+                                  fontSize: "14px",
+                                  color: pin.pinType.color 
+                                }}>
+                                  {pin.pinType.icon}
+                                </span>
+                              )}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+                                  {pin.label}
+                                </div>
+                                {pin.areaName && (
+                                  <div style={{ fontSize: "12px", color: "#adb5bd" }}>
+                                    {pin.areaName}
+                                  </div>
+                                )}
+                                {pin.info && (
+                                  <div style={{ 
+                                    fontSize: "12px", 
+                                    color: "#adb5bd",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap"
+                                  }}>
+                                    {pin.info}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ 
+                          padding: "16px", 
+                          textAlign: "center", 
+                          color: "#adb5bd",
+                          fontStyle: "italic"
+                        }}>
+                          No pins match your search
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Map Statistics */}
+            <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+              <h3>Map Statistics</h3>
+              <div style={{ 
+                background: "rgba(52, 58, 64, 0.6)", 
+                borderRadius: "6px", 
+                padding: "12px",
+                fontSize: "13px"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span>📍 Total Pins:</span>
+                  <strong>{allPins.length}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span>📝 With Descriptions:</span>
+                  <strong>{allPins.filter(p => p.info?.trim()).length}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span>🏷️ With Tags:</span>
+                  <strong>{allPins.filter(p => p.tags && p.tags.length > 0).length}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span>🔗 Linked Maps:</span>
+                  <strong>{allPins.filter(p => p.linkedMapId).length}</strong>
+                </div>
+                
+                {/* Pin type breakdown */}
+                {(() => {
+                  const typeStats = allPins.reduce((acc, pin) => {
+                    const category = pin.pinType?.category || 'custom';
+                    acc[category] = (acc[category] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+                  
+                  const categoryIcons = {
+                    location: '🏰',
+                    encounter: '⚔️',
+                    npc: '👤',
+                    treasure: '💎',
+                    hazard: '⚠️',
+                    custom: '📌'
+                  };
+                  
+                  return Object.entries(typeStats).length > 0 && (
+                    <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #6c757d" }}>
+                      <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#adb5bd" }}>
+                        By Category:
+                      </div>
+                      {Object.entries(typeStats).map(([category, count]) => (
+                        <div key={category} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" }}>
+                          <span>
+                            {categoryIcons[category as keyof typeof categoryIcons]} {category.charAt(0).toUpperCase() + category.slice(1)}:
+                          </span>
+                          <strong>{count}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
             {/* Parent Maps - always shown */}
             <div style={{ marginTop: "12px", color: "#e9ecef" }}>
               <h3>Parent Maps</h3>
@@ -298,9 +508,38 @@ export const SideBar: React.FC<SideBarProps> = ({
             </div>
             {selectedLabel ? (
               <div style={infoStyle}>
-                <p>
-                  <strong>Pin:</strong> {selectedLabel.label}
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <p style={{ margin: 0 }}>
+                    <strong>Pin:</strong> {selectedLabel.label}
+                  </p>
+                  {onCenterPin && (
+                    <button
+                      onClick={() => onCenterPin(selectedLabel.label)}
+                      style={{
+                        background: "#28a745",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#218838";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#28a745";
+                      }}
+                      title="Center map on this pin"
+                    >
+                      🎯 Center Map
+                    </button>
+                  )}
+                </div>
 
                 {/* Pin Type Display */}
                 {selectedLabel.pinType && (

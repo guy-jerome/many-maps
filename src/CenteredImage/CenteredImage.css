@@ -8,6 +8,16 @@
   overflow: hidden;
 }
 
+/* Keyframe animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .ci-map {
   flex: 1;
   background-color: #14181c;
