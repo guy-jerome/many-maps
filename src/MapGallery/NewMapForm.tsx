@@ -1,5 +1,5 @@
 // src/MapGallery/NewMapForm.tsx
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { saveMap } from "../idbService";
 import { useAuth } from "../auth/AuthContext";
@@ -14,7 +14,6 @@ export const NewMapForm: React.FC<Props> = ({ onSaved, onCancel }) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
-  const [isPublic, setIsPublic] = useState(false);
   const { user } = useAuth();
 
   const handleSubmit = async () => {
@@ -26,7 +25,8 @@ export const NewMapForm: React.FC<Props> = ({ onSaved, onCancel }) => {
     if (!user) return alert("You must be logged in to save maps");
     
     const id = uuidv4();
-    await saveMap(id, file, name, description, [], user.id, isPublic);
+    // Always save as private (false) for now
+    await saveMap(id, file, name, description, [], user.id, false);
     onSaved();
   };
 
@@ -43,14 +43,6 @@ export const NewMapForm: React.FC<Props> = ({ onSaved, onCancel }) => {
         <label>
           Description:
           <textarea ref={descRef} rows={3} />
-        </label>
-        <label className="mg-form-checkbox">
-          <input 
-            type="checkbox" 
-            checked={isPublic}
-            onChange={(e) => setIsPublic(e.target.checked)}
-          />
-          <span className="mg-checkbox-label">Make this map public (visible to all users)</span>
         </label>
         <div className="mg-form-buttons">
           <button onClick={onCancel}>Cancel</button>

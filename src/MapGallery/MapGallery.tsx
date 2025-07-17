@@ -1,6 +1,6 @@
 // src/MapGallery/MapGallery.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { deleteMap, getMapsForUser, getPublicMaps } from "../idbService";
+import { deleteMap, getMapsForUser } from "../idbService";
 import { NewMapForm } from "./NewMapForm";
 import { MapCard } from "./MapCard";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +19,6 @@ interface MapEntry {
 export const MapGallery: React.FC = () => {
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [showPublicMaps, setShowPublicMaps] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -31,13 +30,13 @@ export const MapGallery: React.FC = () => {
       URL.revokeObjectURL(thumbUrl);
     });
 
-    // Get user-specific maps or public maps based on auth state and toggle
-    let raws;
-    if (user && !showPublicMaps) {
-      raws = await getMapsForUser(user.id);
-    } else {
-      raws = await getPublicMaps();
+    // Get user-specific maps only
+    if (!user) {
+      setMaps([]);
+      return;
     }
+
+    const raws = await getMapsForUser(user.id);
     const entries: MapEntry[] = raws.map((r) => {
       const fullUrl = URL.createObjectURL(r.blob);
       const thumbBlob = (r as any).thumb ?? r.blob;
@@ -52,7 +51,7 @@ export const MapGallery: React.FC = () => {
       };
     });
     setMaps(entries);
-  }, [maps]);
+  }, [maps, user]);
 
   // On mount, load maps once
   useEffect(() => {
@@ -64,7 +63,7 @@ export const MapGallery: React.FC = () => {
         URL.revokeObjectURL(thumbUrl);
       });
     };
-  }, [user, showPublicMaps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleImageEvent = (id: string) => {
     setMaps((prev) =>
@@ -91,35 +90,17 @@ export const MapGallery: React.FC = () => {
       <button className="mg-back-btn" onClick={() => navigate("/")}>
         ⟵ Back to Home
       </button>
-      <h1>Select a Map</h1>
-      
-      {user && (
-        <div className="mg-view-toggle">
-          <button 
-            className={`mg-toggle-btn ${!showPublicMaps ? 'active' : ''}`}
-            onClick={() => setShowPublicMaps(false)}
-          >
-            My Maps
-          </button>
-          <button 
-            className={`mg-toggle-btn ${showPublicMaps ? 'active' : ''}`}
-            onClick={() => setShowPublicMaps(true)}
-          >
-            Public Maps
-          </button>
-        </div>
-      )}
+      <h1>My Maps</h1>
       
       <div className="mg-add-container">
-        {user && !showPublicMaps && (
+        {user ? (
           <button className="mg-add-btn" onClick={() => setShowForm(true)}>
             <span className="mg-add-icon">＋</span>
             Add New Map
           </button>
-        )}
-        {!user && (
+        ) : (
           <p className="mg-auth-prompt">
-            Please log in to add your own maps or view public maps from the community.
+            Please log in to create and view your maps.
           </p>
         )}
       </div>
