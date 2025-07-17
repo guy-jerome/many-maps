@@ -26,6 +26,8 @@ interface PinFeatureProps {
     info: string;
     areaName: string;
     extraSections: ExtraSection[];
+    linkedMapId?: string;
+    tags?: string[];
     pinType: PinType;
   };
   allPins?: {

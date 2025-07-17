@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Map Linking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #b8daff;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .log {
+            background-color: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Parent Map Linking Test</h1>
+        
+        <div class="test-section info">
+            <h3>Test Instructions</h3>
+            <p>This test will create two maps and link them together to verify the parent map linking functionality.</p>
+            <ol>
+                <li>Click "Create Test Maps" to create linked maps</li>
+                <li>Click "Navigate to Child Map" to see if parent maps appear in the sidebar</li>
+                <li>Check the console for detailed logs</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Actions</h3>
+            <button onclick="createTestMaps()">Create Test Maps</button>
+            <button onclick="navigateToChild()">Navigate to Child Map</button>
+            <button onclick="navigateToParent()">Navigate to Parent Map</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Status</h3>
+            <div id="status">Ready to test...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Console Logs</h3>
+            <div id="logs" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let parentMapId = null;
+        let childMapId = null;
+        
+        // Custom logging function
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const logEntry = `[${timestamp}] ${message}`;
+            logElement.innerHTML += logEntry + '<br>';
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Also log to console
+            console.log(logEntry);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = message;
+            statusElement.className = `test-section ${type}`;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // Create test image blob
+        function createTestImage(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, 400, 300);
+            
+            // Border
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, 400, 300);
+            
+            // Text
+            ctx.fillStyle = '#333';
+            ctx.font = '20px Arial';
+            ctx.fillText(text, 20, 50);
+            
+            // Some visual elements
+            ctx.fillStyle = '#007bff';
+            ctx.fillRect(50, 100, 100, 50);
+            ctx.fillStyle = '#28a745';
+            ctx.fillRect(200, 100, 100, 50);
+            
+            return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        }
+        
+        async function createTestMaps() {
+            try {
+                log('🚀 Starting test map creation...');
+                updateStatus('Creating test maps...', 'info');
+                
+                // Check if we're in the context of the main app
+                if (typeof window.dbService === 'undefined') {
+                    log('❌ Database service not available. Please run this test from the main app.');
+                    updateStatus('Error: Database service not available', 'warning');
+                    return;
+                }
+                
+                const { saveMap, updateMapPins } = window.dbService;
+                
+                // Create test images
+                log('📸 Creating test images...');
+                const parentBlob = await createTestImage('PARENT MAP');
+                const childBlob = await createTestImage('CHILD MAP');
+                
+                // Create parent map
+                log('🗺️ Creating parent map...');
+                parentMapId = await saveMap(parentBlob, "Test Parent Map", "This is a test parent map");
+                log(`✅ Parent map created: ${parentMapId}`);
+                
+                // Create child map
+                log('🗺️ Creating child map...');
+                childMapId = await saveMap(childBlob, "Test Child Map", "This is a test child map");
+                log(`✅ Child map created: ${childMapId}`);
+                
+                // Add linking pin to parent map
+                log('📍 Adding linking pin to parent map...');
+                const parentPins = [{
+                    id: `pin-${Date.now()}`,
+                    x: 200,
+                    y: 150,
+                    label: "Portal to Child Map",
+                    info: "This pin links to the child map. Click to navigate!",
+                    areaName: "Portal Area",
+                    extraSections: [],
+                    linkedMapId: childMapId,
+                    tags: ["portal", "test", "link"],
+                    pinType: {
+                        id: "portal",
+                        name: "Portal",
+                        icon: "🚪",
+                        color: "#0066cc",
+                        category: "location"
+                    }
+                }];
+                
+                await updateMapPins(parentMapId, parentPins);
+                log('✅ Linking pin added to parent map');
+                
+                // Add regular pin to child map
+                log('📍 Adding regular pin to child map...');
+                const childPins = [{
+                    id: `pin-${Date.now() + 1}`,
+                    x: 300,
+                    y: 200,
+                    label: "Child Map Location",
+                    info: "This is a regular pin in the child map",
+                    areaName: "Test Area",
+                    extraSections: [],
+                    tags: ["test", "location"],
+                    pinType: {
+                        id: "location",
+                        name: "Location",
+                        icon: "📍",
+                        color: "#ff0000",
+                        category: "location"
+                    }
+                }];
+                
+                await updateMapPins(childMapId, childPins);
+                log('✅ Regular pin added to child map');
+                
+                updateStatus('✅ Test maps created successfully!', 'success');
+                log('🎉 Test setup complete! Now navigate to the child map to test parent linking.');
+                
+            } catch (error) {
+                log(`❌ Error creating test maps: ${error.message}`);
+                updateStatus(`Error: ${error.message}`, 'warning');
+            }
+        }
+        
+        function navigateToChild() {
+            if (!childMapId) {
+                log('❌ No child map created yet. Please create test maps first.');
+                return;
+            }
+            
+            log(`🧭 Navigating to child map: ${childMapId}`);
+            const childMapUrl = `/map/${childMapId}`;
+            window.location.href = childMapUrl;
+        }
+        
+        function navigateToParent() {
+            if (!parentMapId) {
+                log('❌ No parent map created yet. Please create test maps first.');
+                return;
+            }
+            
+            log(`🧭 Navigating to parent map: ${parentMapId}`);
+            const parentMapUrl = `/map/${parentMapId}`;
+            window.location.href = parentMapUrl;
+        }
+        
+        // Initialize
+        log('📋 Parent Map Linking Test initialized');
+        log('💡 Click "Create Test Maps" to begin testing');
+    </script>
+</body>
+</html>

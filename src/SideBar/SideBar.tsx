@@ -117,7 +117,7 @@ const SideBar: React.FC<SideBarProps> = ({
 
   // Compute parent maps when mapId or mapList change
   useEffect(() => {
-    if (!mapId) {
+    if (!mapId || mapList.length === 0) {
       setParentMaps([]);
       return;
     }
@@ -201,7 +201,7 @@ const SideBar: React.FC<SideBarProps> = ({
         editText,
         editArea,
         extraSections,
-        editLinkedMapId || undefined,
+        editLinkedMapId || undefined, // Convert empty string to undefined
         editTags
       );
     }
