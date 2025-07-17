@@ -1,5 +1,5 @@
 // src/CenteredImage/CenteredImage.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Map from "ol/Map";
 import View from "ol/View";
@@ -297,6 +297,8 @@ const CenteredImage: React.FC = () => {
   // Keep selection-ref & style in sync
   useEffect(() => {
     selectedPinLabelRef.current = selectedPinLabel;
+    // Reset dragging state when selection changes
+    isDraggingRef.current = false;
     if (vectorLayerRef.current) vectorLayerRef.current.changed();
   }, [selectedPinLabel]);
 
@@ -436,19 +438,24 @@ const CenteredImage: React.FC = () => {
   // ─── refresh drag interaction when pins change (after feature recreation) ─────
   useEffect(() => {
     const map = mapObject.current;
-    if (!map || !selectedPinLabel || !translateCollectionRef.current) return;
+    // Skip if we're currently dragging to avoid interrupting the drag operation
+    if (!map || !selectedPinLabel || !translateCollectionRef.current || isDraggingRef.current) return;
     
-    // Find the potentially new feature
-    const feat = vectorSource
-      .getFeatures()
-      .find((f) => f.get("pin") === selectedPinLabel);
+    // Small delay to ensure features are properly updated
+    const timeoutId = setTimeout(() => {
+      const feat = vectorSource
+        .getFeatures()
+        .find((f) => f.get("pin") === selectedPinLabel);
+      
+      if (feat && translateCollectionRef.current) {
+        // Update the collection to use the new feature
+        const collection = translateCollectionRef.current;
+        collection.clear();
+        collection.push(feat);
+      }
+    }, 50);
     
-    if (feat) {
-      // Update the collection to use the new feature
-      const collection = translateCollectionRef.current;
-      collection.clear();
-      collection.push(feat);
-    }
+    return () => clearTimeout(timeoutId);
   }, [pins, selectedPinLabel, vectorSource]);
 
   // ─── click to add / delete / select pins ─────────────────────────
@@ -459,19 +466,17 @@ const CenteredImage: React.FC = () => {
       if (isAdding) {
         const [x, y] = evt.coordinate;
         const label = `${nextLabel}`;
-        setPins((p) => [
-          ...p,
-          {
-            label,
-            info: "",
-            areaName: "",
-            x,
-            y,
-            extraSections: [],
-            tags: [],
-            pinType: selectedPinType,
-          },
-        ]);
+        const newPin = {
+          label,
+          info: "",
+          areaName: "",
+          x,
+          y,
+          extraSections: [],
+          tags: [],
+          pinType: selectedPinType,
+        };
+        setPins((p) => [...p, newPin]);
         setNextLabel((n) => n + 1);
         return;
       }
@@ -546,10 +551,8 @@ const CenteredImage: React.FC = () => {
               prev.map((p) => (p.label === lbl ? { ...p, x, y } : p))
             );
           }
-          // Reset dragging flag after a short delay to allow state update
-          setTimeout(() => {
-            isDraggingRef.current = false;
-          }, 10);
+          // Reset dragging flag immediately
+          isDraggingRef.current = false;
         });
       }
     }
@@ -565,6 +568,17 @@ const CenteredImage: React.FC = () => {
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
+
+  // Memoize pin counts for better performance and reliability
+  const pinCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    pins.forEach((pin) => {
+      if (pin.pinType?.id) {
+        counts[pin.pinType.id] = (counts[pin.pinType.id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [pins]);
 
   return (
     <div className="ci-container">
@@ -751,9 +765,7 @@ const CenteredImage: React.FC = () => {
                     .includes(pinSearch.toLowerCase());
                 return matchesCategory && matchesSearch;
               }).map((pinType) => {
-                const pinCount = pins.filter(
-                  (p) => p.pinType?.id === pinType.id
-                ).length;
+                const pinCount = pinCounts[pinType.id] || 0;
                 return (
                   <button
                     key={pinType.id}
@@ -792,7 +804,12 @@ const CenteredImage: React.FC = () => {
         )}
       </div>
       <div ref={mapRef} className="ci-map" />
-      <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
+      <SideBar 
+        selectedLabel={selectedPin} 
+        allPins={pins}
+        onSelectPin={setSelectedPinLabel}
+        updateInfo={updateInfo} 
+      />
       {pins.map((p) => (
         <PinFeature
           key={p.label}
