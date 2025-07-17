@@ -1,4 +1,3 @@
-// src/SideBar/SideBar.tsx
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { ChevronDown, ChevronUp, Plus, Tag } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -65,7 +64,7 @@ const emptyStyle: React.CSSProperties = {
   color: "#adb5bd",
 };
 
-export const SideBar: React.FC<SideBarProps> = ({
+const SideBar: React.FC<SideBarProps> = ({
   selectedLabel,
   allPins = [],
   onSelectPin,
@@ -84,9 +83,7 @@ export const SideBar: React.FC<SideBarProps> = ({
   const [collapsedSections, setCollapsedSections] = useState<boolean[]>([]);
   const [editLinkedMapId, setEditLinkedMapId] = useState<string>("");
   const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
-  const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>([]);
 
   // Pin search functionality
   const [pinSearchQuery, setPinSearchQuery] = useState<string>("");
@@ -94,6 +91,12 @@ export const SideBar: React.FC<SideBarProps> = ({
 
   // Map statistics functionality
   const [showMapStats, setShowMapStats] = useState(false);
+
+  // Parent maps functionality
+  const [showParentMaps, setShowParentMaps] = useState(false);
+
+  // Pin information functionality
+  const [showPinInfo, setShowPinInfo] = useState(true);
 
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -297,7 +300,7 @@ export const SideBar: React.FC<SideBarProps> = ({
 
         {!isCollapsed && (
           <>
-            {/* Pin Search Section - above Parent Maps */}
+            {/* Pin Search Section */}
             <div style={{ marginTop: "12px", color: "#e9ecef" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                 <h3 style={{ margin: 0 }}>Pin Search</h3>
@@ -504,453 +507,502 @@ export const SideBar: React.FC<SideBarProps> = ({
               )}
             </div>
 
-            {/* Parent Maps - always shown */}
+            {/* Parent Maps */}
             <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-              <h3>Parent Maps</h3>
-              {parentMaps.length > 0 ? (
-                parentMaps.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => navigate(`/map/${m.id}`)}
-                    style={{
-                      display: "block",
-                      background: "none",
-                      border: "none",
-                      color: "#0d6efd",
-                      cursor: "pointer",
-                      padding: "4px 0",
-                      textAlign: "left",
-                    }}
-                  >
-                    {m.name}
-                  </button>
-                ))
-              ) : (
-                <p style={emptyStyle}>No parent maps.</p>
-              )}
-            </div>
-            {selectedLabel ? (
-              <div style={infoStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <p style={{ margin: 0 }}>
-                    <strong>Pin:</strong> {selectedLabel.label}
-                  </p>
-                  {onCenterPin && (
-                    <button
-                      onClick={() => onCenterPin(selectedLabel.label)}
-                      style={{
-                        background: "#28a745",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "6px",
-                        padding: "6px 12px",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#218838";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#28a745";
-                      }}
-                      title="Center map on this pin"
-                    >
-                      🎯 Center Map
-                    </button>
-                  )}
-                </div>
-
-                {/* Pin Type Display */}
-                {selectedLabel.pinType && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    marginBottom: '12px',
-                    padding: '8px',
-                    backgroundColor: selectedLabel.pinType.color,
-                    borderRadius: '6px',
-                    color: '#fff'
-                  }}>
-                    <span style={{ fontSize: '18px' }}>{selectedLabel.pinType.icon}</span>
-                    <div>
-                      <strong>{selectedLabel.pinType.name}</strong>
-                      <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'capitalize' }}>
-                        {selectedLabel.pinType.category}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <h3>Area Name:</h3>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editArea}
-                    onChange={(e) => setEditArea(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      marginBottom: "12px",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                ) : (
-                  <p
-                    onClick={() => setIsEditing(true)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {selectedLabel.areaName || <em>Click to add area name</em>}
-                  </p>
-                )}
-
-                <h3>Description:</h3>
-                {isEditing ? (
-                  <>
-                    <textarea
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      style={{
-                        width: "100%",
-                        minHeight: "100px",
-                        padding: "8px",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                    <div style={{ marginTop: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <h3 style={{ margin: 0 }}>Parent Maps</h3>
+                <button
+                  onClick={() => setShowParentMaps(!showParentMaps)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label={showParentMaps ? "Hide parent maps" : "Show parent maps"}
+                >
+                  {showParentMaps ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              </div>
+              
+              {showParentMaps && (
+                <div style={{ marginBottom: "12px" }}>
+                  {parentMaps.length > 0 ? (
+                    parentMaps.map((m) => (
                       <button
-                        onClick={handleSave}
-                        style={{ marginRight: 8, cursor: "pointer" }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <p
-                    onClick={() => setIsEditing(true)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {selectedLabel.info || <em>Click to add description</em>}
-                  </p>
-                )}
-
-                {/* ─── Linked Map ─────────────────────────────────────────── */}
-                <div style={{ marginTop: "20px" }}>
-                  <h3>Linked Map:</h3>
-                  {isEditing ? (
-                    <select
-                      value={editLinkedMapId}
-                      onChange={(e) => setEditLinkedMapId(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        boxSizing: "border-box",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      <option value="">— No link —</option>
-                      {mapList.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : selectedLabel.linkedMapId ? (
-                    <button
-                      onClick={() =>
-                        navigate(`/map/${selectedLabel.linkedMapId}`)
-                      }
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#0d6efd",
-                        cursor: "pointer",
-                        padding: 0,
-                        fontSize: "14px",
-                      }}
-                    >
-                      Go to “
-                      {mapList.find((m) => m.id === selectedLabel.linkedMapId)
-                        ?.name || selectedLabel.linkedMapId}
-                      ”
-                    </button>
-                  ) : (
-                    <p
-                      onClick={() => setIsEditing(true)}
-                      style={{
-                        fontStyle: "italic",
-                        color: "#adb5bd",
-                        cursor: "pointer",
-                      }}
-                    >
-                      No linked map.
-                    </p>
-                  )}
-                </div>
-                {/* ─── Tags Section ─────────────────────────── */}
-                <div style={{ marginTop: 20 }}>
-                  <h3 style={{ margin: 0, marginBottom: 8 }}>Tags:</h3>
-
-                  {/* Add Tag Input - only when editing */}
-                  {isEditing && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <input
-                        type="text"
-                        value={newTagInput}
-                        onChange={(e) => setNewTagInput(e.target.value)}
-                        placeholder="New tag"
+                        key={m.id}
+                        onClick={() => navigate(`/map/${m.id}`)}
                         style={{
-                          padding: "4px 8px",
-                          flexGrow: 1,
-                          marginRight: 6,
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") addTag();
-                        }}
-                      />
-                      <button
-                        onClick={addTag}
-                        style={{
+                          display: "block",
                           background: "none",
                           border: "none",
+                          color: "#0d6efd",
                           cursor: "pointer",
+                          padding: "4px 0",
+                          textAlign: "left",
                         }}
                       >
-                        <Plus size={16} />
+                        {m.name}
                       </button>
-                    </div>
+                    ))
+                  ) : (
+                    <p style={emptyStyle}>No parent maps.</p>
                   )}
-
-                  {/* Tag Chips or "No tags" */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "6px",
-                      paddingBottom: 8,
-                      cursor: !isEditing ? "pointer" : "default",
-                    }}
-                    onClick={() => {
-                      if (!isEditing) setIsEditing(true);
-                    }}
-                  >
-                    {(isEditing ? editTags : selectedLabel?.tags || []).length >
-                    0 ? (
-                      (isEditing ? editTags : selectedLabel?.tags || []).map(
-                        (tag) => (
-                          <span
-                            key={tag}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              backgroundColor: "#495057",
-                              color: "#e9ecef",
-                              padding: "4px 8px",
-                              borderRadius: 12,
-                              maxWidth: "100%",
-                              wordBreak: "break-word",
-                            }}
-                          >
-                            <Tag size={12} style={{ marginRight: 4 }} />
-                            <span>{tag}</span>
-                            {isEditing && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation(); // prevent triggering setIsEditing again
-                                  removeTag(tag);
-                                }}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  color: "#e55353",
-                                  marginLeft: 4,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                ×
-                              </button>
-                            )}
-                          </span>
-                        )
-                      )
-                    ) : !isEditing ? (
-                      <span
-                        style={{
-                          fontStyle: "italic",
-                          color: "#adb5bd",
-                        }}
-                      >
-                        No tags. Click to add.
-                      </span>
-                    ) : null}
-                  </div>
                 </div>
-                {/* ─── Extra Sections ───────────────────────────────────── */}
-                <div style={{ marginTop: "20px" }}>
-                  <div
+              )}
+            </div>
+
+            {/* Pin Information */}
+            {selectedLabel ? (
+              <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <h3 style={{ margin: 0 }}>Pin Information</h3>
+                  <button
+                    onClick={() => setShowPinInfo(!showPinInfo)}
                     style={{
+                      background: "none",
+                      border: "none",
+                      color: "#fff",
+                      cursor: "pointer",
+                      padding: 0,
                       display: "flex",
-                      justifyContent: "space-between",
                       alignItems: "center",
                     }}
+                    aria-label={showPinInfo ? "Hide pin information" : "Show pin information"}
                   >
-                    <h3 style={{ margin: 0 }}>Extra Sections:</h3>
-                    <button
-                      onClick={addSection}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#0d6efd",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Plus size={16} style={{ marginRight: "4px" }} /> Add
-                      Section
-                    </button>
-                  </div>
-
-                  {extraSections.length === 0 && !isEditing && (
-                    <p style={{ fontStyle: "italic", color: "#adb5bd" }}>
-                      No extra sections yet.
-                    </p>
-                  )}
-
-                  {/* VIEW MODE: collapsible details */}
-                  {!isEditing &&
-                    extraSections.map((sec, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          marginTop: "12px",
-                          padding: "8px",
-                          backgroundColor: "#495057",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        <div
-                          onClick={() => toggleSection(idx)}
+                    {showPinInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                </div>
+                
+                {showPinInfo && (
+                  <div style={infoStyle}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <p style={{ margin: 0 }}>
+                        <strong>Pin:</strong> {selectedLabel.label}
+                      </p>
+                      {onCenterPin && (
+                        <button
+                          onClick={() => onCenterPin(selectedLabel.label)}
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            background: "#28a745",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "6px 12px",
+                            fontSize: "12px",
                             cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#218838";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#28a745";
+                          }}
+                          title="Center map on this pin"
+                        >
+                          🎯 Center Map
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Pin Type Display */}
+                    {selectedLabel.pinType && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        marginBottom: '12px',
+                        padding: '8px',
+                        backgroundColor: selectedLabel.pinType.color,
+                        borderRadius: '6px',
+                        color: '#fff'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>{selectedLabel.pinType.icon}</span>
+                        <div>
+                          <strong>{selectedLabel.pinType.name}</strong>
+                          <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'capitalize' }}>
+                            {selectedLabel.pinType.category}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <h3>Area Name:</h3>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editArea}
+                        onChange={(e) => setEditArea(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px",
+                          marginBottom: "12px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    ) : (
+                      <p
+                        onClick={() => setIsEditing(true)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {selectedLabel.areaName || <em>Click to add area name</em>}
+                      </p>
+                    )}
+
+                    <h3>Description:</h3>
+                    {isEditing ? (
+                      <>
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          style={{
+                            width: "100%",
+                            minHeight: "100px",
+                            padding: "8px",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                        <div style={{ marginTop: "8px" }}>
+                          <button
+                            onClick={handleSave}
+                            style={{ marginRight: 8, cursor: "pointer" }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setIsEditing(false)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p
+                        onClick={() => setIsEditing(true)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {selectedLabel.info || <em>Click to add description</em>}
+                      </p>
+                    )}
+
+                    {/* Linked Map */}
+                    <div style={{ marginTop: "20px" }}>
+                      <h3>Linked Map:</h3>
+                      {isEditing ? (
+                        <select
+                          value={editLinkedMapId}
+                          onChange={(e) => setEditLinkedMapId(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "8px",
+                            boxSizing: "border-box",
+                            marginBottom: "12px",
                           }}
                         >
-                          <h4 style={{ margin: 0, color: "#e9ecef" }}>
-                            {sec.title || <em>(No title)</em>}
-                          </h4>
-                          {collapsedSections[idx] ? (
-                            <ChevronDown size={16} />
-                          ) : (
-                            <ChevronUp size={16} />
-                          )}
-                        </div>
-                        {!collapsedSections[idx] && (
-                          <p style={{ marginTop: "8px", color: "#e9ecef" }}>
-                            {sec.content || <em>(No content)</em>}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-
-                  {/* EDIT MODE: fully expanded with delete buttons */}
-                  {isEditing &&
-                    extraSections.map((sec, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          position: "relative",
-                          marginTop: "12px",
-                          padding: "8px",
-                          backgroundColor: "#495057",
-                          borderRadius: "4px",
-                        }}
-                      >
+                          <option value="">— No link —</option>
+                          {mapList.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : selectedLabel.linkedMapId ? (
                         <button
-                          onClick={() => deleteSection(idx)}
+                          onClick={() =>
+                            navigate(`/map/${selectedLabel.linkedMapId}`)
+                          }
                           style={{
-                            position: "absolute",
-                            top: "8px",
-                            right: "8px",
                             background: "none",
                             border: "none",
-                            color: "#e55353",
+                            color: "#0d6efd",
                             cursor: "pointer",
-                            fontWeight: "bold",
+                            padding: 0,
+                            fontSize: "14px",
                           }}
-                          aria-label={`Delete section ${idx + 1}`}
                         >
-                          ×
+                          Go to "
+                          {mapList.find((m) => m.id === selectedLabel.linkedMapId)
+                            ?.name || selectedLabel.linkedMapId}
+                          "
                         </button>
-
-                        <label
+                      ) : (
+                        <p
+                          onClick={() => setIsEditing(true)}
                           style={{
-                            display: "block",
-                            marginBottom: "4px",
-                            fontWeight: "bold",
-                            color: "#e9ecef",
+                            fontStyle: "italic",
+                            color: "#adb5bd",
+                            cursor: "pointer",
                           }}
                         >
-                          Title:
-                        </label>
-                        <input
-                          type="text"
-                          value={sec.title}
-                          onChange={(e) =>
-                            updateSection(idx, "title", e.target.value)
-                          }
-                          style={{
-                            width: "100%",
-                            padding: "6px",
-                            marginBottom: "8px",
-                            boxSizing: "border-box",
-                          }}
-                        />
+                          No linked map.
+                        </p>
+                      )}
+                    </div>
 
-                        <label
+                    {/* Tags Section */}
+                    <div style={{ marginTop: 20 }}>
+                      <h3 style={{ margin: 0, marginBottom: 8 }}>Tags:</h3>
+
+                      {/* Add Tag Input - only when editing */}
+                      {isEditing && (
+                        <div
                           style={{
-                            display: "block",
-                            marginBottom: "4px",
-                            fontWeight: "bold",
-                            color: "#e9ecef",
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: 12,
                           }}
                         >
-                          Content:
-                        </label>
-                        <textarea
-                          value={sec.content}
-                          onChange={(e) =>
-                            updateSection(idx, "content", e.target.value)
-                          }
-                          style={{
-                            width: "100%",
-                            minHeight: "80px",
-                            padding: "6px",
-                            boxSizing: "border-box",
-                          }}
-                        />
+                          <input
+                            type="text"
+                            value={newTagInput}
+                            onChange={(e) => setNewTagInput(e.target.value)}
+                            placeholder="New tag"
+                            style={{
+                              padding: "4px 8px",
+                              flexGrow: 1,
+                              marginRight: 6,
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") addTag();
+                            }}
+                          />
+                          <button
+                            onClick={addTag}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Tag Chips or "No tags" */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "6px",
+                          paddingBottom: 8,
+                          cursor: !isEditing ? "pointer" : "default",
+                        }}
+                        onClick={() => {
+                          if (!isEditing) setIsEditing(true);
+                        }}
+                      >
+                        {(isEditing ? editTags : selectedLabel?.tags || []).length >
+                        0 ? (
+                          (isEditing ? editTags : selectedLabel?.tags || []).map(
+                            (tag) => (
+                              <span
+                                key={tag}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  backgroundColor: "#495057",
+                                  color: "#e9ecef",
+                                  padding: "4px 8px",
+                                  borderRadius: 12,
+                                  maxWidth: "100%",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                <Tag size={12} style={{ marginRight: 4 }} />
+                                <span>{tag}</span>
+                                {isEditing && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // prevent triggering setIsEditing again
+                                      removeTag(tag);
+                                    }}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      color: "#e55353",
+                                      marginLeft: 4,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </span>
+                            )
+                          )
+                        ) : !isEditing ? (
+                          <span
+                            style={{
+                              fontStyle: "italic",
+                              color: "#adb5bd",
+                            }}
+                          >
+                            No tags. Click to add.
+                          </span>
+                        ) : null}
                       </div>
-                    ))}
-                </div>
+                    </div>
+
+                    {/* Extra Sections */}
+                    <div style={{ marginTop: "20px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <h3 style={{ margin: 0 }}>Extra Sections:</h3>
+                        <button
+                          onClick={addSection}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#0d6efd",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Plus size={16} style={{ marginRight: "4px" }} /> Add
+                          Section
+                        </button>
+                      </div>
+
+                      {extraSections.length === 0 && !isEditing && (
+                        <p style={{ fontStyle: "italic", color: "#adb5bd" }}>
+                          No extra sections yet.
+                        </p>
+                      )}
+
+                      {/* VIEW MODE: collapsible details */}
+                      {!isEditing &&
+                        extraSections.map((sec, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              marginTop: "12px",
+                              padding: "8px",
+                              backgroundColor: "#495057",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <div
+                              onClick={() => toggleSection(idx)}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <h4 style={{ margin: 0, color: "#e9ecef" }}>
+                                {sec.title || <em>(No title)</em>}
+                              </h4>
+                              {collapsedSections[idx] ? (
+                                <ChevronDown size={16} />
+                              ) : (
+                                <ChevronUp size={16} />
+                              )}
+                            </div>
+                            {!collapsedSections[idx] && (
+                              <p style={{ marginTop: "8px", color: "#e9ecef" }}>
+                                {sec.content || <em>(No content)</em>}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+
+                      {/* EDIT MODE: fully expanded with delete buttons */}
+                      {isEditing &&
+                        extraSections.map((sec, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: "relative",
+                              marginTop: "12px",
+                              padding: "8px",
+                              backgroundColor: "#495057",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <button
+                              onClick={() => deleteSection(idx)}
+                              style={{
+                                position: "absolute",
+                                top: "8px",
+                                right: "8px",
+                                background: "none",
+                                border: "none",
+                                color: "#e55353",
+                                cursor: "pointer",
+                                fontWeight: "bold",
+                              }}
+                              aria-label={`Delete section ${idx + 1}`}
+                            >
+                              ×
+                            </button>
+
+                            <label
+                              style={{
+                                display: "block",
+                                marginBottom: "4px",
+                                fontWeight: "bold",
+                                color: "#e9ecef",
+                              }}
+                            >
+                              Title:
+                            </label>
+                            <input
+                              type="text"
+                              value={sec.title}
+                              onChange={(e) =>
+                                updateSection(idx, "title", e.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "6px",
+                                marginBottom: "8px",
+                                boxSizing: "border-box",
+                              }}
+                            />
+
+                            <label
+                              style={{
+                                display: "block",
+                                marginBottom: "4px",
+                                fontWeight: "bold",
+                                color: "#e9ecef",
+                              }}
+                            >
+                              Content:
+                            </label>
+                            <textarea
+                              value={sec.content}
+                              onChange={(e) =>
+                                updateSection(idx, "content", e.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                minHeight: "80px",
+                                padding: "6px",
+                                boxSizing: "border-box",
+                              }}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p style={emptyStyle}>Click a pin to see details</p>
