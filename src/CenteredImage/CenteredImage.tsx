@@ -32,6 +32,7 @@ const CenteredImage: React.FC = () => {
   const selectedPinLabelRef = useRef<string | null>(null);
   const [vectorSource] = useState(() => new VectorSource());
   const [loading, setLoading] = useState(true);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   // Pin interaction state
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
@@ -83,7 +84,8 @@ const CenteredImage: React.FC = () => {
     pins,
     setPins,
     setNextLabel,
-    setSelectedPinLabel
+    setSelectedPinLabel,
+    mapInitialized
   );
 
   // Keep selection ref in sync
@@ -101,6 +103,9 @@ const CenteredImage: React.FC = () => {
   useEffect(() => {
     if (!mapRef.current || !mapUrl) return;
 
+    setMapInitialized(false);
+    setSelectedPinLabel(null); // Reset selected pin when initializing map
+    
     const { map, vectorLayer } = initializeMap(
       mapRef,
       mapUrl,
@@ -111,10 +116,17 @@ const CenteredImage: React.FC = () => {
 
     mapObject.current = map;
     vectorLayerRef.current = vectorLayer;
+    
+    // Small delay to ensure map is fully initialized
+    setTimeout(() => {
+      setMapInitialized(true);
+    }, 100);
 
     return () => {
       map.setTarget(undefined);
       map.dispose?.();
+      setMapInitialized(false);
+      vectorSource.clear(); // Clear vector source when map is disposed
     };
   }, [mapUrl, vectorSource]);
 

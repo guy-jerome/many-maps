@@ -13,11 +13,12 @@ export const useMapInteractions = (
   pins: PinData[],
   setPins: React.Dispatch<React.SetStateAction<PinData[]>>,
   setNextLabel: (label: number) => void,
-  setSelectedPinLabel: (label: string | null) => void
+  setSelectedPinLabel: (label: string | null) => void,
+  mapInitialized: boolean
 ) => {
   useEffect(() => {
     const map = mapObject.current;
-    if (!map) return;
+    if (!map || !mapInitialized) return;
 
     const onClick = (evt: any) => {
       handleMapClick(
@@ -56,5 +57,6 @@ export const useMapInteractions = (
     setPins,
     setNextLabel,
     setSelectedPinLabel,
+    mapInitialized,
   ]);
 };

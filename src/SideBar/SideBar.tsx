@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { ChevronDown, ChevronUp, Plus, Tag } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Tag, Menu, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExtraSection, getAllMaps, getMapRecord, PinData, PinType } from "../idbService";
 
@@ -37,6 +37,7 @@ const resizerStyle: React.CSSProperties = {
   cursor: "col-resize",
   backgroundColor: "#6c757d",
   zIndex: 10,
+  display: "block", // Will be hidden on mobile via inline style
 };
 
 const headerContainerStyle: React.CSSProperties = {
@@ -74,6 +75,11 @@ const SideBar: React.FC<SideBarProps> = ({
   const navigate = useNavigate();
   const { mapId } = useParams<{ mapId: string }>();
 
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [editArea, setEditArea] = useState("");
@@ -107,6 +113,45 @@ const SideBar: React.FC<SideBarProps> = ({
   const isResizing = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(0);
+
+  // Check screen size for responsive behavior
+  useEffect(() => {
+    const checkSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width <= 768);
+      setIsTablet(width > 768 && width <= 1200);
+      
+      // On mobile, start closed but don't force collapse
+      if (width <= 768) {
+        setIsSidebarOpen(false);
+        // Don't force collapse - let user control it
+      } else {
+        setIsCollapsed(false);
+        setIsSidebarOpen(true);
+      }
+    };
+    
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
+  }, []);
+
+  // Handle clicks outside sidebar on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isMobile &&
+        isSidebarOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobile, isSidebarOpen]);
 
   // Load map names for linking
   useEffect(() => {
@@ -256,46 +301,174 @@ const SideBar: React.FC<SideBarProps> = ({
     );
   });
 
+  // Responsive styling function
+  const getResponsiveStyle = () => {
+    const baseStyle = {
+      position: "fixed" as const,
+      top: 0,
+      right: 0,
+      height: "100%",
+      backgroundColor: "#343a40",
+      color: "#fff",
+      borderLeft: "1px solid #495057",
+      boxSizing: "border-box" as const,
+      padding: "16px",
+      display: "flex",
+      flexDirection: "column" as const,
+      maxHeight: isCollapsed ? `${headerHeight + 32}px` : "100%",
+      overflowX: "hidden" as const,
+      transition: "max-height 0.2s ease, transform 0.3s ease",
+      zIndex: 2000,
+    };
+
+    if (isMobile) {
+      return {
+        ...baseStyle,
+        width: "100%",
+        maxWidth: "320px",
+        transform: isSidebarOpen ? "translateX(0)" : "translateX(100%)",
+        boxShadow: isSidebarOpen ? "-2px 0 10px rgba(0,0,0,0.3)" : "none",
+      };
+    }
+
+    if (isTablet) {
+      return {
+        ...baseStyle,
+        width: Math.min(width, 280),
+      };
+    }
+
+    return {
+      ...baseStyle,
+      width,
+    };
+  };
+
+  // Mobile-friendly input styling
+  const getInputStyle = (baseStyle: React.CSSProperties = {}) => ({
+    ...baseStyle,
+    fontSize: isMobile ? "16px" : "14px", // Prevent zoom on mobile
+    padding: isMobile ? "12px" : "8px",
+    borderRadius: "4px",
+    border: "1px solid #495057",
+    backgroundColor: "#495057",
+    color: "#fff",
+    width: "100%",
+    boxSizing: "border-box" as const,
+  });
+
+  // Mobile-friendly button styling
+  const getButtonStyle = (baseStyle: React.CSSProperties = {}) => ({
+    ...baseStyle,
+    padding: isMobile ? "12px 16px" : "8px 12px",
+    fontSize: isMobile ? "16px" : "14px",
+    minHeight: isMobile ? "44px" : "auto", // Touch target size
+    cursor: "pointer",
+    borderRadius: "4px",
+    border: "1px solid #495057",
+    backgroundColor: "#495057",
+    color: "#fff",
+  });
+
   return (
-    <div
-      ref={sidebarRef}
-      style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        height: "100%",
-        width,
-        backgroundColor: "#343a40",
-        color: "#fff",
-        borderLeft: "1px solid #495057",
-        boxSizing: "border-box",
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        maxHeight: isCollapsed ? `${headerHeight + 32}px` : "100%",
-        overflowX: "hidden",
-        transition: "max-height 0.2s ease",
-      }}
-    >
-      <div style={resizerStyle} onMouseDown={handleMouseDown} />
-      <div style={{ flex: 1, overflowY: "auto" }}>
+    <>
+      {/* Mobile Toggle Button */}
+      {isMobile && (
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            zIndex: 2100,
+            background: "rgba(24, 28, 36, 0.95)",
+            border: "1px solid #495057",
+            borderRadius: "8px",
+            color: "#fff",
+            padding: "12px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+            backdropFilter: "blur(10px)",
+          }}
+          aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      )}
+
+      {/* Mobile Overlay */}
+      {isMobile && isSidebarOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1999,
+          }}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <div
+        ref={sidebarRef}
+        style={getResponsiveStyle()}
+      >
+        {/* Hide resizer on mobile */}
+        <div 
+          style={{
+            ...resizerStyle,
+            display: isMobile ? "none" : "block"
+          }} 
+          onMouseDown={handleMouseDown} 
+        />
+        <div style={{ flex: 1, overflowY: "auto" }}>
         <div ref={headerRef} style={headerContainerStyle}>
           <h2 style={headerStyle}>Pin Details</h2>
-          <button
-            onClick={() => setIsCollapsed((p) => !p)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-            }}
-            aria-label={isCollapsed ? "Expand" : "Collapse"}
-          >
-            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-          </button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {/* Collapse/Expand button - only show on desktop */}
+            {!isMobile && (
+              <button
+                onClick={() => setIsCollapsed((p) => !p)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label={isCollapsed ? "Expand" : "Collapse"}
+              >
+                {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+              </button>
+            )}
+            
+            {/* Close button - only show on mobile */}
+            {isMobile && (
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label="Close sidebar"
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
         {!isCollapsed && (
@@ -328,16 +501,9 @@ const SideBar: React.FC<SideBarProps> = ({
                     placeholder="Search pins by name, area, description, or tags..."
                     value={pinSearchQuery}
                     onChange={(e) => setPinSearchQuery(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
+                    style={getInputStyle({
                       marginBottom: "8px",
-                      boxSizing: "border-box",
-                      borderRadius: "4px",
-                      border: "1px solid #495057",
-                      backgroundColor: "#495057",
-                      color: "#fff",
-                    }}
+                    })}
                   />
                   
                   {pinSearchQuery.trim() && (
@@ -640,12 +806,9 @@ const SideBar: React.FC<SideBarProps> = ({
                         type="text"
                         value={editArea}
                         onChange={(e) => setEditArea(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "8px",
+                        style={getInputStyle({
                           marginBottom: "12px",
-                          boxSizing: "border-box",
-                        }}
+                        })}
                       />
                     ) : (
                       <p
@@ -662,23 +825,27 @@ const SideBar: React.FC<SideBarProps> = ({
                         <textarea
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
-                          style={{
-                            width: "100%",
+                          style={getInputStyle({
                             minHeight: "100px",
-                            padding: "8px",
-                            boxSizing: "border-box",
-                          }}
+                          })}
                         />
                         <div style={{ marginTop: "8px" }}>
                           <button
                             onClick={handleSave}
-                            style={{ marginRight: 8, cursor: "pointer" }}
+                            style={getButtonStyle({
+                              marginRight: 8,
+                              backgroundColor: "#28a745",
+                              borderColor: "#28a745",
+                            })}
                           >
                             Save
                           </button>
                           <button
                             onClick={() => setIsEditing(false)}
-                            style={{ cursor: "pointer" }}
+                            style={getButtonStyle({
+                              backgroundColor: "#6c757d",
+                              borderColor: "#6c757d",
+                            })}
                           >
                             Cancel
                           </button>
@@ -765,22 +932,26 @@ const SideBar: React.FC<SideBarProps> = ({
                             value={newTagInput}
                             onChange={(e) => setNewTagInput(e.target.value)}
                             placeholder="New tag"
-                            style={{
-                              padding: "4px 8px",
+                            style={getInputStyle({
+                              padding: isMobile ? "8px" : "4px 8px",
                               flexGrow: 1,
                               marginRight: 6,
-                            }}
+                            })}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") addTag();
                             }}
                           />
                           <button
                             onClick={addTag}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                            }}
+                            style={getButtonStyle({
+                              background: "#28a745",
+                              border: "1px solid #28a745",
+                              padding: isMobile ? "8px" : "4px 8px",
+                              minHeight: isMobile ? "44px" : "32px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            })}
                           >
                             <Plus size={16} />
                           </button>
@@ -968,12 +1139,10 @@ const SideBar: React.FC<SideBarProps> = ({
                               onChange={(e) =>
                                 updateSection(idx, "title", e.target.value)
                               }
-                              style={{
-                                width: "100%",
+                              style={getInputStyle({
                                 padding: "6px",
                                 marginBottom: "8px",
-                                boxSizing: "border-box",
-                              }}
+                              })}
                             />
 
                             <label
@@ -991,12 +1160,10 @@ const SideBar: React.FC<SideBarProps> = ({
                               onChange={(e) =>
                                 updateSection(idx, "content", e.target.value)
                               }
-                              style={{
-                                width: "100%",
+                              style={getInputStyle({
                                 minHeight: "80px",
                                 padding: "6px",
-                                boxSizing: "border-box",
-                              }}
+                              })}
                             />
                           </div>
                         ))}
@@ -1011,6 +1178,7 @@ const SideBar: React.FC<SideBarProps> = ({
         )}
       </div>
     </div>
+    </>
   );
 };
 
