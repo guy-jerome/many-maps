@@ -301,6 +301,22 @@ const SideBar: React.FC<SideBarProps> = ({
     );
   });
 
+  // Helper function to get display name for selectedLabel
+  const getSelectedLabelDisplayName = (selectedLabel: SelectedLabelType): string => {
+    // First try to use areaName if it exists and is not empty
+    if (selectedLabel.areaName && selectedLabel.areaName.trim()) {
+      return selectedLabel.areaName.trim();
+    }
+    
+    // Fall back to pin type name
+    if (selectedLabel.pinType && selectedLabel.pinType.name) {
+      return selectedLabel.pinType.name;
+    }
+    
+    // Last resort - use the label (numeric)
+    return selectedLabel.label;
+  };
+
   // Responsive styling function
   const getResponsiveStyle = () => {
     const baseStyle = {
@@ -553,11 +569,11 @@ const SideBar: React.FC<SideBarProps> = ({
                               )}
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: "bold", fontSize: "14px" }}>
-                                  {pin.label}
+                                  {pin.areaName && pin.areaName.trim() ? pin.areaName.trim() : pin.pinType?.name || pin.label}
                                 </div>
-                                {pin.areaName && (
+                                {pin.areaName && pin.areaName.trim() && pin.pinType && (
                                   <div style={{ fontSize: "12px", color: "#adb5bd" }}>
-                                    {pin.areaName}
+                                    {pin.pinType.name}
                                   </div>
                                 )}
                                 {pin.info && (
@@ -747,7 +763,7 @@ const SideBar: React.FC<SideBarProps> = ({
                   <div style={infoStyle}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                       <p style={{ margin: 0 }}>
-                        <strong>Pin:</strong> {selectedLabel.label}
+                        <strong>Pin:</strong> {getSelectedLabelDisplayName(selectedLabel)}
                       </p>
                       {onCenterPin && (
                         <button
