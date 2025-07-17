@@ -11,7 +11,7 @@ export const DND_PIN_TYPES: PinType[] = [
   {
     id: "numbered",
     name: "Numbered Pin",
-    icon: "1",
+    icon: "",
     color: "#4169E1",
     category: "custom",
   },

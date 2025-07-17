@@ -317,6 +317,36 @@ const SideBar: React.FC<SideBarProps> = ({
     return selectedLabel.label;
   };
 
+  // Helper function to get display name for search results
+  const getSearchDisplayName = (pin: PinData): string => {
+    // For all pins, use area name if available, otherwise pin type name
+    if (pin.areaName && pin.areaName.trim()) {
+      return pin.areaName.trim();
+    }
+    
+    return pin.pinType?.name || pin.label;
+  };
+
+  // Helper function to get subtitle for search results
+  const getSearchSubtitle = (pin: PinData): string | null => {
+    // For numbered pins, show "Pin {number}" as subtitle
+    if (pin.pinType?.id === "numbered") {
+      const numberedPins = allPins
+        .filter((p) => p.pinType.id === "numbered")
+        .sort((a, b) => parseInt(a.label) - parseInt(b.label));
+      const pinIndex = numberedPins.findIndex((p) => p.label === pin.label);
+      const displayNumber = pinIndex + 1;
+      return `Pin ${displayNumber}`;
+    }
+    
+    // For other pins, show pin type name as subtitle if area name is present
+    if (pin.areaName && pin.areaName.trim() && pin.pinType) {
+      return pin.pinType.name;
+    }
+    
+    return null;
+  };
+
   // Responsive styling function
   const getResponsiveStyle = () => {
     const baseStyle = {
@@ -564,16 +594,22 @@ const SideBar: React.FC<SideBarProps> = ({
                                   fontSize: "14px",
                                   color: pin.pinType.color 
                                 }}>
-                                  {pin.pinType.icon}
+                                  {pin.pinType.id === "numbered" ? (() => {
+                                    const numberedPins = allPins
+                                      .filter((p) => p.pinType.id === "numbered")
+                                      .sort((a, b) => parseInt(a.label) - parseInt(b.label));
+                                    const pinIndex = numberedPins.findIndex((p) => p.label === pin.label);
+                                    return (pinIndex + 1).toString();
+                                  })() : pin.pinType.icon}
                                 </span>
                               )}
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: "bold", fontSize: "14px" }}>
-                                  {pin.areaName && pin.areaName.trim() ? pin.areaName.trim() : pin.pinType?.name || pin.label}
+                                  {getSearchDisplayName(pin)}
                                 </div>
-                                {pin.areaName && pin.areaName.trim() && pin.pinType && (
+                                {getSearchSubtitle(pin) && (
                                   <div style={{ fontSize: "12px", color: "#adb5bd" }}>
-                                    {pin.pinType.name}
+                                    {getSearchSubtitle(pin)}
                                   </div>
                                 )}
                                 {pin.info && (
