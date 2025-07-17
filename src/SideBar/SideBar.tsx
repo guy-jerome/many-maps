@@ -92,6 +92,9 @@ export const SideBar: React.FC<SideBarProps> = ({
   const [pinSearchQuery, setPinSearchQuery] = useState<string>("");
   const [showPinSearch, setShowPinSearch] = useState(false);
 
+  // Map statistics functionality
+  const [showMapStats, setShowMapStats] = useState(false);
+
   const [width, setWidth] = useState(300);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -421,64 +424,84 @@ export const SideBar: React.FC<SideBarProps> = ({
 
             {/* Map Statistics */}
             <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-              <h3>Map Statistics</h3>
-              <div style={{ 
-                background: "rgba(52, 58, 64, 0.6)", 
-                borderRadius: "6px", 
-                padding: "12px",
-                fontSize: "13px"
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>📍 Total Pins:</span>
-                  <strong>{allPins.length}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>📝 With Descriptions:</span>
-                  <strong>{allPins.filter(p => p.info?.trim()).length}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>🏷️ With Tags:</span>
-                  <strong>{allPins.filter(p => p.tags && p.tags.length > 0).length}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>🔗 Linked Maps:</span>
-                  <strong>{allPins.filter(p => p.linkedMapId).length}</strong>
-                </div>
-                
-                {/* Pin type breakdown */}
-                {(() => {
-                  const typeStats = allPins.reduce((acc, pin) => {
-                    const category = pin.pinType?.category || 'custom';
-                    acc[category] = (acc[category] || 0) + 1;
-                    return acc;
-                  }, {} as Record<string, number>);
-                  
-                  const categoryIcons = {
-                    location: '🏰',
-                    encounter: '⚔️',
-                    npc: '👤',
-                    treasure: '💎',
-                    hazard: '⚠️',
-                    custom: '📌'
-                  };
-                  
-                  return Object.entries(typeStats).length > 0 && (
-                    <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #6c757d" }}>
-                      <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#adb5bd" }}>
-                        By Category:
-                      </div>
-                      {Object.entries(typeStats).map(([category, count]) => (
-                        <div key={category} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" }}>
-                          <span>
-                            {categoryIcons[category as keyof typeof categoryIcons]} {category.charAt(0).toUpperCase() + category.slice(1)}:
-                          </span>
-                          <strong>{count}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <h3 style={{ margin: 0 }}>Map Statistics</h3>
+                <button
+                  onClick={() => setShowMapStats(!showMapStats)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label={showMapStats ? "Hide statistics" : "Show statistics"}
+                >
+                  {showMapStats ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
               </div>
+              
+              {showMapStats && (
+                <div style={{ 
+                  background: "rgba(52, 58, 64, 0.6)", 
+                  borderRadius: "6px", 
+                  padding: "12px",
+                  fontSize: "13px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>📍 Total Pins:</span>
+                    <strong>{allPins.length}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>📝 With Descriptions:</span>
+                    <strong>{allPins.filter(p => p.info?.trim()).length}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>🏷️ With Tags:</span>
+                    <strong>{allPins.filter(p => p.tags && p.tags.length > 0).length}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>🔗 Linked Maps:</span>
+                    <strong>{allPins.filter(p => p.linkedMapId).length}</strong>
+                  </div>
+                  
+                  {/* Pin type breakdown */}
+                  {(() => {
+                    const typeStats = allPins.reduce((acc, pin) => {
+                      const category = pin.pinType?.category || 'custom';
+                      acc[category] = (acc[category] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>);
+                    
+                    const categoryIcons = {
+                      location: '🏰',
+                      encounter: '⚔️',
+                      npc: '👤',
+                      treasure: '💎',
+                      hazard: '⚠️',
+                      custom: '📌'
+                    };
+                    
+                    return Object.entries(typeStats).length > 0 && (
+                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #6c757d" }}>
+                        <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#adb5bd" }}>
+                          By Category:
+                        </div>
+                        {Object.entries(typeStats).map(([category, count]) => (
+                          <div key={category} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" }}>
+                            <span>
+                              {categoryIcons[category as keyof typeof categoryIcons]} {category.charAt(0).toUpperCase() + category.slice(1)}:
+                            </span>
+                            <strong>{count}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Parent Maps - always shown */}
