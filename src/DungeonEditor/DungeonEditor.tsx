@@ -374,6 +374,11 @@ function DungeonEditor() {
     "background" | "underlayer"
   >("background");
   const [iconIndex, setIconIndex] = React.useState(0);
+  
+  // Mobile-specific state
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [isToolbarExpanded, setIsToolbarExpanded] = React.useState(false);
+  const [lastTouchDistance, setLastTouchDistance] = React.useState<number | null>(null);
 
   // Shape color matches the stone/grid color (underlayerColor)
   const shapeColor = underlayerColor;
@@ -501,6 +506,51 @@ function DungeonEditor() {
   React.useEffect(() => {
     setProjectName(currentProjectName);
   }, [currentProjectName]);
+
+  // Mobile detection and resize handler
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-collapse toolbar on mobile when tool is selected
+  React.useEffect(() => {
+    if (isMobile && isToolbarExpanded) {
+      const timer = setTimeout(() => {
+        setIsToolbarExpanded(false);
+      }, 2000); // Auto-collapse after 2 seconds for better UX
+      
+      return () => clearTimeout(timer);
+    }
+  }, [tool, isMobile, isToolbarExpanded]);
+
+  // Helper function for mobile tool selection
+  const handleMobileToolSelect = (newTool: ToolName) => {
+    setTool(newTool);
+    if (isMobile) {
+      // Give a brief moment for user feedback, then collapse
+      setTimeout(() => {
+        setIsToolbarExpanded(false);
+      }, 500);
+    }
+  };
+
+  // Helper function to calculate distance between two touch points
+  const getTouchDistance = (touches: TouchList) => {
+    if (touches.length < 2) return 0;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) +
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
 
   // Load saved projects list
   const loadSavedProjects = async () => {
@@ -1495,28 +1545,65 @@ function DungeonEditor() {
 
   // Mouse drag panning
   const handleStageMouseDown = (e: any) => {
+    // Handle pinch-to-zoom for mobile
+    if (e.evt.touches && e.evt.touches.length === 2) {
+      e.evt.preventDefault();
+      setLastTouchDistance(getTouchDistance(e.evt.touches));
+      return;
+    }
+    
+    // Prevent default for touch events to avoid scrolling
+    if (e.evt.touches) {
+      e.evt.preventDefault();
+    }
+    
     if (
       e.evt.button === 1 ||
       (e.target === e.target.getStage() && tool === "select" && e.evt.ctrlKey)
     ) {
       isPanning.current = true;
-      lastPan.current = { x: e.evt.clientX, y: e.evt.clientY };
+      const clientX = e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
+      const clientY = e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
+      lastPan.current = { x: clientX, y: clientY };
       document.body.style.cursor = "grab";
     } else {
       handleMouseDown(e);
     }
   };
   const handleStageMouseMove = (e: any) => {
+    // Handle pinch-to-zoom for mobile
+    if (e.evt.touches && e.evt.touches.length === 2) {
+      e.evt.preventDefault();
+      if (lastTouchDistance) {
+        const newDistance = getTouchDistance(e.evt.touches);
+        const scale = newDistance / lastTouchDistance;
+        const newZoom = Math.max(0.1, Math.min(5, zoom * scale));
+        setZoom(newZoom);
+        setLastTouchDistance(newDistance);
+      }
+      return;
+    }
+    
+    // Prevent default for touch events to avoid scrolling
+    if (e.evt.touches) {
+      e.evt.preventDefault();
+    }
+    
     if (isPanning.current) {
-      const dx = e.evt.clientX - lastPan.current.x;
-      const dy = e.evt.clientY - lastPan.current.y;
+      const clientX = e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
+      const clientY = e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
+      const dx = clientX - lastPan.current.x;
+      const dy = clientY - lastPan.current.y;
       setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
-      lastPan.current = { x: e.evt.clientX, y: e.evt.clientY };
+      lastPan.current = { x: clientX, y: clientY };
     } else {
       handleMouseMove(e);
     }
   };
   const handleStageMouseUp = () => {
+    // Reset touch distance for pinch-to-zoom
+    setLastTouchDistance(null);
+    
     if (isPanning.current) {
       isPanning.current = false;
       document.body.style.cursor = "";
@@ -2300,10 +2387,54 @@ function DungeonEditor() {
           </div>
         </div>
 
-        {/* Center section - Main actions and settings */}
-        <div className="toolbar-section toolbar-center">
-          {/* File Operations Group */}
-          <div className="button-group">
+        {/* Mobile-specific compact toolbar */}
+        {isMobile && (
+          <div className="toolbar-section toolbar-center mobile-compact">
+            <div className="button-group essential-tools">
+              <button
+                onClick={handleUndo}
+                disabled={history.length === 0}
+                className={
+                  history.length === 0 ? "btn-disabled" : "btn-secondary"
+                }
+                title="Undo"
+              >
+                ↶
+              </button>
+
+              <button
+                onClick={handleRedo}
+                disabled={future.length === 0}
+                className={future.length === 0 ? "btn-disabled" : "btn-secondary"}
+                title="Redo"
+              >
+                ↷
+              </button>
+
+              <button
+                onClick={() => setAddMode((v) => !v)}
+                className={addMode ? "btn-active" : "btn-inactive"}
+                title={addMode ? "Carving Mode" : "Adding Mode"}
+              >
+                {addMode ? "✏️" : "⛏️"}
+              </button>
+
+              <button
+                onClick={() => setShowGrid((v) => !v)}
+                className={showGrid ? "btn-active" : "btn-inactive"}
+                title="Grid"
+              >
+                {showGrid ? "⬜" : "⬛"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Center section - Main actions and settings (hidden on mobile) */}
+        {!isMobile && (
+          <div className="toolbar-section toolbar-center">
+            {/* File Operations Group */}
+            <div className="button-group">
             <button
               onClick={() => {
                 if (
@@ -2494,6 +2625,7 @@ function DungeonEditor() {
             </button>
           </div>
         </div>
+        )}
 
         {/* Right section - Export actions and overflow menu */}
         <div className="toolbar-section toolbar-right">
@@ -2591,19 +2723,93 @@ function DungeonEditor() {
       </div>
       <div className="dungeon-editor-main" style={{ display: "flex" }}>
         <div
-          className="dungeon-toolbar"
+          className={`dungeon-toolbar ${isMobile ? (isToolbarExpanded ? 'expanded' : 'collapsed') : ''}`}
           style={{
             flexDirection: "column",
             alignItems: "center",
-            width: 112,
-            minWidth: 112,
-            maxWidth: 112,
+            width: isMobile ? (isToolbarExpanded ? 112 : 48) : 112,
+            minWidth: isMobile ? (isToolbarExpanded ? 112 : 48) : 112,
+            maxWidth: isMobile ? (isToolbarExpanded ? 112 : 48) : 112,
             paddingTop: 8,
-            position: "relative",
+            position: isMobile ? "fixed" : "relative",
+            left: isMobile ? 0 : "auto",
+            top: isMobile ? 70 : "auto",
+            zIndex: isMobile ? 1000 : "auto",
+            background: "#222",
+            borderRadius: isMobile ? "0 8px 8px 0" : "0",
+            boxShadow: isMobile ? "2px 0 8px rgba(0, 0, 0, 0.3)" : "none",
+            transition: "all 0.3s ease",
+            overflow: isMobile && !isToolbarExpanded ? "hidden" : "visible",
           }}
         >
-          {/* Color picker at the very top */}
-          <button
+          {/* Mobile toolbar toggle button */}
+          {isMobile && (
+            <button
+              style={{
+                width: 40,
+                height: 40,
+                background: "#444",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                margin: 4,
+                cursor: "pointer",
+                fontSize: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+              }}
+              onClick={() => setIsToolbarExpanded(!isToolbarExpanded)}
+              title="Toggle Toolbar"
+            >
+              {isToolbarExpanded ? '×' : '☰'}
+              {/* Current tool indicator when collapsed */}
+              {!isToolbarExpanded && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 2,
+                    right: 2,
+                    width: 12,
+                    height: 12,
+                    background: "#3a7bd5",
+                    borderRadius: "50%",
+                    fontSize: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    border: "1px solid #fff",
+                  }}
+                  title={`Current tool: ${tool}`}
+                >
+                  {TOOL_LIST.find(t => t.name === tool)?.icon || '•'}
+                </div>
+              )}
+            </button>
+          )}
+          
+          {/* Only show toolbar content if not mobile or if expanded */}
+          {(!isMobile || isToolbarExpanded) && (
+            <>
+              {/* Mobile helper text */}
+              {isMobile && isToolbarExpanded && (
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#aaa",
+                    textAlign: "center",
+                    margin: "4px 0",
+                    padding: "2px",
+                  }}
+                >
+                  Tap tool to select
+                </div>
+              )}
+              
+              {/* Color picker at the very top */}
+              <button
             style={{
               background:
                 colorPickerMode === "background"
@@ -2680,7 +2886,7 @@ function DungeonEditor() {
               <button
                 key={t.name}
                 className={tool === t.name ? "active" : ""}
-                onClick={() => setTool(t.name as ToolName)}
+                onClick={() => handleMobileToolSelect(t.name as ToolName)}
                 style={{
                   fontSize: 24,
                   background: tool === t.name ? "#444" : "#222",
@@ -2779,8 +2985,13 @@ function DungeonEditor() {
               </div>
             </div>
           )}
+            </>
+          )}
         </div>
-        <div className="canvas-container">
+        <div className="canvas-container" style={{
+          paddingLeft: isMobile ? (isToolbarExpanded ? 120 : 56) : 0,
+          transition: "padding-left 0.3s ease"
+        }}>
           <Stage
             ref={stageRef}
             width={canvasWidth}
@@ -2795,6 +3006,9 @@ function DungeonEditor() {
             onMouseDown={handleStageMouseDown}
             onMouseMove={handleStageMouseMove}
             onMouseUp={handleStageMouseUp}
+            onTouchStart={handleStageMouseDown}
+            onTouchMove={handleStageMouseMove}
+            onTouchEnd={handleStageMouseUp}
           >
             {/* Underground + Mask Layer: always show background, existing shapes always carve */}
             <Layer id="underground-mask-layer">
