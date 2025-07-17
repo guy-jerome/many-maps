@@ -68,3 +68,21 @@
   background-color: #0d6efd;
   color: #fff;
 }
+
+/* checkbox styling */
+.mg-form-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-form-checkbox input[type="checkbox"] {
+  margin: 0 !important;
+  width: auto;
+}
+
+.mg-checkbox-label {
+  font-size: 13px;
+  color: #555;
+  margin-left: 4px;
+}

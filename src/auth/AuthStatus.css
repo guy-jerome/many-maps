@@ -1,0 +1,76 @@
+/* src/auth/AuthStatus.css */
+.auth-status {
+  background: #232a34;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  border-left: 4px solid transparent;
+}
+
+.auth-status.guest {
+  border-left-color: #ffc107;
+}
+
+.auth-status.authenticated {
+  border-left-color: #28a745;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background: #28a745;
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.4);
+}
+
+.status-dot.offline {
+  background: #ffc107;
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+}
+
+.auth-message {
+  color: #d0d0d0;
+  font-size: 14px;
+  margin: 0;
+  font-style: italic;
+}
+
+.auth-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1d23;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #d0d0d0;
+}
+
+.feature-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .auth-features {
+    grid-template-columns: 1fr;
+  }
+}

@@ -9,6 +9,7 @@ import {
 } from "react-konva";
 import { SketchPicker } from "react-color";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import Konva from "konva";
 import {
   GRID_SIZE,
@@ -28,7 +29,8 @@ import {
 import {
   saveDungeonProject,
   getDungeonProject,
-  getAllDungeonProjects,
+  getDungeonProjectsForUser,
+  getPublicDungeonProjects,
   deleteDungeonProject,
   exportDungeonToGallery,
   DungeonProject,
@@ -359,6 +361,7 @@ const ICONS = [
 
 function DungeonEditor() {
   const { projectId } = useParams<{ projectId?: string }>();
+  const { user } = useAuth();
   const [tool, setTool] = React.useState<ToolName>("line");
   const [drawing, setDrawing] = React.useState<Shape | null>(null);
   const [shapes, setShapes] = React.useState<Shape[]>([]);
@@ -489,6 +492,11 @@ function DungeonEditor() {
     loadSavedProjects();
   }, [projectId]);
 
+  // Reload projects when user changes
+  React.useEffect(() => {
+    loadSavedProjects();
+  }, [user]);
+
   // Sync projectName with currentProjectName when it changes
   React.useEffect(() => {
     setProjectName(currentProjectName);
@@ -497,7 +505,10 @@ function DungeonEditor() {
   // Load saved projects list
   const loadSavedProjects = async () => {
     try {
-      const projects = await getAllDungeonProjects();
+      // Load user-specific projects if authenticated, otherwise load public projects
+      const projects = user 
+        ? await getDungeonProjectsForUser(user.id)
+        : await getPublicDungeonProjects();
       setSavedProjects(projects);
     } catch (error) {
       console.error("Error loading saved projects:", error);
@@ -534,6 +545,11 @@ function DungeonEditor() {
 
   // Save current project
   const saveCurrentProject = async () => {
+    if (!user) {
+      alert("You must be logged in to save projects. Please sign in or create an account.");
+      return;
+    }
+    
     try {
       const id =
         currentProjectId ||
@@ -578,6 +594,8 @@ function DungeonEditor() {
         underlayerColor,
         lastModified: new Date(),
         thumbnail,
+        userId: user?.id, // Associate with current user
+        isPublic: false, // Default to private
       };
 
       await saveDungeonProject(project);
@@ -600,6 +618,11 @@ function DungeonEditor() {
 
   // Export to Map Gallery
   const exportToGallery = async () => {
+    if (!user) {
+      alert("You must be logged in to export to gallery. Please sign in or create an account.");
+      return;
+    }
+    
     try {
       if (stageRef.current) {
         const stage = stageRef.current;
@@ -629,7 +652,8 @@ function DungeonEditor() {
             currentProjectId || "temp",
             blob,
             exportName,
-            exportDescription
+            exportDescription,
+            user?.id // Pass user ID for ownership
           );
           setShowExportModal(false);
 

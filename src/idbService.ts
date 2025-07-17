@@ -26,12 +26,28 @@ export interface PinType {
   category: 'location' | 'encounter' | 'treasure' | 'npc' | 'hazard' | 'custom';
 }
 
+// New interface for user accounts
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  passwordHash: string;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  profilePicture?: Blob;
+}
+
+// Update MapRecord to include user ownership
 export interface MapRecord {
+  id: string;
   blob: Blob;
   thumb?: Blob;
   name: string;
   description?: string;
   pins: PinData[];
+  userId?: string; // Add user ownership
+  createdAt?: Date;
+  isPublic?: boolean; // Allow maps to be public or private
 }
 
 // New interface for dungeon work-in-progress projects
@@ -47,6 +63,19 @@ export interface DungeonProject {
   underlayerColor: string; // Color for the stone layer
   lastModified: Date;
   thumbnail?: Blob; // Optional thumbnail
+  userId?: string; // Add user ownership
+  isPublic?: boolean; // Allow dungeons to be public or private
+}
+
+// New interface for user accounts
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  passwordHash: string;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  profilePicture?: Blob;
 }
 
 interface MapGalleryDB extends DBSchema {
@@ -58,20 +87,34 @@ interface MapGalleryDB extends DBSchema {
     key: string;
     value: DungeonProject;
   };
+  users: {
+    key: string;
+    value: User;
+    indexes: {
+      username: string;
+      email: string;
+    };
+  };
 }
 
 const DB_NAME = "map-gallery-db";
 const STORE = "maps";
 const DUNGEON_STORE = "dungeonProjects";
+const USER_STORE = "users";
 
 async function getDB() {
-  return openDB<MapGalleryDB>(DB_NAME, 2, {
+  return openDB<MapGalleryDB>(DB_NAME, 3, {
     upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains(STORE)) {
         db.createObjectStore(STORE);
       }
       if (oldVersion < 2 && !db.objectStoreNames.contains(DUNGEON_STORE)) {
         db.createObjectStore(DUNGEON_STORE);
+      }
+      if (oldVersion < 3 && !db.objectStoreNames.contains(USER_STORE)) {
+        const userStore = db.createObjectStore(USER_STORE);
+        userStore.createIndex('username', 'username', { unique: true });
+        userStore.createIndex('email', 'email', { unique: true });
       }
     },
   });
@@ -82,11 +125,24 @@ export async function saveMap(
   blob: Blob,
   name: string,
   description?: string,
-  pins: PinData[] = []
+  pins: PinData[] = [],
+  userId?: string,
+  isPublic: boolean = false
 ) {
   const thumb = await makeThumbnail(blob, 200, 200); // create thumbnail once here
   const db = await getDB();
-  await db.put(STORE, { blob, name, description, pins, thumb }, id);
+  const mapRecord: MapRecord = {
+    id,
+    blob,
+    name,
+    description,
+    pins,
+    thumb,
+    userId,
+    createdAt: new Date(),
+    isPublic
+  };
+  await db.put(STORE, mapRecord, id);
 }
 
 export async function getMapRecord(id: string): Promise<MapRecord | undefined> {
@@ -209,11 +265,121 @@ export async function exportDungeonToGallery(
   projectId: string,
   mapBlob: Blob,
   mapName: string,
-  mapDescription?: string
+  mapDescription?: string,
+  userId?: string
 ) {
   // Save the dungeon as a regular map in the gallery
   // Use projectId as part of the map ID to maintain some connection
   const mapId = projectId ? `dungeon-${projectId}` : `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  await saveMap(mapId, mapBlob, mapName, mapDescription);
+  await saveMap(mapId, mapBlob, mapName, mapDescription, [], userId);
   return mapId;
+}
+
+// ===== USER AUTHENTICATION FUNCTIONS =====
+
+// Simple password hashing (in production, use bcrypt or similar)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function createUser(username: string, email: string, password: string): Promise<User | null> {
+  try {
+    const db = await getDB();
+    
+    // Check if username or email already exists
+    const existingByUsername = await db.getFromIndex(USER_STORE, 'username', username);
+    const existingByEmail = await db.getFromIndex(USER_STORE, 'email', email);
+    
+    if (existingByUsername || existingByEmail) {
+      return null; // User already exists
+    }
+    
+    const passwordHash = await hashPassword(password);
+    const user: User = {
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      username,
+      email,
+      passwordHash,
+      createdAt: new Date(),
+      lastLoginAt: new Date()
+    };
+    
+    await db.put(USER_STORE, user, user.id);
+    return user;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return null;
+  }
+}
+
+export async function validateUser(username: string, password: string): Promise<User | null> {
+  try {
+    const db = await getDB();
+    const user = await db.getFromIndex(USER_STORE, 'username', username);
+    
+    if (!user) {
+      return null;
+    }
+    
+    const passwordHash = await hashPassword(password);
+    if (user.passwordHash !== passwordHash) {
+      return null;
+    }
+    
+    // Update last login time
+    user.lastLoginAt = new Date();
+    await db.put(USER_STORE, user, user.id);
+    
+    return user;
+  } catch (error) {
+    console.error('Error validating user:', error);
+    return null;
+  }
+}
+
+export async function getUserById(id: string): Promise<User | undefined> {
+  const db = await getDB();
+  return db.get(USER_STORE, id);
+}
+
+export async function getUserByUsername(username: string): Promise<User | undefined> {
+  const db = await getDB();
+  return db.getFromIndex(USER_STORE, 'username', username);
+}
+
+export async function updateUser(user: User): Promise<void> {
+  const db = await getDB();
+  await db.put(USER_STORE, user, user.id);
+}
+
+// ===== UPDATED MAP FUNCTIONS WITH USER SUPPORT =====
+
+export async function getMapsForUser(userId: string): Promise<MapRecord[]> {
+  const db = await getDB();
+  const allMaps = await db.getAll(STORE);
+  return allMaps.filter(map => map.userId === userId);
+}
+
+export async function getPublicMaps(): Promise<MapRecord[]> {
+  const db = await getDB();
+  const allMaps = await db.getAll(STORE);
+  return allMaps.filter(map => map.isPublic === true);
+}
+
+// ===== UPDATED DUNGEON FUNCTIONS WITH USER SUPPORT =====
+
+export async function getDungeonProjectsForUser(userId: string): Promise<DungeonProject[]> {
+  const db = await getDB();
+  const allProjects = await db.getAll(DUNGEON_STORE);
+  return allProjects.filter(project => project.userId === userId);
+}
+
+export async function getPublicDungeonProjects(): Promise<DungeonProject[]> {
+  const db = await getDB();
+  const allProjects = await db.getAll(DUNGEON_STORE);
+  return allProjects.filter(project => project.isPublic === true);
 }

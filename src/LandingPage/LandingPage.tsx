@@ -1,15 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { AuthModal } from "../auth/AuthModal";
+import { UserProfile } from "../auth/UserProfile";
+import { AuthStatus } from "../auth/AuthStatus";
 import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  // Auto-login with default username
-  const [username] = React.useState("DM");
+  const { user, isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [showUserProfile, setShowUserProfile] = useState(false);
+
+  const handleAuthClick = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
 
   return (
     <div className="landing-bg">
       <div className="landing-container">
+        {/* Navigation Header */}
+        <div className="landing-nav">
+          <div className="nav-logo">
+            <span className="nav-logo-icon">🏰</span>
+            <span className="nav-logo-text">D&D Map Assistant</span>
+          </div>
+          <div className="nav-actions">
+            {isAuthenticated ? (
+              <div className="user-menu">
+                <button 
+                  className="user-menu-btn" 
+                  onClick={() => setShowUserProfile(true)}
+                >
+                  <span className="user-avatar-small">
+                    {user?.username.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="user-name">{user?.username}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="auth-nav-buttons">
+                <button 
+                  className="nav-btn secondary" 
+                  onClick={() => handleAuthClick('login')}
+                >
+                  Sign In
+                </button>
+                <button 
+                  className="nav-btn primary" 
+                  onClick={() => handleAuthClick('signup')}
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Hero Section */}
         <div className="hero-section">
           <div className="hero-content">
@@ -21,8 +70,11 @@ const LandingPage: React.FC = () => {
               Your Ultimate Tool for Creating Interactive D&D Maps and Dungeons
             </p>
             <p className="hero-description">
-              Welcome, {username}! Transform your tabletop adventures with powerful 
-              map creation tools, pin management, and dungeon building features.
+              {isAuthenticated ? (
+                <>Welcome back, {user?.username}! Ready to continue your adventure with powerful map creation tools, pin management, and dungeon building features.</>
+              ) : (
+                <>Transform your tabletop adventures with powerful map creation tools, pin management, and dungeon building features. Join thousands of DMs already using our platform!</>
+              )}
             </p>
             
             <div className="hero-actions">
@@ -35,6 +87,22 @@ const LandingPage: React.FC = () => {
                 Create Dungeon
               </button>
             </div>
+
+            <AuthStatus />
+
+            {!isAuthenticated && (
+              <div className="hero-cta">
+                <p className="cta-text">
+                  Want to save your work and access premium features?
+                </p>
+                <button 
+                  className="cta-btn"
+                  onClick={() => handleAuthClick('signup')}
+                >
+                  Create Free Account
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -211,6 +279,18 @@ const LandingPage: React.FC = () => {
           <p>Ready to enhance your D&D campaigns? Start exploring your maps or create new dungeons!</p>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authMode}
+      />
+
+      {/* User Profile Modal */}
+      {showUserProfile && (
+        <UserProfile onClose={() => setShowUserProfile(false)} />
+      )}
     </div>
   );
 };

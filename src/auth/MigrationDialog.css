@@ -1,0 +1,151 @@
+/* src/auth/MigrationDialog.css */
+.migration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.migration-dialog {
+  background: #1a1d23;
+  color: #f3f3f3;
+  padding: 32px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.migration-dialog h3 {
+  margin-bottom: 20px;
+  color: #f3f3f3;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.migration-content {
+  margin-bottom: 24px;
+}
+
+.migration-content p {
+  margin-bottom: 16px;
+  line-height: 1.5;
+  color: #d0d0d0;
+}
+
+.migration-content ul {
+  margin-left: 20px;
+  margin-bottom: 16px;
+}
+
+.migration-content li {
+  margin-bottom: 8px;
+  color: #d0d0d0;
+}
+
+.migration-success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.migration-success p {
+  color: #155724;
+  margin-bottom: 12px;
+}
+
+.migration-success ul {
+  color: #155724;
+}
+
+.migration-error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.migration-error p {
+  color: #721c24;
+  margin-bottom: 12px;
+}
+
+.migration-error ul {
+  color: #721c24;
+}
+
+.migration-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.migration-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.migration-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.migrate-btn {
+  background: linear-gradient(135deg, #3a7bd5 0%, #00d4ff 100%);
+  color: white;
+}
+
+.migrate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
+}
+
+.skip-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.skip-btn:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.migration-btn:last-child {
+  background: #28a745;
+  color: white;
+}
+
+.migration-btn:last-child:hover {
+  background: #218838;
+}
+
+@media (max-width: 768px) {
+  .migration-dialog {
+    padding: 24px;
+  }
+  
+  .migration-actions {
+    flex-direction: column;
+  }
+  
+  .migration-btn {
+    width: 100%;
+  }
+}
