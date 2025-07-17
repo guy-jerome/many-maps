@@ -286,101 +286,10 @@ const CenteredImage: React.FC = () => {
   const [mapDescription, setMapDescription] = useState<string | null>("");
   const [descOpen, setDescOpen] = useState(false);
 
-  // Tooltip state
-  const [tooltip, setTooltip] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    content: string;
-  }>({ visible: false, x: 0, y: 0, content: "" });
-
-  // Hover state for visual feedback
-  const [hoveredPinLabel, setHoveredPinLabel] = useState<string | null>(null);
-
   const [editingMeta, setEditingMeta] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [metaSaving, setMetaSaving] = useState(false);
-  
-  // Auto-save indicator state
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-  // ─── keyboard shortcuts ──────────────────────────────────────────
-  useEffect(() => {
-    const handleKeyDown = (evt: KeyboardEvent) => {
-      // Ignore key events when typing in inputs
-      if (evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      switch (evt.key) {
-        case 'Delete':
-        case 'Backspace':
-          // Delete selected pin with confirmation
-          if (selectedPinLabel) {
-            evt.preventDefault();
-            const pin = pins.find(p => p.label === selectedPinLabel);
-            const pinDescription = pin?.areaName || `Pin ${selectedPinLabel}`;
-            
-            if (window.confirm(`Are you sure you want to delete "${pinDescription}"?\n\nThis action cannot be undone.`)) {
-              const updatedPins = pins.filter((p) => p.label !== selectedPinLabel);
-              // Renumber remaining pins
-              const renumberedPins = updatedPins.map((p, i) => ({
-                ...p,
-                label: `${i + 1}`,
-                pinType: p.pinType || DND_PIN_TYPES[0],
-              }));
-              setPins(renumberedPins);
-              setNextLabel(renumberedPins.length + 1);
-              setSelectedPinLabel(null);
-            }
-          }
-          break;
-        case 'Escape':
-          // Clear selection and exit modes
-          evt.preventDefault();
-          setSelectedPinLabel(null);
-          setIsAdding(false);
-          setIsDeleting(false);
-          setShowPinPanel(false);
-          break;
-        case 'a':
-        case 'A':
-          // Toggle add mode
-          if (evt.ctrlKey || evt.metaKey) {
-            return; // Don't interfere with Ctrl+A (select all)
-          }
-          evt.preventDefault();
-          setIsAdding(!isAdding);
-          if (!isAdding) {
-            setIsDeleting(false);
-            setSelectedPinLabel(null);
-            setShowPinPanel(true);
-          } else {
-            setShowPinPanel(false);
-          }
-          break;
-        case 'd':
-        case 'D':
-          // Toggle delete mode
-          if (evt.ctrlKey || evt.metaKey) {
-            return; // Don't interfere with Ctrl+D
-          }
-          evt.preventDefault();
-          setIsDeleting(!isDeleting);
-          if (!isDeleting) {
-            setIsAdding(false);
-            setSelectedPinLabel(null);
-            setShowPinPanel(false);
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPinLabel, pins, isAdding, isDeleting]);
 
   // Keep selection-ref & style in sync
   useEffect(() => {
@@ -441,15 +350,7 @@ const CenteredImage: React.FC = () => {
 
   // ─── persist pins whenever they change ────────────────────────────
   useEffect(() => {
-    if (mapId && pins.length > 0) {
-      setIsSaving(true);
-      updateMapPins(mapId, pins)
-        .then(() => {
-          setLastSaved(new Date());
-          setIsSaving(false);
-        })
-        .catch(console.error);
-    }
+    if (mapId) updateMapPins(mapId, pins).catch(console.error);
   }, [mapId, pins]);
 
   // ─── initialize OL when image is ready ────────────────────────────
@@ -473,34 +374,17 @@ const CenteredImage: React.FC = () => {
         const radius = Math.max(8, Math.min(24, 100 / resolution));
         const lbl = feature.get("pin") as string;
         const isSel = selectedPinLabelRef.current === lbl;
-        const isHovered = hoveredPinLabel === lbl;
 
         // Get the pin type directly from the feature properties
         const pinType = feature.get("pinType") || DND_PIN_TYPES[0];
 
-        // Enhanced visual feedback for hover and selection
-        let strokeColor = "#ffffff";
-        let strokeWidth = 2;
-
-        if (isSel) {
-          strokeColor = "#00ff00";
-          strokeWidth = 3;
-        } else if (isHovered && !isAdding && !isDeleting) {
-          strokeColor = "#ffff00";
-          strokeWidth = 3;
-        }
-
-        const style = new Style({
+        return new Style({
           image: new CircleStyle({
-            radius: isHovered || isSel ? radius + 2 : radius, // Slightly larger on hover/select
-            fill: new Fill({ 
-              color: isHovered && !isSel ? 
-                `${pinType.color}DD` : // Slightly more opaque on hover
-                pinType.color 
-            }),
+            radius,
+            fill: new Fill({ color: pinType.color }),
             stroke: new Stroke({
-              color: strokeColor,
-              width: strokeWidth,
+              color: isSel ? "#00ff00" : "#ffffff",
+              width: isSel ? 3 : 2,
             }),
           }),
           text: new Text({
@@ -510,8 +394,6 @@ const CenteredImage: React.FC = () => {
             stroke: new Stroke({ color: "#000000", width: 1 }),
           }),
         });
-
-        return style;
       },
     });
     vectorLayerRef.current = vectorLayer;
@@ -541,12 +423,12 @@ const CenteredImage: React.FC = () => {
     };
   }, [vectorSource, mapUrl]); // Removed pins from dependencies to prevent map re-initialization
 
-  // ─── update vector layer style when pins change or hover state changes ─────────────────────
+  // ─── update vector layer style when pins change ─────────────────────
   useEffect(() => {
     if (vectorLayerRef.current) {
-      vectorLayerRef.current.changed(); // Trigger style refresh when pins or hover state changes
+      vectorLayerRef.current.changed(); // Trigger style refresh when pins change
     }
-  }, [pins, hoveredPinLabel]);
+  }, [pins]);
 
   // ─── click to add / delete / select pins ─────────────────────────
   useEffect(() => {
@@ -578,20 +460,15 @@ const CenteredImage: React.FC = () => {
           if (typeof feat.get("pin") === "string") hit = feat.get("pin");
         });
         if (hit) {
-          const pin = pins.find(p => p.label === hit);
-          const pinDescription = pin?.areaName || `Pin ${hit}`;
-          
-          if (window.confirm(`Are you sure you want to delete "${pinDescription}"?\n\nThis action cannot be undone.`)) {
-            const rem = pins.filter((p) => p.label !== hit);
-            const rel = rem.map((p, i) => ({
-              ...p,
-              label: `${i + 1}`,
-              pinType: p.pinType || DND_PIN_TYPES[0], // Ensure pinType exists
-            }));
-            setPins(rel);
-            setNextLabel(rel.length + 1);
-            setSelectedPinLabel(null);
-          }
+          const rem = pins.filter((p) => p.label !== hit);
+          const rel = rem.map((p, i) => ({
+            ...p,
+            label: `${i + 1}`,
+            pinType: p.pinType || DND_PIN_TYPES[0], // Ensure pinType exists
+          }));
+          setPins(rel);
+          setNextLabel(rel.length + 1);
+          setSelectedPinLabel(null);
         }
         return;
       }
@@ -605,34 +482,6 @@ const CenteredImage: React.FC = () => {
     map.on("pointermove", (evt) => {
       const hit = map.hasFeatureAtPixel(evt.pixel);
       map.getTargetElement().style.cursor = hit ? "pointer" : "";
-      
-      // Handle tooltip and hover state
-      if (hit && !isAdding && !isDeleting) {
-        let hoveredLabel: string | null = null;
-        map.forEachFeatureAtPixel(evt.pixel, (feat) => {
-          if (typeof feat.get("pin") === "string") {
-            hoveredLabel = feat.get("pin");
-          }
-        });
-        
-        if (hoveredLabel) {
-          setHoveredPinLabel(hoveredLabel);
-          const pin = pins.find(p => p.label === hoveredLabel);
-          if (pin) {
-            const tooltipContent = `${pin.areaName || 'Pin'} ${pin.label}${pin.pinType ? ` (${pin.pinType.name})` : ''}`;
-            const mouseEvent = evt.originalEvent as MouseEvent;
-            setTooltip({
-              visible: true,
-              x: mouseEvent.clientX,
-              y: mouseEvent.clientY,
-              content: tooltipContent
-            });
-          }
-        }
-      } else {
-        setHoveredPinLabel(null);
-        setTooltip(prev => ({ ...prev, visible: false }));
-      }
     });
     return () => map.un("singleclick", onClick);
   }, [isAdding, isDeleting, nextLabel, pins, selectedPinType]);
@@ -665,44 +514,11 @@ const CenteredImage: React.FC = () => {
     return () => {
       if (trans) map.removeInteraction(trans);
     };
-  }, [selectedPinLabel, vectorSource, pins]);
+  }, [selectedPinLabel, vectorSource]); // Removed pins dependency to prevent interaction recreation
 
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
-
-  // Function to center map on a specific pin
-  const centerMapOnPin = (pinLabel: string) => {
-    const pin = pins.find((p) => p.label === pinLabel);
-    const map = mapObject.current;
-    
-    if (pin && map) {
-      const view = map.getView();
-      view.animate({
-        center: [pin.x, pin.y],
-        zoom: Math.max(view.getZoom() || 3, 4), // Ensure minimum zoom level for visibility
-        duration: 500, // Smooth animation duration in ms
-      });
-    }
-  };
-
-  // Function to export current map view as image
-  const exportMapView = () => {
-    const map = mapObject.current;
-    if (!map) return;
-
-    map.once('rendercomplete', () => {
-      const canvas = map.getViewport().querySelector('canvas') as HTMLCanvasElement;
-      if (canvas) {
-        // Create a download link
-        const link = document.createElement('a');
-        link.download = `${mapName || 'map'}-view.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-      }
-    });
-    map.renderSync();
-  };
 
   return (
     <div className="ci-container">
@@ -763,58 +579,6 @@ const CenteredImage: React.FC = () => {
         ) : (
           <>
             <span className="ci-map-name">{mapName}</span>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginLeft: "12px"
-            }}>
-              <div style={{
-                background: "rgba(40, 167, 69, 0.9)",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "12px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}>
-                📍 {pins.length} pin{pins.length !== 1 ? 's' : ''}
-              </div>
-              
-              {/* Auto-save indicator */}
-              <div style={{
-                background: isSaving ? "rgba(255, 193, 7, 0.9)" : "rgba(108, 117, 125, 0.9)",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "12px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                transition: "all 0.3s ease"
-              }}>
-                {isSaving ? (
-                  <>
-                    <span style={{ 
-                      animation: "spin 1s linear infinite",
-                      display: "inline-block"
-                    }}>⟳</span>
-                    Saving...
-                  </>
-                ) : lastSaved ? (
-                  <>
-                    ✓ Saved {new Date().getTime() - lastSaved.getTime() < 5000 ? 'now' : 'recently'}
-                  </>
-                ) : (
-                  <>
-                    ● Ready
-                  </>
-                )}
-              </div>
-            </div>
             {mapDescription && (
               <button
                 className="ci-map-desc-btn"
@@ -850,38 +614,6 @@ const CenteredImage: React.FC = () => {
       )}
       <button className="ci-back-btn" onClick={() => navigate("/gallery")}>
         ← Back to Maps
-      </button>
-      
-      <button 
-        onClick={exportMapView}
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "200px",
-          padding: "8px 12px",
-          color: "#fff",
-          background: "#28a745",
-          border: "1px solid #34ce57",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "14px",
-          zIndex: 2000,
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          transition: "all 0.2s ease"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#218838";
-          e.currentTarget.style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#28a745";
-          e.currentTarget.style.transform = "translateY(0)";
-        }}
-        title="Export current map view as PNG image"
-      >
-        📷 Export View
       </button>
 
       {/* Pin Toolbar */}
@@ -1010,57 +742,11 @@ const CenteredImage: React.FC = () => {
                 <p>Click anywhere on the map to place this pin type</p>
               </div>
             )}
-            
-            {/* Keyboard Shortcuts Help */}
-            <div style={{
-              marginTop: "12px",
-              padding: "8px",
-              backgroundColor: "rgba(73, 80, 87, 0.8)",
-              borderRadius: "6px",
-              fontSize: "11px",
-              color: "#adb5bd"
-            }}>
-              <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#fff" }}>Keyboard Shortcuts:</div>
-              <div>• <strong>A</strong> - Toggle Add Pin mode</div>
-              <div>• <strong>D</strong> - Toggle Delete mode</div>
-              <div>• <strong>Delete/Backspace</strong> - Delete selected pin</div>
-              <div>• <strong>Escape</strong> - Clear selection & exit modes</div>
-            </div>
           </div>
         )}
       </div>
       <div ref={mapRef} className="ci-map" />
-      <SideBar 
-        selectedLabel={selectedPin} 
-        allPins={pins}
-        onSelectPin={(pinLabel) => setSelectedPinLabel(pinLabel)}
-        onCenterPin={centerMapOnPin}
-        updateInfo={updateInfo} 
-      />
-      
-      {/* Pin Tooltip */}
-      {tooltip.visible && (
-        <div
-          style={{
-            position: "fixed",
-            left: tooltip.x + 10,
-            top: tooltip.y - 30,
-            background: "rgba(0, 0, 0, 0.8)",
-            color: "#fff",
-            padding: "4px 8px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            fontWeight: "bold",
-            pointerEvents: "none",
-            zIndex: 10000,
-            whiteSpace: "nowrap",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          {tooltip.content}
-        </div>
-      )}
-      
+      <SideBar selectedLabel={selectedPin} updateInfo={updateInfo} />
       {pins.map((p) => (
         <PinFeature
           key={p.label}
