@@ -565,6 +565,19 @@ const CenteredImage: React.FC = () => {
     };
   }, [selectedPinLabel, vectorSource]); // Removed pins dependency completely
 
+  // Function to center map on a specific pin
+  const centerOnPin = (pinLabel: string) => {
+    const pin = pins.find(p => p.label === pinLabel);
+    if (pin && mapObject.current) {
+      const view = mapObject.current.getView();
+      view.animate({
+        center: [pin.x, pin.y],
+        zoom: 6, // Zoom level for focusing on the pin
+        duration: 500, // Animation duration in milliseconds
+      });
+    }
+  };
+
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
@@ -808,6 +821,7 @@ const CenteredImage: React.FC = () => {
         selectedLabel={selectedPin} 
         allPins={pins}
         onSelectPin={setSelectedPinLabel}
+        onCenterPin={centerOnPin}
         updateInfo={updateInfo} 
       />
       {pins.map((p) => (
