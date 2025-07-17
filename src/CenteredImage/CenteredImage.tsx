@@ -273,6 +273,9 @@ const CenteredImage: React.FC = () => {
   const [nextLabel, setNextLabel] = useState(1);
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
   const selectedPinLabelRef = useRef<string | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const translateInteractionRef = useRef<Translate | null>(null);
+  const translateCollectionRef = useRef<Collection<any> | null>(null);
 
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -430,6 +433,24 @@ const CenteredImage: React.FC = () => {
     }
   }, [pins]);
 
+  // ─── refresh drag interaction when pins change (after feature recreation) ─────
+  useEffect(() => {
+    const map = mapObject.current;
+    if (!map || !selectedPinLabel || !translateCollectionRef.current) return;
+    
+    // Find the potentially new feature
+    const feat = vectorSource
+      .getFeatures()
+      .find((f) => f.get("pin") === selectedPinLabel);
+    
+    if (feat) {
+      // Update the collection to use the new feature
+      const collection = translateCollectionRef.current;
+      collection.clear();
+      collection.push(feat);
+    }
+  }, [pins, selectedPinLabel, vectorSource]);
+
   // ─── click to add / delete / select pins ─────────────────────────
   useEffect(() => {
     const map = mapObject.current;
@@ -490,14 +511,31 @@ const CenteredImage: React.FC = () => {
   useEffect(() => {
     const map = mapObject.current;
     if (!map) return;
-    let trans: Translate | null = null;
+    
+    // Remove existing interaction if any
+    if (translateInteractionRef.current) {
+      map.removeInteraction(translateInteractionRef.current);
+      translateInteractionRef.current = null;
+      translateCollectionRef.current = null;
+    }
+    
     if (selectedPinLabel) {
       const feat = vectorSource
         .getFeatures()
         .find((f) => f.get("pin") === selectedPinLabel);
       if (feat) {
-        trans = new Translate({ features: new Collection([feat]) });
+        const collection = new Collection([feat]);
+        const trans = new Translate({ features: collection });
+        translateInteractionRef.current = trans;
+        translateCollectionRef.current = collection;
         map.addInteraction(trans);
+        
+        // Track when dragging starts
+        trans.on("translatestart", () => {
+          isDraggingRef.current = true;
+        });
+        
+        // Only update state when drag ends
         trans.on("translateend", (e) => {
           const f = e.features.item(0);
           const lbl = f?.get("pin");
@@ -508,13 +546,21 @@ const CenteredImage: React.FC = () => {
               prev.map((p) => (p.label === lbl ? { ...p, x, y } : p))
             );
           }
+          // Reset dragging flag after a short delay to allow state update
+          setTimeout(() => {
+            isDraggingRef.current = false;
+          }, 10);
         });
       }
     }
     return () => {
-      if (trans) map.removeInteraction(trans);
+      if (translateInteractionRef.current) {
+        map.removeInteraction(translateInteractionRef.current);
+        translateInteractionRef.current = null;
+        translateCollectionRef.current = null;
+      }
     };
-  }, [selectedPinLabel, vectorSource]); // Removed pins dependency to prevent interaction recreation
+  }, [selectedPinLabel, vectorSource]); // Removed pins dependency completely
 
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
