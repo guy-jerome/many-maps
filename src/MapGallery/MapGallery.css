@@ -1,102 +1,87 @@
-/* src/MapGallery/MapGallery.css - Old School D&D Theme */
+/* src/MapGallery/MapGallery.css - Stark Black & White Pixel Design */
 
 /* container */
 .mg-container {
-  padding: var(--dnd-space-xl);
+  padding: var(--pixel-space-xl);
   text-align: center;
-  background: var(--dnd-bg-primary);
-  color: var(--dnd-text-primary);
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
   min-height: 100vh;
-  font-family: var(--dnd-font-secondary);
-  /* Vintage D&D dungeon atmosphere */
-  background-image: radial-gradient(
-      circle at 30% 20%,
-      rgba(125, 91, 166, 0.1) 0%,
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at 70% 80%,
-      rgba(184, 134, 11, 0.08) 0%,
-      transparent 40%
-    );
+  font-family: var(--pixel-font-primary);
+  /* Pixel grid background */
+  background-image: 
+    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+    linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 /* back button */
 .mg-back-btn {
   display: inline-flex;
   align-items: center;
-  background: var(--dnd-bg-secondary);
-  color: var(--dnd-text-primary);
-  border: 3px solid var(--dnd-border-primary);
-  padding: var(--dnd-space-md) var(--dnd-space-xl);
-  font-size: 1.1rem;
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  border: 3px solid var(--pixel-border-primary);
+  padding: var(--pixel-space-md) var(--pixel-space-lg);
+  font-size: 1rem;
   font-weight: bold;
-  font-family: var(--dnd-font-secondary);
-  border-radius: var(--dnd-radius-sm);
+  font-family: var(--pixel-font-primary);
+  border-radius: var(--pixel-radius);
   cursor: pointer;
-  margin-bottom: var(--dnd-space-xl);
+  margin-bottom: var(--pixel-space-xl);
   margin-right: auto;
   margin-left: 0;
-  box-shadow: var(--dnd-shadow-medium);
-  transition: var(--dnd-transition);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--pixel-shadow-harsh);
+  transition: var(--pixel-transition-fast);
+  text-shadow: var(--pixel-shadow-sharp);
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .mg-back-btn:hover {
-  background: var(--dnd-bg-tertiary);
-  border-color: var(--dnd-border-highlight);
-  color: var(--dnd-text-accent);
-  transform: translateY(-2px);
-  box-shadow: var(--dnd-shadow-heavy);
+  background: var(--pixel-bg-tertiary);
+  border-color: var(--pixel-border-primary);
+  color: var(--pixel-text-primary);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-brutal);
 }
 
 .mg-back-btn:active {
-  background: var(--dnd-bg-accent);
-  transform: translateY(0);
-  box-shadow: var(--dnd-shadow-light);
+  background: var(--pixel-bg-primary);
+  transform: translate(0, 0);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 /* grid layout */
 .mg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--dnd-space-xl);
-  margin-top: var(--dnd-space-xl);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--pixel-space-lg);
+  margin-top: var(--pixel-space-xl);
 }
 
 /* each card */
 .mg-card {
   position: relative;
   cursor: pointer;
-  border: 3px solid var(--dnd-border-primary);
-  border-radius: var(--dnd-radius-md);
+  border: 3px solid var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
   overflow: hidden;
-  box-shadow: var(--dnd-shadow-medium);
-  background: var(--dnd-bg-secondary);
-  transition: var(--dnd-transition);
-  /* Old-school parchment texture */
-  background-image: linear-gradient(
-      45deg,
-      transparent 25%,
-      rgba(74, 61, 42, 0.1) 25%,
-      rgba(74, 61, 42, 0.1) 75%,
-      transparent 75%
-    ),
-    linear-gradient(
-      -45deg,
-      transparent 25%,
-      rgba(74, 61, 42, 0.1) 25%,
-      rgba(74, 61, 42, 0.1) 75%,
-      transparent 75%
-    );
+  box-shadow: var(--pixel-shadow-harsh);
+  background: var(--pixel-bg-secondary);
+  transition: var(--pixel-transition-fast);
+  /* Pixel texture */
+  background-image: 
+    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+    linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 8px 8px;
 }
 
 .mg-card:hover {
-  box-shadow: var(--dnd-shadow-heavy);
-  border-color: var(--dnd-color-treasure);
-  transform: translateY(-4px);
-  background: var(--dnd-bg-tertiary);
+  box-shadow: var(--pixel-shadow-brutal);
+  border-color: var(--pixel-border-primary);
+  transform: translate(-2px, -2px);
+  background: var(--pixel-bg-tertiary);
 }
 
 /* thumbnail */
@@ -104,41 +89,91 @@
   width: 100%;
   height: 180px;
   object-fit: cover;
-  background: #232a34;
+  background: var(--pixel-bg-primary);
+  border-bottom: 2px solid var(--pixel-border-secondary);
 }
 
 /* info area */
 .mg-info {
-  padding: 10px;
+  padding: var(--pixel-space-md);
   text-align: left;
-  background: #232a34;
-  color: #f3f3f3;
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  font-family: var(--pixel-font-primary);
 }
+
+.mg-info strong {
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: var(--pixel-shadow-sharp);
+}
+
 .mg-desc {
-  margin: 4px 0 0;
-  font-size: 0.95em;
-  color: #b0b8c9;
+  margin: var(--pixel-space-xs) 0 0;
+  font-size: 0.85rem;
+  color: var(--pixel-text-secondary);
+  line-height: 1.3;
 }
 
 /* delete button */
 .mg-delete-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #d7263d;
-  border: none;
-  color: #fff;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
+  top: var(--pixel-space-xs);
+  right: var(--pixel-space-xs);
+  background: var(--pixel-text-primary);
+  border: 2px solid var(--pixel-border-primary);
+  color: var(--pixel-text-inverse);
+  border-radius: var(--pixel-radius);
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   z-index: 10;
   font-weight: bold;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  transition: background 0.2s;
+  font-family: var(--pixel-font-primary);
+  box-shadow: var(--pixel-shadow-sharp);
+  transition: var(--pixel-transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
 }
+
 .mg-delete-btn:hover {
-  background: #a81d2b;
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--pixel-shadow-harsh);
+}
+
+/* edit button */
+.mg-edit-btn {
+  position: absolute;
+  top: var(--pixel-space-xs);
+  right: calc(var(--pixel-space-xs) + 36px);
+  background: var(--pixel-bg-tertiary);
+  color: var(--pixel-text-primary);
+  border: 2px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: var(--pixel-space-xs);
+  z-index: 10;
+  transition: var(--pixel-transition-fast);
+  font-family: var(--pixel-font-primary);
+  box-shadow: var(--pixel-shadow-sharp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.mg-edit-btn:hover {
+  background: var(--pixel-bg-primary);
+  border-color: var(--pixel-border-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--pixel-shadow-harsh);
 }
 
 /* spinner overlay on card */
@@ -148,7 +183,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(24, 28, 36, 0.85);
+  background: var(--pixel-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,10 +194,11 @@
 .mg-spinner {
   width: 32px;
   height: 32px;
-  border: 4px solid rgba(58, 123, 213, 0.2);
-  border-top-color: #3a7bd5;
-  border-radius: 50%;
+  border: 4px solid var(--pixel-border-secondary);
+  border-top-color: var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
   animation: mg-spin 0.8s linear infinite;
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 @keyframes mg-spin {
@@ -174,33 +210,39 @@
 /* container for the add button */
 .mg-add-container {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--pixel-space-lg);
 }
 
-/* the pill-like Add New Map button */
+/* the Add New Map button */
 .mg-add-btn {
   display: inline-flex;
   align-items: center;
-  background-color: #0d6efd;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 24px;
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  border: 3px solid var(--pixel-border-primary);
+  padding: var(--pixel-space-md) var(--pixel-space-lg);
+  font-size: 1rem;
+  border-radius: var(--pixel-radius);
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  font-weight: 500;
+  transition: var(--pixel-transition-fast);
+  box-shadow: var(--pixel-shadow-harsh);
+  font-weight: bold;
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: var(--pixel-shadow-sharp);
 }
 
 .mg-add-btn:hover {
-  background-color: #3a7bd5;
-  transform: translateY(-1px);
+  background: var(--pixel-bg-tertiary);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-brutal);
 }
 
 .mg-add-btn:active {
-  background-color: #0a58ca;
-  transform: translateY(0);
+  background: var(--pixel-bg-primary);
+  transform: translate(0, 0);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 /* the “+” icon spacing */
@@ -212,102 +254,178 @@
 /* edit button and inline edit form styles */
 .mg-edit-btn {
   position: absolute;
-  top: 8px;
-  right: 36px;
-  background: #232a34;
-  color: #b0b8c9;
-  border: none;
-  border-radius: 4px;
-  font-size: 1.1em;
+  top: var(--pixel-space-xs);
+  right: calc(var(--pixel-space-xs) + 36px);
+  background: var(--pixel-bg-tertiary);
+  color: var(--pixel-text-primary);
+  border: 2px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+  font-size: 1rem;
   cursor: pointer;
-  padding: 2px 8px;
-  z-index: 2;
-  transition: background 0.2s;
+  padding: var(--pixel-space-xs);
+  z-index: 10;
+  transition: var(--pixel-transition-fast);
+  font-family: var(--pixel-font-primary);
+  box-shadow: var(--pixel-shadow-sharp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
 }
+
 .mg-edit-btn:hover {
-  background: #3a7bd5;
-  color: #fff;
+  background: var(--pixel-bg-primary);
+  border-color: var(--pixel-border-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--pixel-shadow-harsh);
 }
+
 .mg-edit-form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--pixel-space-xs);
 }
+
 .mg-edit-input {
-  font-size: 1em;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #181c24;
-  color: #f3f3f3;
+  font-size: 0.9rem;
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
+  border-radius: var(--pixel-radius);
+  border: 2px solid var(--pixel-border-secondary);
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  box-shadow: var(--pixel-shadow-sharp);
 }
+
+.mg-edit-input:focus {
+  outline: none;
+  border-color: var(--pixel-border-primary);
+  box-shadow: var(--pixel-shadow-harsh);
+}
+
 .mg-edit-textarea {
-  font-size: 0.95em;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #181c24;
-  color: #f3f3f3;
+  font-size: 0.85rem;
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
+  border-radius: var(--pixel-radius);
+  border: 2px solid var(--pixel-border-secondary);
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  font-family: var(--pixel-font-primary);
   resize: vertical;
+  box-shadow: var(--pixel-shadow-sharp);
 }
+
+.mg-edit-textarea:focus {
+  outline: none;
+  border-color: var(--pixel-border-primary);
+  box-shadow: var(--pixel-shadow-harsh);
+}
+
 .mg-edit-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: var(--pixel-space-xs);
+  margin-top: var(--pixel-space-xs);
 }
+
 .mg-edit-save {
-  background: #3a7bd5;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 12px;
+  background: var(--pixel-bg-tertiary);
+  color: var(--pixel-text-primary);
+  border: 2px solid var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
   cursor: pointer;
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  box-shadow: var(--pixel-shadow-sharp);
+  transition: var(--pixel-transition-fast);
 }
+
+.mg-edit-save:hover {
+  background: var(--pixel-bg-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--pixel-shadow-harsh);
+}
+
 .mg-edit-cancel {
-  background: #232a34;
-  color: #b0b8c9;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 12px;
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-secondary);
+  border: 2px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
   cursor: pointer;
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  box-shadow: var(--pixel-shadow-sharp);
+  transition: var(--pixel-transition-fast);
+}
+
+.mg-edit-cancel:hover {
+  background: var(--pixel-bg-primary);
+  border-color: var(--pixel-border-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--pixel-shadow-harsh);
 }
 
 /* view toggle buttons */
 .mg-view-toggle {
   display: flex;
-  gap: 8px;
+  gap: var(--pixel-space-sm);
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--pixel-space-lg);
+  padding: var(--pixel-space-md);
+  background: var(--pixel-bg-secondary);
+  border: 3px solid var(--pixel-border-primary);
+  box-shadow: var(--pixel-shadow-harsh);
 }
 
 .mg-toggle-btn {
-  background: #232a34;
-  color: #f3f3f3;
-  border: none;
-  padding: 10px 20px;
-  font-size: 14px;
-  border-radius: 20px;
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
+  border: 2px solid var(--pixel-border-secondary);
+  padding: var(--pixel-space-sm) var(--pixel-space-md);
+  font-size: 0.9rem;
+  border-radius: var(--pixel-radius);
   cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  transition: var(--pixel-transition-fast);
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  box-shadow: var(--pixel-shadow-sharp);
+  text-shadow: var(--pixel-shadow-sharp);
 }
 
 .mg-toggle-btn:hover {
-  background: #3a7bd5;
-  color: #fff;
+  background: var(--pixel-bg-tertiary);
+  border-color: var(--pixel-border-primary);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-brutal);
 }
 
 .mg-toggle-btn.active {
-  background: linear-gradient(135deg, #3a7bd5 0%, #00d4ff 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
+  background: var(--pixel-bg-tertiary);
+  color: var(--pixel-text-primary);
+  border-color: var(--pixel-border-primary);
+  box-shadow: var(--pixel-shadow-harsh);
+  transform: translate(0, 0);
 }
 
 /* authentication prompt */
 .mg-auth-prompt {
-  color: #b0b0b0;
-  font-size: 14px;
-  margin: 20px 0;
-  font-style: italic;
+  color: var(--pixel-text-secondary);
+  font-size: 0.9rem;
+  margin: var(--pixel-space-lg) 0;
+  font-style: normal;
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  font-weight: bold;
+  text-shadow: var(--pixel-shadow-sharp);
 }
