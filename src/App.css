@@ -161,3 +161,31 @@ select:focus {
   background: var(--pixel-bg-tertiary);
   box-shadow: var(--pixel-shadow-sharp);
 }
+
+/* Pixel-style scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pixel-bg-primary);
+  border: 1px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-bg-tertiary);
+  border: 1px solid var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
+  box-shadow: var(--pixel-shadow-sharp);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-border-secondary);
+  box-shadow: var(--pixel-shadow-harsh);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--pixel-bg-primary);
+}

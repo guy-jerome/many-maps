@@ -305,42 +305,37 @@
   left: 50%;
   transform: translateX(-50%);
   width: auto;
-  max-width: 600px;
-  min-width: 400px;
+  max-width: 550px;
+  min-width: 350px;
   background: var(--pixel-bg-secondary);
-  border: 2px solid var(--pixel-border-primary);
+  border: 3px solid var(--pixel-border-primary);
   border-radius: var(--pixel-radius);
-  padding: var(--pixel-space-xs) var(--pixel-space-sm);
+  padding: var(--pixel-space-xs);
   display: flex;
   align-items: center;
-  gap: var(--pixel-space-sm);
+  gap: var(--pixel-space-xs);
   flex-wrap: nowrap;
-  z-index: 1500; /* Below wiki sidebar (2001) but above map content */
+  z-index: 1500;
   box-shadow: var(--pixel-shadow-harsh);
   font-family: var(--pixel-font-primary);
-  /* Pixel texture */
-  background-image: linear-gradient(
-      90deg,
-      var(--pixel-gray-dark) 1px,
-      transparent 1px
-    ),
-    linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
-  background-size: 8px 8px;
-  max-height: 60px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  /* Stronger contrast background */
+  background-color: var(--pixel-bg-secondary);
+  backdrop-filter: blur(4px);
+  max-height: 50px;
+  overflow: hidden;
   flex-shrink: 0;
   transition: var(--pixel-transition-fast);
 }
 
 .ci-pin-toolbar.panel-open {
-  max-height: 300px;
+  max-height: 280px;
   flex-direction: column;
   align-items: stretch;
-  width: 500px;
-  max-width: 80vw;
+  width: 480px;
+  max-width: 90vw;
   overflow-y: auto;
   padding: var(--pixel-space-sm);
+  background-color: var(--pixel-bg-secondary);
 }
 
 .ci-mode-section {
@@ -348,14 +343,16 @@
   align-items: center;
   gap: var(--pixel-space-xs);
   flex-shrink: 0;
+  width: 100%;
+  justify-content: center;
 }
 
 .ci-mode-btn {
   background: var(--pixel-bg-tertiary);
   color: var(--pixel-text-primary);
   border: 2px solid var(--pixel-border-secondary);
-  padding: var(--pixel-space-xs);
-  font-size: 0.7rem;
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
+  font-size: 0.75rem;
   font-weight: bold;
   border-radius: var(--pixel-radius);
   cursor: pointer;
@@ -366,6 +363,7 @@
   text-shadow: var(--pixel-shadow-sharp);
   box-shadow: var(--pixel-shadow-sharp);
   white-space: nowrap;
+  min-width: 80px;
 }
 
 .ci-mode-btn:hover {
@@ -389,21 +387,51 @@
 
 /* pin panel */
 .ci-pin-panel {
-  margin-top: var(--pixel-space-sm);
+  margin-top: var(--pixel-space-xs);
   background: var(--pixel-bg-tertiary);
   border: 2px solid var(--pixel-border-secondary);
   border-radius: var(--pixel-radius);
   padding: var(--pixel-space-sm);
   box-shadow: var(--pixel-shadow-sharp);
-  max-height: 140px;
+  max-height: 200px;
   overflow-y: auto;
+}
+
+/* Custom scrollbar styles for pin panel */
+.ci-pin-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ci-pin-panel::-webkit-scrollbar-track {
+  background: var(--pixel-bg-primary);
+  border: 1px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+}
+
+.ci-pin-panel::-webkit-scrollbar-thumb {
+  background: var(--pixel-bg-tertiary);
+  border: 1px solid var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
+}
+
+.ci-pin-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-border-secondary);
 }
 
 .ci-pin-panel-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--pixel-space-xs);
   margin-bottom: var(--pixel-space-sm);
+}
+
+.ci-pin-panel-header h3 {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--pixel-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .ci-category-filter {
@@ -426,7 +454,7 @@
 }
 
 .ci-pin-search {
-  margin-bottom: var(--pixel-space-sm);
+  margin-bottom: var(--pixel-space-xs);
 }
 
 .ci-search-input {
@@ -434,13 +462,13 @@
   background: var(--pixel-bg-secondary);
   color: var(--pixel-text-primary);
   border: 2px solid var(--pixel-border-secondary);
-  padding: var(--pixel-space-xs);
+  padding: var(--pixel-space-xs) var(--pixel-space-sm);
   border-radius: var(--pixel-radius);
   font-family: var(--pixel-font-primary);
   font-weight: bold;
   transition: var(--pixel-transition-fast);
   box-shadow: var(--pixel-shadow-sharp);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .ci-search-input:focus {
@@ -460,7 +488,7 @@
 
 .ci-pin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
   gap: var(--pixel-space-xs);
   margin-bottom: var(--pixel-space-sm);
 }
@@ -481,6 +509,8 @@
   text-shadow: var(--pixel-shadow-sharp);
   box-shadow: var(--pixel-shadow-sharp);
   position: relative;
+  min-height: 55px;
+  justify-content: center;
 }
 
 .ci-pin-type-btn:hover {
@@ -495,6 +525,7 @@
   color: var(--pixel-text-inverse);
   border-color: var(--pixel-border-primary);
   text-shadow: none;
+  box-shadow: var(--pixel-shadow-harsh);
 }
 
 .ci-pin-type-btn.selected:hover {
@@ -503,16 +534,17 @@
 }
 
 .ci-pin-icon {
-  font-size: 1rem;
+  font-size: 0.9rem;
   display: block;
 }
 
 .ci-pin-name {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
   text-align: center;
+  line-height: 1.1;
 }
 
 .ci-pin-count {
@@ -523,10 +555,10 @@
   color: var(--pixel-text-inverse);
   border: 2px solid var(--pixel-border-primary);
   border-radius: var(--pixel-radius);
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: bold;
-  padding: 1px 4px;
-  min-width: 12px;
+  padding: 1px 3px;
+  min-width: 10px;
   text-align: center;
   font-family: var(--pixel-font-primary);
   text-shadow: none;
@@ -546,6 +578,12 @@
   border-radius: var(--pixel-radius);
   border: 2px solid var(--pixel-border-secondary);
   box-shadow: var(--pixel-shadow-sharp);
+  margin-top: var(--pixel-space-xs);
+}
+
+.ci-pin-instructions p {
+  margin: 2px 0;
+  line-height: 1.2;
 }
 
 /* toolbar labels and selects */
