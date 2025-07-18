@@ -36,6 +36,7 @@ interface WikiSidebarProps {
   pins: PinData[];
   selectedPinLabel?: string | null;
   onPinSelect?: (pinLabel: string) => void;
+  onWidthChange?: (width: number) => void;
 }
 
 interface EditingSection {
@@ -54,6 +55,7 @@ const WikiSidebar: React.FC<WikiSidebarProps> = ({
   pins,
   selectedPinLabel,
   onPinSelect,
+  onWidthChange,
 }) => {
   const [wiki, setWiki] = useState<MapWiki | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,13 @@ const WikiSidebar: React.FC<WikiSidebarProps> = ({
   const isResizing = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(0);
+
+  // Notify parent of width changes
+  useEffect(() => {
+    if (onWidthChange && isOpen) {
+      onWidthChange(width);
+    }
+  }, [width, onWidthChange, isOpen]);
 
   // Load wiki data
   useEffect(() => {
@@ -287,9 +296,6 @@ const WikiSidebar: React.FC<WikiSidebarProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="wiki-backdrop" onClick={onToggle} />
-
       {/* Sidebar */}
       <div ref={sidebarRef} className="wiki-sidebar" style={{ width }}>
         {/* Resizer */}

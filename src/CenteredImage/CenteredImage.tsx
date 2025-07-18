@@ -53,6 +53,7 @@ const CenteredImage: React.FC = () => {
 
   // Wiki sidebar state
   const [isWikiOpen, setIsWikiOpen] = useState(false);
+  const [wikiWidth, setWikiWidth] = useState(350);
 
   // Use custom hooks for data and interactions
   const {
@@ -178,6 +179,10 @@ const CenteredImage: React.FC = () => {
     setIsWikiOpen(!isWikiOpen);
   };
 
+  const handleWikiWidthChange = (width: number) => {
+    setWikiWidth(width);
+  };
+
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
@@ -208,7 +213,11 @@ const CenteredImage: React.FC = () => {
         setDescOpen={setDescOpen}
       />
 
-      <button className="ci-back-btn" onClick={() => navigate("/gallery")}>
+      <button
+        className="ci-back-btn"
+        style={isWikiOpen ? { left: `${wikiWidth + 50}px` } : {}}
+        onClick={() => navigate("/gallery")}
+      >
         ← Back to Maps
       </button>
 
@@ -226,6 +235,8 @@ const CenteredImage: React.FC = () => {
         onPinCategoryChange={setPinCategory}
         pinSearch={pinSearch}
         onPinSearchChange={setPinSearch}
+        isWikiOpen={isWikiOpen}
+        wikiWidth={wikiWidth}
       />
 
       <div ref={mapRef} className="ci-map" />
@@ -259,6 +270,7 @@ const CenteredImage: React.FC = () => {
         pins={pins}
         selectedPinLabel={selectedPinLabel}
         onPinSelect={setSelectedPinLabel}
+        onWidthChange={handleWikiWidthChange}
       />
     </div>
   );

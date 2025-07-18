@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { ChevronDown, ChevronUp, Plus, Tag, Menu, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ExtraSection, getAllMaps, getMapRecord, PinData, PinType } from "../idbService";
+import {
+  ExtraSection,
+  getAllMaps,
+  getMapRecord,
+  PinData,
+  PinType,
+} from "../idbService";
 
 interface SelectedLabelType {
   label: string;
@@ -89,7 +95,9 @@ const SideBar: React.FC<SideBarProps> = ({
   const [collapsedSections, setCollapsedSections] = useState<boolean[]>([]);
   const [editLinkedMapId, setEditLinkedMapId] = useState<string>("");
   const [mapList, setMapList] = useState<{ id: string; name: string }[]>([]);
-  const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>([]);
+  const [parentMaps, setParentMaps] = useState<{ id: string; name: string }[]>(
+    []
+  );
 
   // Pin search functionality
   const [pinSearchQuery, setPinSearchQuery] = useState<string>("");
@@ -120,7 +128,7 @@ const SideBar: React.FC<SideBarProps> = ({
       const width = window.innerWidth;
       setIsMobile(width <= 768);
       setIsTablet(width > 768 && width <= 1200);
-      
+
       // On mobile, start closed but don't force collapse
       if (width <= 768) {
         setIsSidebarOpen(false);
@@ -130,10 +138,10 @@ const SideBar: React.FC<SideBarProps> = ({
         setIsSidebarOpen(true);
       }
     };
-    
+
     checkSize();
-    window.addEventListener('resize', checkSize);
-    return () => window.removeEventListener('resize', checkSize);
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
   }, []);
 
   // Handle clicks outside sidebar on mobile
@@ -149,8 +157,8 @@ const SideBar: React.FC<SideBarProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobile, isSidebarOpen]);
 
   // Load map names for linking
@@ -289,30 +297,32 @@ const SideBar: React.FC<SideBarProps> = ({
   };
 
   // Filter pins based on search query
-  const filteredPins = allPins.filter(pin => {
+  const filteredPins = allPins.filter((pin) => {
     if (!pinSearchQuery.trim()) return false;
     const query = pinSearchQuery.toLowerCase();
     return (
       pin.label.toLowerCase().includes(query) ||
       (pin.areaName && pin.areaName.toLowerCase().includes(query)) ||
       pin.info.toLowerCase().includes(query) ||
-      (pin.tags && pin.tags.some(tag => tag.toLowerCase().includes(query))) ||
+      (pin.tags && pin.tags.some((tag) => tag.toLowerCase().includes(query))) ||
       (pin.pinType && pin.pinType.name.toLowerCase().includes(query))
     );
   });
 
   // Helper function to get display name for selectedLabel
-  const getSelectedLabelDisplayName = (selectedLabel: SelectedLabelType): string => {
+  const getSelectedLabelDisplayName = (
+    selectedLabel: SelectedLabelType
+  ): string => {
     // First try to use areaName if it exists and is not empty
     if (selectedLabel.areaName && selectedLabel.areaName.trim()) {
       return selectedLabel.areaName.trim();
     }
-    
+
     // Fall back to pin type name
     if (selectedLabel.pinType && selectedLabel.pinType.name) {
       return selectedLabel.pinType.name;
     }
-    
+
     // Last resort - use the label (numeric)
     return selectedLabel.label;
   };
@@ -323,7 +333,7 @@ const SideBar: React.FC<SideBarProps> = ({
     if (pin.areaName && pin.areaName.trim()) {
       return pin.areaName.trim();
     }
-    
+
     return pin.pinType?.name || pin.label;
   };
 
@@ -338,12 +348,12 @@ const SideBar: React.FC<SideBarProps> = ({
       const displayNumber = pinIndex + 1;
       return `Pin ${displayNumber}`;
     }
-    
+
     // For other pins, show pin type name as subtitle if area name is present
     if (pin.areaName && pin.areaName.trim() && pin.pinType) {
       return pin.pinType.name;
     }
-    
+
     return null;
   };
 
@@ -364,7 +374,7 @@ const SideBar: React.FC<SideBarProps> = ({
       maxHeight: isCollapsed ? `${headerHeight + 32}px` : "100%",
       overflowX: "hidden" as const,
       transition: "max-height 0.2s ease, transform 0.3s ease",
-      zIndex: 2000,
+      zIndex: 2001, // Higher than wiki
     };
 
     if (isMobile) {
@@ -461,70 +471,23 @@ const SideBar: React.FC<SideBarProps> = ({
         />
       )}
 
-      <div
-        ref={sidebarRef}
-        style={getResponsiveStyle()}
-      >
+      <div ref={sidebarRef} style={getResponsiveStyle()}>
         {/* Hide resizer on mobile */}
-        <div 
+        <div
           style={{
             ...resizerStyle,
-            display: isMobile ? "none" : "block"
-          }} 
-          onMouseDown={handleMouseDown} 
+            display: isMobile ? "none" : "block",
+          }}
+          onMouseDown={handleMouseDown}
         />
         <div style={{ flex: 1, overflowY: "auto" }}>
-        <div ref={headerRef} style={headerContainerStyle}>
-          <h2 style={headerStyle}>Pin Details</h2>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Collapse/Expand button - only show on desktop */}
-            {!isMobile && (
-              <button
-                onClick={() => setIsCollapsed((p) => !p)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#fff",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                aria-label={isCollapsed ? "Expand" : "Collapse"}
-              >
-                {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-              </button>
-            )}
-            
-            {/* Close button - only show on mobile */}
-            {isMobile && (
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#fff",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                aria-label="Close sidebar"
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {!isCollapsed && (
-          <>
-            {/* Pin Search Section */}
-            <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <h3 style={{ margin: 0 }}>Pin Search</h3>
+          <div ref={headerRef} style={headerContainerStyle}>
+            <h2 style={headerStyle}>Pin Details</h2>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              {/* Collapse/Expand button - only show on desktop */}
+              {!isMobile && (
                 <button
-                  onClick={() => setShowPinSearch(!showPinSearch)}
+                  onClick={() => setIsCollapsed((p) => !p)}
                   style={{
                     background: "none",
                     border: "none",
@@ -534,252 +497,52 @@ const SideBar: React.FC<SideBarProps> = ({
                     display: "flex",
                     alignItems: "center",
                   }}
-                  aria-label={showPinSearch ? "Hide search" : "Show search"}
+                  aria-label={isCollapsed ? "Expand" : "Collapse"}
                 >
-                  {showPinSearch ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              </div>
-              
-              {showPinSearch && (
-                <div style={{ marginBottom: "12px" }}>
-                  <input
-                    type="text"
-                    placeholder="Search pins by name, area, description, or tags..."
-                    value={pinSearchQuery}
-                    onChange={(e) => setPinSearchQuery(e.target.value)}
-                    style={getInputStyle({
-                      marginBottom: "8px",
-                    })}
-                  />
-                  
-                  {pinSearchQuery.trim() && (
-                    <div style={{ 
-                      maxHeight: "200px", 
-                      overflowY: "auto",
-                      border: "1px solid #495057",
-                      borderRadius: "4px",
-                      backgroundColor: "#495057"
-                    }}>
-                      <div style={{ 
-                        padding: "8px", 
-                        borderBottom: "1px solid #6c757d",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        color: "#adb5bd"
-                      }}>
-                        {filteredPins.length} pin{filteredPins.length !== 1 ? 's' : ''} found
-                      </div>
-                      
-                      {filteredPins.length > 0 ? (
-                        filteredPins.map((pin, index) => (
-                          <div
-                            key={`${pin.label}-${index}`}
-                            onClick={() => onSelectPin?.(pin.label)}
-                            style={{
-                              padding: "8px",
-                              borderBottom: index < filteredPins.length - 1 ? "1px solid #6c757d" : "none",
-                              cursor: "pointer",
-                              transition: "background-color 0.2s",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#6c757d";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "transparent";
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              {pin.pinType && (
-                                <span style={{ 
-                                  fontSize: "14px",
-                                  color: pin.pinType.color 
-                                }}>
-                                  {pin.pinType.id === "numbered" ? (() => {
-                                    const numberedPins = allPins
-                                      .filter((p) => p.pinType.id === "numbered")
-                                      .sort((a, b) => parseInt(a.label) - parseInt(b.label));
-                                    const pinIndex = numberedPins.findIndex((p) => p.label === pin.label);
-                                    return (pinIndex + 1).toString();
-                                  })() : pin.pinType.icon}
-                                </span>
-                              )}
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: "bold", fontSize: "14px" }}>
-                                  {getSearchDisplayName(pin)}
-                                </div>
-                                {getSearchSubtitle(pin) && (
-                                  <div style={{ fontSize: "12px", color: "#adb5bd" }}>
-                                    {getSearchSubtitle(pin)}
-                                  </div>
-                                )}
-                                {pin.info && (
-                                  <div style={{ 
-                                    fontSize: "12px", 
-                                    color: "#adb5bd",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap"
-                                  }}>
-                                    {pin.info}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div style={{ 
-                          padding: "16px", 
-                          textAlign: "center", 
-                          color: "#adb5bd",
-                          fontStyle: "italic"
-                        }}>
-                          No pins match your search
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Map Statistics */}
-            <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <h3 style={{ margin: 0 }}>Map Statistics</h3>
-                <button
-                  onClick={() => setShowMapStats(!showMapStats)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  aria-label={showMapStats ? "Hide statistics" : "Show statistics"}
-                >
-                  {showMapStats ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              </div>
-              
-              {showMapStats && (
-                <div style={{ 
-                  background: "rgba(52, 58, 64, 0.6)", 
-                  borderRadius: "6px", 
-                  padding: "12px",
-                  fontSize: "13px"
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span>📍 Total Pins:</span>
-                    <strong>{allPins.length}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span>📝 With Descriptions:</span>
-                    <strong>{allPins.filter(p => p.info?.trim()).length}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span>🏷️ With Tags:</span>
-                    <strong>{allPins.filter(p => p.tags && p.tags.length > 0).length}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span>🔗 Linked Maps:</span>
-                    <strong>{allPins.filter(p => p.linkedMapId).length}</strong>
-                  </div>
-                  
-                  {/* Pin type breakdown */}
-                  {(() => {
-                    const typeStats = allPins.reduce((acc, pin) => {
-                      const category = pin.pinType?.category || 'custom';
-                      acc[category] = (acc[category] || 0) + 1;
-                      return acc;
-                    }, {} as Record<string, number>);
-                    
-                    const categoryIcons = {
-                      location: '🏰',
-                      encounter: '⚔️',
-                      npc: '👤',
-                      treasure: '💎',
-                      hazard: '⚠️',
-                      custom: '📌'
-                    };
-                    
-                    return Object.entries(typeStats).length > 0 && (
-                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #6c757d" }}>
-                        <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#adb5bd" }}>
-                          By Category:
-                        </div>
-                        {Object.entries(typeStats).map(([category, count]) => (
-                          <div key={category} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" }}>
-                            <span>
-                              {categoryIcons[category as keyof typeof categoryIcons]} {category.charAt(0).toUpperCase() + category.slice(1)}:
-                            </span>
-                            <strong>{count}</strong>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Parent Maps */}
-            <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <h3 style={{ margin: 0 }}>Parent Maps</h3>
-                <button
-                  onClick={() => setShowParentMaps(!showParentMaps)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  aria-label={showParentMaps ? "Hide parent maps" : "Show parent maps"}
-                >
-                  {showParentMaps ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              </div>
-              
-              {showParentMaps && (
-                <div style={{ marginBottom: "12px" }}>
-                  {parentMaps.length > 0 ? (
-                    parentMaps.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => navigate(`/map/${m.id}`)}
-                        style={{
-                          display: "block",
-                          background: "none",
-                          border: "none",
-                          color: "#0d6efd",
-                          cursor: "pointer",
-                          padding: "4px 0",
-                          textAlign: "left",
-                        }}
-                      >
-                        {m.name}
-                      </button>
-                    ))
+                  {isCollapsed ? (
+                    <ChevronDown size={20} />
                   ) : (
-                    <p style={emptyStyle}>No parent maps.</p>
+                    <ChevronUp size={20} />
                   )}
-                </div>
+                </button>
+              )}
+
+              {/* Close button - only show on mobile */}
+              {isMobile && (
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label="Close sidebar"
+                >
+                  <X size={20} />
+                </button>
               )}
             </div>
+          </div>
 
-            {/* Pin Information */}
-            {selectedLabel ? (
+          {!isCollapsed && (
+            <>
+              {/* Pin Search Section */}
               <div style={{ marginTop: "12px", color: "#e9ecef" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <h3 style={{ margin: 0 }}>Pin Information</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <h3 style={{ margin: 0 }}>Pin Search</h3>
                   <button
-                    onClick={() => setShowPinInfo(!showPinInfo)}
+                    onClick={() => setShowPinSearch(!showPinSearch)}
                     style={{
                       background: "none",
                       border: "none",
@@ -789,244 +552,679 @@ const SideBar: React.FC<SideBarProps> = ({
                       display: "flex",
                       alignItems: "center",
                     }}
-                    aria-label={showPinInfo ? "Hide pin information" : "Show pin information"}
+                    aria-label={showPinSearch ? "Hide search" : "Show search"}
                   >
-                    {showPinInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    {showPinSearch ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
                   </button>
                 </div>
-                
-                {showPinInfo && (
-                  <div style={infoStyle}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                      <p style={{ margin: 0 }}>
-                        <strong>Pin:</strong> {getSelectedLabelDisplayName(selectedLabel)}
-                      </p>
-                      {onCenterPin && (
-                        <button
-                          onClick={() => onCenterPin(selectedLabel.label)}
-                          style={{
-                            background: "#28a745",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "6px",
-                            padding: "6px 12px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            transition: "background-color 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "#218838";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "#28a745";
-                          }}
-                          title="Center map on this pin"
-                        >
-                          🎯 Center Map
-                        </button>
-                      )}
-                    </div>
 
-                    {/* Pin Type Display */}
-                    {selectedLabel.pinType && (
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px',
-                        marginBottom: '12px',
-                        padding: '8px',
-                        backgroundColor: selectedLabel.pinType.color,
-                        borderRadius: '6px',
-                        color: '#fff'
-                      }}>
-                        <span style={{ fontSize: '18px' }}>{selectedLabel.pinType.icon}</span>
-                        <div>
-                          <strong>{selectedLabel.pinType.name}</strong>
-                          <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'capitalize' }}>
-                            {selectedLabel.pinType.category}
-                          </div>
+                {showPinSearch && (
+                  <div style={{ marginBottom: "12px" }}>
+                    <input
+                      type="text"
+                      placeholder="Search pins by name, area, description, or tags..."
+                      value={pinSearchQuery}
+                      onChange={(e) => setPinSearchQuery(e.target.value)}
+                      style={getInputStyle({
+                        marginBottom: "8px",
+                      })}
+                    />
+
+                    {pinSearchQuery.trim() && (
+                      <div
+                        style={{
+                          maxHeight: "200px",
+                          overflowY: "auto",
+                          border: "1px solid #495057",
+                          borderRadius: "4px",
+                          backgroundColor: "#495057",
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: "8px",
+                            borderBottom: "1px solid #6c757d",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            color: "#adb5bd",
+                          }}
+                        >
+                          {filteredPins.length} pin
+                          {filteredPins.length !== 1 ? "s" : ""} found
                         </div>
+
+                        {filteredPins.length > 0 ? (
+                          filteredPins.map((pin, index) => (
+                            <div
+                              key={`${pin.label}-${index}`}
+                              onClick={() => onSelectPin?.(pin.label)}
+                              style={{
+                                padding: "8px",
+                                borderBottom:
+                                  index < filteredPins.length - 1
+                                    ? "1px solid #6c757d"
+                                    : "none",
+                                cursor: "pointer",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#6c757d";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "transparent";
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                {pin.pinType && (
+                                  <span
+                                    style={{
+                                      fontSize: "14px",
+                                      color: pin.pinType.color,
+                                    }}
+                                  >
+                                    {pin.pinType.id === "numbered"
+                                      ? (() => {
+                                          const numberedPins = allPins
+                                            .filter(
+                                              (p) => p.pinType.id === "numbered"
+                                            )
+                                            .sort(
+                                              (a, b) =>
+                                                parseInt(a.label) -
+                                                parseInt(b.label)
+                                            );
+                                          const pinIndex =
+                                            numberedPins.findIndex(
+                                              (p) => p.label === pin.label
+                                            );
+                                          return (pinIndex + 1).toString();
+                                        })()
+                                      : pin.pinType.icon}
+                                  </span>
+                                )}
+                                <div style={{ flex: 1 }}>
+                                  <div
+                                    style={{
+                                      fontWeight: "bold",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    {getSearchDisplayName(pin)}
+                                  </div>
+                                  {getSearchSubtitle(pin) && (
+                                    <div
+                                      style={{
+                                        fontSize: "12px",
+                                        color: "#adb5bd",
+                                      }}
+                                    >
+                                      {getSearchSubtitle(pin)}
+                                    </div>
+                                  )}
+                                  {pin.info && (
+                                    <div
+                                      style={{
+                                        fontSize: "12px",
+                                        color: "#adb5bd",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {pin.info}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div
+                            style={{
+                              padding: "16px",
+                              textAlign: "center",
+                              color: "#adb5bd",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            No pins match your search
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
 
-                    <h3>Area Name:</h3>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editArea}
-                        onChange={(e) => setEditArea(e.target.value)}
-                        style={getInputStyle({
-                          marginBottom: "12px",
-                        })}
-                      />
+              {/* Map Statistics */}
+              <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <h3 style={{ margin: 0 }}>Map Statistics</h3>
+                  <button
+                    onClick={() => setShowMapStats(!showMapStats)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#fff",
+                      cursor: "pointer",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    aria-label={
+                      showMapStats ? "Hide statistics" : "Show statistics"
+                    }
+                  >
+                    {showMapStats ? (
+                      <ChevronUp size={16} />
                     ) : (
-                      <p
-                        onClick={() => setIsEditing(true)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {selectedLabel.areaName || <em>Click to add area name</em>}
-                      </p>
+                      <ChevronDown size={16} />
                     )}
+                  </button>
+                </div>
 
-                    <h3>Description:</h3>
-                    {isEditing ? (
-                      <>
-                        <textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          style={getInputStyle({
-                            minHeight: "100px",
-                          })}
-                        />
-                        <div style={{ marginTop: "8px" }}>
-                          <button
-                            onClick={handleSave}
-                            style={getButtonStyle({
-                              marginRight: 8,
-                              backgroundColor: "#28a745",
-                              borderColor: "#28a745",
-                            })}
+                {showMapStats && (
+                  <div
+                    style={{
+                      background: "rgba(52, 58, 64, 0.6)",
+                      borderRadius: "6px",
+                      padding: "12px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span>📍 Total Pins:</span>
+                      <strong>{allPins.length}</strong>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span>📝 With Descriptions:</span>
+                      <strong>
+                        {allPins.filter((p) => p.info?.trim()).length}
+                      </strong>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span>🏷️ With Tags:</span>
+                      <strong>
+                        {
+                          allPins.filter((p) => p.tags && p.tags.length > 0)
+                            .length
+                        }
+                      </strong>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span>🔗 Linked Maps:</span>
+                      <strong>
+                        {allPins.filter((p) => p.linkedMapId).length}
+                      </strong>
+                    </div>
+
+                    {/* Pin type breakdown */}
+                    {(() => {
+                      const typeStats = allPins.reduce((acc, pin) => {
+                        const category = pin.pinType?.category || "custom";
+                        acc[category] = (acc[category] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>);
+
+                      const categoryIcons = {
+                        location: "🏰",
+                        encounter: "⚔️",
+                        npc: "👤",
+                        treasure: "💎",
+                        hazard: "⚠️",
+                        custom: "📌",
+                      };
+
+                      return (
+                        Object.entries(typeStats).length > 0 && (
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              paddingTop: "8px",
+                              borderTop: "1px solid #6c757d",
+                            }}
                           >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setIsEditing(false)}
-                            style={getButtonStyle({
-                              backgroundColor: "#6c757d",
-                              borderColor: "#6c757d",
-                            })}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </>
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                marginBottom: "4px",
+                                color: "#adb5bd",
+                              }}
+                            >
+                              By Category:
+                            </div>
+                            {Object.entries(typeStats).map(
+                              ([category, count]) => (
+                                <div
+                                  key={category}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    fontSize: "12px",
+                                    marginBottom: "2px",
+                                  }}
+                                >
+                                  <span>
+                                    {
+                                      categoryIcons[
+                                        category as keyof typeof categoryIcons
+                                      ]
+                                    }{" "}
+                                    {category.charAt(0).toUpperCase() +
+                                      category.slice(1)}
+                                    :
+                                  </span>
+                                  <strong>{count}</strong>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Parent Maps */}
+              <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <h3 style={{ margin: 0 }}>Parent Maps</h3>
+                  <button
+                    onClick={() => setShowParentMaps(!showParentMaps)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#fff",
+                      cursor: "pointer",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    aria-label={
+                      showParentMaps ? "Hide parent maps" : "Show parent maps"
+                    }
+                  >
+                    {showParentMaps ? (
+                      <ChevronUp size={16} />
                     ) : (
-                      <p
-                        onClick={() => setIsEditing(true)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {selectedLabel.info || <em>Click to add description</em>}
-                      </p>
+                      <ChevronDown size={16} />
                     )}
+                  </button>
+                </div>
 
-                    {/* Linked Map */}
-                    <div style={{ marginTop: "20px" }}>
-                      <h3>Linked Map:</h3>
-                      {isEditing ? (
-                        <select
-                          value={editLinkedMapId}
-                          onChange={(e) => setEditLinkedMapId(e.target.value)}
-                          style={{
-                            width: "100%",
-                            padding: "8px",
-                            boxSizing: "border-box",
-                            marginBottom: "12px",
-                          }}
-                        >
-                          <option value="">— No link —</option>
-                          {mapList.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : selectedLabel.linkedMapId ? (
+                {showParentMaps && (
+                  <div style={{ marginBottom: "12px" }}>
+                    {parentMaps.length > 0 ? (
+                      parentMaps.map((m) => (
                         <button
-                          onClick={() =>
-                            navigate(`/map/${selectedLabel.linkedMapId}`)
-                          }
+                          key={m.id}
+                          onClick={() => navigate(`/map/${m.id}`)}
                           style={{
+                            display: "block",
                             background: "none",
                             border: "none",
                             color: "#0d6efd",
                             cursor: "pointer",
-                            padding: 0,
-                            fontSize: "14px",
+                            padding: "4px 0",
+                            textAlign: "left",
                           }}
                         >
-                          Go to "
-                          {mapList.find((m) => m.id === selectedLabel.linkedMapId)
-                            ?.name || selectedLabel.linkedMapId}
-                          "
+                          {m.name}
                         </button>
+                      ))
+                    ) : (
+                      <p style={emptyStyle}>No parent maps.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Pin Information */}
+              {selectedLabel ? (
+                <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <h3 style={{ margin: 0 }}>Pin Information</h3>
+                    <button
+                      onClick={() => setShowPinInfo(!showPinInfo)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#fff",
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      aria-label={
+                        showPinInfo
+                          ? "Hide pin information"
+                          : "Show pin information"
+                      }
+                    >
+                      {showPinInfo ? (
+                        <ChevronUp size={16} />
                       ) : (
-                        <p
-                          onClick={() => setIsEditing(true)}
-                          style={{
-                            fontStyle: "italic",
-                            color: "#adb5bd",
-                            cursor: "pointer",
-                          }}
-                        >
-                          No linked map.
-                        </p>
+                        <ChevronDown size={16} />
                       )}
-                    </div>
+                    </button>
+                  </div>
 
-                    {/* Tags Section */}
-                    <div style={{ marginTop: 20 }}>
-                      <h3 style={{ margin: 0, marginBottom: 8 }}>Tags:</h3>
+                  {showPinInfo && (
+                    <div style={infoStyle}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <p style={{ margin: 0 }}>
+                          <strong>Pin:</strong>{" "}
+                          {getSelectedLabelDisplayName(selectedLabel)}
+                        </p>
+                        {onCenterPin && (
+                          <button
+                            onClick={() => onCenterPin(selectedLabel.label)}
+                            style={{
+                              background: "#28a745",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "6px 12px",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "background-color 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#218838";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#28a745";
+                            }}
+                            title="Center map on this pin"
+                          >
+                            🎯 Center Map
+                          </button>
+                        )}
+                      </div>
 
-                      {/* Add Tag Input - only when editing */}
-                      {isEditing && (
+                      {/* Pin Type Display */}
+                      {selectedLabel.pinType && (
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            marginBottom: 12,
+                            gap: "8px",
+                            marginBottom: "12px",
+                            padding: "8px",
+                            backgroundColor: selectedLabel.pinType.color,
+                            borderRadius: "6px",
+                            color: "#fff",
                           }}
                         >
-                          <input
-                            type="text"
-                            value={newTagInput}
-                            onChange={(e) => setNewTagInput(e.target.value)}
-                            placeholder="New tag"
-                            style={getInputStyle({
-                              padding: isMobile ? "8px" : "4px 8px",
-                              flexGrow: 1,
-                              marginRight: 6,
-                            })}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") addTag();
-                            }}
-                          />
-                          <button
-                            onClick={addTag}
-                            style={getButtonStyle({
-                              background: "#28a745",
-                              border: "1px solid #28a745",
-                              padding: isMobile ? "8px" : "4px 8px",
-                              minHeight: isMobile ? "44px" : "32px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            })}
-                          >
-                            <Plus size={16} />
-                          </button>
+                          <span style={{ fontSize: "18px" }}>
+                            {selectedLabel.pinType.icon}
+                          </span>
+                          <div>
+                            <strong>{selectedLabel.pinType.name}</strong>
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                opacity: 0.8,
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {selectedLabel.pinType.category}
+                            </div>
+                          </div>
                         </div>
                       )}
 
-                      {/* Tag Chips or "No tags" */}
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "6px",
-                          paddingBottom: 8,
-                          cursor: !isEditing ? "pointer" : "default",
-                        }}
-                        onClick={() => {
-                          if (!isEditing) setIsEditing(true);
-                        }}
-                      >
-                        {(isEditing ? editTags : selectedLabel?.tags || []).length >
-                        0 ? (
-                          (isEditing ? editTags : selectedLabel?.tags || []).map(
-                            (tag) => (
+                      <h3>Area Name:</h3>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editArea}
+                          onChange={(e) => setEditArea(e.target.value)}
+                          style={getInputStyle({
+                            marginBottom: "12px",
+                          })}
+                        />
+                      ) : (
+                        <p
+                          onClick={() => setIsEditing(true)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {selectedLabel.areaName || (
+                            <em>Click to add area name</em>
+                          )}
+                        </p>
+                      )}
+
+                      <h3>Description:</h3>
+                      {isEditing ? (
+                        <>
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            style={getInputStyle({
+                              minHeight: "100px",
+                            })}
+                          />
+                          <div style={{ marginTop: "8px" }}>
+                            <button
+                              onClick={handleSave}
+                              style={getButtonStyle({
+                                marginRight: 8,
+                                backgroundColor: "#28a745",
+                                borderColor: "#28a745",
+                              })}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setIsEditing(false)}
+                              style={getButtonStyle({
+                                backgroundColor: "#6c757d",
+                                borderColor: "#6c757d",
+                              })}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p
+                          onClick={() => setIsEditing(true)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {selectedLabel.info || (
+                            <em>Click to add description</em>
+                          )}
+                        </p>
+                      )}
+
+                      {/* Linked Map */}
+                      <div style={{ marginTop: "20px" }}>
+                        <h3>Linked Map:</h3>
+                        {isEditing ? (
+                          <select
+                            value={editLinkedMapId}
+                            onChange={(e) => setEditLinkedMapId(e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "8px",
+                              boxSizing: "border-box",
+                              marginBottom: "12px",
+                            }}
+                          >
+                            <option value="">— No link —</option>
+                            {mapList.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : selectedLabel.linkedMapId ? (
+                          <button
+                            onClick={() =>
+                              navigate(`/map/${selectedLabel.linkedMapId}`)
+                            }
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#0d6efd",
+                              cursor: "pointer",
+                              padding: 0,
+                              fontSize: "14px",
+                            }}
+                          >
+                            Go to "
+                            {mapList.find(
+                              (m) => m.id === selectedLabel.linkedMapId
+                            )?.name || selectedLabel.linkedMapId}
+                            "
+                          </button>
+                        ) : (
+                          <p
+                            onClick={() => setIsEditing(true)}
+                            style={{
+                              fontStyle: "italic",
+                              color: "#adb5bd",
+                              cursor: "pointer",
+                            }}
+                          >
+                            No linked map.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Tags Section */}
+                      <div style={{ marginTop: 20 }}>
+                        <h3 style={{ margin: 0, marginBottom: 8 }}>Tags:</h3>
+
+                        {/* Add Tag Input - only when editing */}
+                        {isEditing && (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              marginBottom: 12,
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={newTagInput}
+                              onChange={(e) => setNewTagInput(e.target.value)}
+                              placeholder="New tag"
+                              style={getInputStyle({
+                                padding: isMobile ? "8px" : "4px 8px",
+                                flexGrow: 1,
+                                marginRight: 6,
+                              })}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") addTag();
+                              }}
+                            />
+                            <button
+                              onClick={addTag}
+                              style={getButtonStyle({
+                                background: "#28a745",
+                                border: "1px solid #28a745",
+                                padding: isMobile ? "8px" : "4px 8px",
+                                minHeight: isMobile ? "44px" : "32px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              })}
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Tag Chips or "No tags" */}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                            paddingBottom: 8,
+                            cursor: !isEditing ? "pointer" : "default",
+                          }}
+                          onClick={() => {
+                            if (!isEditing) setIsEditing(true);
+                          }}
+                        >
+                          {(isEditing ? editTags : selectedLabel?.tags || [])
+                            .length > 0 ? (
+                            (isEditing
+                              ? editTags
+                              : selectedLabel?.tags || []
+                            ).map((tag) => (
                               <span
                                 key={tag}
                                 style={{
@@ -1060,176 +1258,177 @@ const SideBar: React.FC<SideBarProps> = ({
                                   </button>
                                 )}
                               </span>
-                            )
-                          )
-                        ) : !isEditing ? (
-                          <span
-                            style={{
-                              fontStyle: "italic",
-                              color: "#adb5bd",
-                            }}
-                          >
-                            No tags. Click to add.
-                          </span>
-                        ) : null}
+                            ))
+                          ) : !isEditing ? (
+                            <span
+                              style={{
+                                fontStyle: "italic",
+                                color: "#adb5bd",
+                              }}
+                            >
+                              No tags. Click to add.
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Extra Sections */}
-                    <div style={{ marginTop: "20px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <h3 style={{ margin: 0 }}>Extra Sections:</h3>
-                        <button
-                          onClick={addSection}
+                      {/* Extra Sections */}
+                      <div style={{ marginTop: "20px" }}>
+                        <div
                           style={{
-                            background: "none",
-                            border: "none",
-                            color: "#0d6efd",
-                            cursor: "pointer",
                             display: "flex",
+                            justifyContent: "space-between",
                             alignItems: "center",
                           }}
                         >
-                          <Plus size={16} style={{ marginRight: "4px" }} /> Add
-                          Section
-                        </button>
-                      </div>
-
-                      {extraSections.length === 0 && !isEditing && (
-                        <p style={{ fontStyle: "italic", color: "#adb5bd" }}>
-                          No extra sections yet.
-                        </p>
-                      )}
-
-                      {/* VIEW MODE: collapsible details */}
-                      {!isEditing &&
-                        extraSections.map((sec, idx) => (
-                          <div
-                            key={idx}
+                          <h3 style={{ margin: 0 }}>Extra Sections:</h3>
+                          <button
+                            onClick={addSection}
                             style={{
-                              marginTop: "12px",
-                              padding: "8px",
-                              backgroundColor: "#495057",
-                              borderRadius: "4px",
+                              background: "none",
+                              border: "none",
+                              color: "#0d6efd",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
                             }}
                           >
+                            <Plus size={16} style={{ marginRight: "4px" }} />{" "}
+                            Add Section
+                          </button>
+                        </div>
+
+                        {extraSections.length === 0 && !isEditing && (
+                          <p style={{ fontStyle: "italic", color: "#adb5bd" }}>
+                            No extra sections yet.
+                          </p>
+                        )}
+
+                        {/* VIEW MODE: collapsible details */}
+                        {!isEditing &&
+                          extraSections.map((sec, idx) => (
                             <div
-                              onClick={() => toggleSection(idx)}
+                              key={idx}
                               style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                cursor: "pointer",
+                                marginTop: "12px",
+                                padding: "8px",
+                                backgroundColor: "#495057",
+                                borderRadius: "4px",
                               }}
                             >
-                              <h4 style={{ margin: 0, color: "#e9ecef" }}>
-                                {sec.title || <em>(No title)</em>}
-                              </h4>
-                              {collapsedSections[idx] ? (
-                                <ChevronDown size={16} />
-                              ) : (
-                                <ChevronUp size={16} />
+                              <div
+                                onClick={() => toggleSection(idx)}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <h4 style={{ margin: 0, color: "#e9ecef" }}>
+                                  {sec.title || <em>(No title)</em>}
+                                </h4>
+                                {collapsedSections[idx] ? (
+                                  <ChevronDown size={16} />
+                                ) : (
+                                  <ChevronUp size={16} />
+                                )}
+                              </div>
+                              {!collapsedSections[idx] && (
+                                <p
+                                  style={{ marginTop: "8px", color: "#e9ecef" }}
+                                >
+                                  {sec.content || <em>(No content)</em>}
+                                </p>
                               )}
                             </div>
-                            {!collapsedSections[idx] && (
-                              <p style={{ marginTop: "8px", color: "#e9ecef" }}>
-                                {sec.content || <em>(No content)</em>}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                          ))}
 
-                      {/* EDIT MODE: fully expanded with delete buttons */}
-                      {isEditing &&
-                        extraSections.map((sec, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              position: "relative",
-                              marginTop: "12px",
-                              padding: "8px",
-                              backgroundColor: "#495057",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            <button
-                              onClick={() => deleteSection(idx)}
+                        {/* EDIT MODE: fully expanded with delete buttons */}
+                        {isEditing &&
+                          extraSections.map((sec, idx) => (
+                            <div
+                              key={idx}
                               style={{
-                                position: "absolute",
-                                top: "8px",
-                                right: "8px",
-                                background: "none",
-                                border: "none",
-                                color: "#e55353",
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                              }}
-                              aria-label={`Delete section ${idx + 1}`}
-                            >
-                              ×
-                            </button>
-
-                            <label
-                              style={{
-                                display: "block",
-                                marginBottom: "4px",
-                                fontWeight: "bold",
-                                color: "#e9ecef",
+                                position: "relative",
+                                marginTop: "12px",
+                                padding: "8px",
+                                backgroundColor: "#495057",
+                                borderRadius: "4px",
                               }}
                             >
-                              Title:
-                            </label>
-                            <input
-                              type="text"
-                              value={sec.title}
-                              onChange={(e) =>
-                                updateSection(idx, "title", e.target.value)
-                              }
-                              style={getInputStyle({
-                                padding: "6px",
-                                marginBottom: "8px",
-                              })}
-                            />
+                              <button
+                                onClick={() => deleteSection(idx)}
+                                style={{
+                                  position: "absolute",
+                                  top: "8px",
+                                  right: "8px",
+                                  background: "none",
+                                  border: "none",
+                                  color: "#e55353",
+                                  cursor: "pointer",
+                                  fontWeight: "bold",
+                                }}
+                                aria-label={`Delete section ${idx + 1}`}
+                              >
+                                ×
+                              </button>
 
-                            <label
-                              style={{
-                                display: "block",
-                                marginBottom: "4px",
-                                fontWeight: "bold",
-                                color: "#e9ecef",
-                              }}
-                            >
-                              Content:
-                            </label>
-                            <textarea
-                              value={sec.content}
-                              onChange={(e) =>
-                                updateSection(idx, "content", e.target.value)
-                              }
-                              style={getInputStyle({
-                                minHeight: "80px",
-                                padding: "6px",
-                              })}
-                            />
-                          </div>
-                        ))}
+                              <label
+                                style={{
+                                  display: "block",
+                                  marginBottom: "4px",
+                                  fontWeight: "bold",
+                                  color: "#e9ecef",
+                                }}
+                              >
+                                Title:
+                              </label>
+                              <input
+                                type="text"
+                                value={sec.title}
+                                onChange={(e) =>
+                                  updateSection(idx, "title", e.target.value)
+                                }
+                                style={getInputStyle({
+                                  padding: "6px",
+                                  marginBottom: "8px",
+                                })}
+                              />
+
+                              <label
+                                style={{
+                                  display: "block",
+                                  marginBottom: "4px",
+                                  fontWeight: "bold",
+                                  color: "#e9ecef",
+                                }}
+                              >
+                                Content:
+                              </label>
+                              <textarea
+                                value={sec.content}
+                                onChange={(e) =>
+                                  updateSection(idx, "content", e.target.value)
+                                }
+                                style={getInputStyle({
+                                  minHeight: "80px",
+                                  padding: "6px",
+                                })}
+                              />
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p style={emptyStyle}>Click a pin to see details</p>
-            )}
-          </>
-        )}
+                  )}
+                </div>
+              ) : (
+                <p style={emptyStyle}>Click a pin to see details</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };

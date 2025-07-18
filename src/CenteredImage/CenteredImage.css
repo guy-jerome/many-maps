@@ -60,6 +60,7 @@
   cursor: pointer;
   font-size: 14px;
   z-index: 2000;
+  transition: left 0.3s ease;
 }
 
 /* Mode buttons */
@@ -98,6 +99,7 @@
   backdrop-filter: blur(10px);
   border: 1px solid #495057;
   max-width: calc(100vw - 320px - 60px); /* Account for sidebar width */
+  transition: left 0.3s ease;
 }
 
 .ci-mode-section {
@@ -374,15 +376,15 @@
   .ci-pin-toolbar {
     max-width: calc(100vw - 280px - 40px);
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
-  
+
   .ci-map-name {
     font-size: 1.8rem;
   }
-  
+
   .ci-map-name-block {
     padding: 10px 24px 10px 20px;
   }
@@ -393,11 +395,11 @@
   .ci-container {
     flex-direction: column;
   }
-  
+
   .ci-map {
     height: 100vh;
   }
-  
+
   /* Pin toolbar - move to bottom and make compact */
   .ci-pin-toolbar {
     position: fixed;
@@ -411,28 +413,28 @@
     max-height: 50vh;
     overflow-y: auto;
     padding: 12px;
-    
+
     /* Compact by default - only show mode buttons */
     transition: all 0.3s ease;
   }
-  
+
   /* When panel is not open, keep it compact */
   .ci-pin-toolbar:not(.panel-open) {
     max-height: 60px;
     overflow: hidden;
   }
-  
+
   /* Pin panel hidden by default */
   .ci-pin-toolbar:not(.panel-open) .ci-pin-panel {
     display: none;
   }
-  
+
   .ci-mode-section {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 8px;
   }
-  
+
   .ci-mode-btn {
     flex: 1;
     min-width: 80px;
@@ -440,48 +442,48 @@
     font-size: 12px;
     white-space: nowrap;
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: 6px;
     max-height: 120px;
   }
-  
+
   .ci-pin-type-btn {
     padding: 6px 4px;
     min-height: 50px;
   }
-  
+
   .ci-pin-type-icon {
     font-size: 16px;
     margin-bottom: 2px;
   }
-  
+
   .ci-pin-type-name {
     font-size: 9px;
     line-height: 1.2;
   }
-  
+
   .ci-pin-type-count {
     font-size: 8px;
   }
-  
+
   /* Map header adjustments */
   .ci-map-name-block {
     top: 10px;
     padding: 6px 12px;
     max-width: calc(100vw - 40px);
   }
-  
+
   .ci-map-name {
     font-size: 1.3rem;
     text-align: center;
   }
-  
+
   .ci-map-description {
     font-size: 0.8rem;
   }
-  
+
   /* Back button */
   .ci-back-btn {
     top: 10px;
@@ -489,37 +491,37 @@
     padding: 6px 10px;
     font-size: 12px;
   }
-  
+
   /* Search input */
   .ci-search-input {
     padding: 8px;
     font-size: 14px;
   }
-  
+
   /* Category filter */
   .ci-category-filter {
     font-size: 12px;
     padding: 4px 8px;
   }
-  
+
   /* Edit metadata responsive */
   .ci-meta-edit-input {
     width: 100%;
     max-width: calc(100vw - 40px);
     font-size: 1.1rem;
   }
-  
+
   .ci-meta-edit-textarea {
     width: 100%;
     max-width: calc(100vw - 40px);
     font-size: 0.9rem;
   }
-  
+
   .ci-meta-edit-actions {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .ci-meta-edit-save,
   .ci-meta-edit-cancel {
     width: 100%;
@@ -533,66 +535,66 @@
     padding: 8px;
     max-height: 45vh; /* Smaller on very small screens */
   }
-  
+
   .ci-pin-toolbar:not(.panel-open) {
     max-height: 50px;
   }
-  
+
   .ci-mode-section {
     flex-direction: column;
     gap: 4px;
   }
-  
+
   .ci-mode-btn {
     width: 100%;
     padding: 10px;
     font-size: 14px;
     justify-content: center;
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 4px;
     max-height: 100px;
   }
-  
+
   .ci-pin-type-btn {
     padding: 4px 2px;
     min-height: 40px;
   }
-  
+
   .ci-pin-type-icon {
     font-size: 14px;
     margin-bottom: 1px;
   }
-  
+
   .ci-pin-type-name {
     font-size: 8px;
   }
-  
+
   .ci-map-name-block {
     max-width: calc(100vw - 30px);
     padding: 4px 8px;
   }
-  
+
   .ci-map-name {
     font-size: 1.1rem;
   }
-  
+
   .ci-map-description {
     font-size: 0.7rem;
   }
-  
+
   .ci-back-btn {
     padding: 4px 8px;
     font-size: 11px;
   }
-  
+
   .ci-category-filter {
     font-size: 11px;
     padding: 3px 6px;
   }
-  
+
   .ci-search-input {
     font-size: 12px;
     padding: 6px 8px;
@@ -608,56 +610,56 @@
     max-height: 40vh;
     padding: 8px;
   }
-  
+
   .ci-pin-toolbar:not(.panel-open) {
     max-height: 45px;
   }
-  
+
   .ci-mode-section {
     flex-direction: row;
     gap: 4px;
   }
-  
+
   .ci-mode-btn {
     flex: 1;
     padding: 6px 8px;
     font-size: 11px;
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     gap: 3px;
     max-height: 80px;
   }
-  
+
   .ci-pin-type-btn {
     padding: 3px 2px;
     min-height: 35px;
   }
-  
+
   .ci-pin-type-icon {
     font-size: 12px;
     margin-bottom: 1px;
   }
-  
+
   .ci-pin-type-name {
     font-size: 7px;
   }
-  
+
   .ci-map-name-block {
     top: 5px;
     padding: 4px 8px;
     max-width: calc(100vw - 40px);
   }
-  
+
   .ci-map-name {
-    font-size: 1.0rem;
+    font-size: 1rem;
   }
-  
+
   .ci-map-description {
     font-size: 0.7rem;
   }
-  
+
   .ci-back-btn {
     top: 5px;
     left: 5px;
@@ -1065,4 +1067,18 @@
   font-size: 1rem;
   cursor: pointer;
 }
+
+/* Wiki integration styles - dynamic positioning handled via inline styles */
+
+/* Responsive adjustments for wiki */
+@media (max-width: 768px) {
+  .ci-back-btn[style*="left"] {
+    left: 10px !important;
+  }
+
+  .ci-pin-toolbar[style*="left"] {
+    left: 20px !important;
+  }
+}
+
 /* Force refresh - Thu 17 Jul 2025 03:32:55 PM EDT */
