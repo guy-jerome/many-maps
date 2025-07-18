@@ -55,18 +55,13 @@ const MapHeader: React.FC<MapHeaderProps> = ({
   };
 
   // Calculate dynamic margin based on wiki state
-  const headerStyle = isWikiOpen 
-    ? { marginLeft: `${wikiWidth}px` }
-    : {};
+  const headerStyle = isWikiOpen ? { marginLeft: `${wikiWidth}px` } : {};
 
   return (
     <>
       <div className="ci-map-name-block" style={headerStyle}>
         <div className="ci-header-left">
-          <button
-            className="ci-back-btn"
-            onClick={() => navigate("/gallery")}
-          >
+          <button className="ci-back-btn" onClick={() => navigate("/gallery")}>
             ← Back
           </button>
           <span className="ci-map-name">{mapName}</span>

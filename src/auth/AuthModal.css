@@ -24,8 +24,11 @@
   border: 4px solid var(--pixel-border-primary);
   font-family: var(--pixel-font-primary);
   /* Pixel grid pattern */
-  background-image: 
-    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+  background-image: linear-gradient(
+      90deg,
+      var(--pixel-gray-dark) 1px,
+      transparent 1px
+    ),
     linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 8px 8px;
 }
@@ -245,11 +248,11 @@
     padding: var(--pixel-space-lg);
     margin: var(--pixel-space-lg);
   }
-  
+
   .auth-modal-header h2 {
     font-size: 1.5rem;
   }
-  
+
   .auth-form {
     gap: var(--pixel-space-lg);
   }

@@ -6,9 +6,20 @@
   overflow-x: hidden;
   overflow-y: auto;
   /* Harsh pixel grid pattern */
-  background-image: 
-    linear-gradient(90deg, transparent 49%, var(--pixel-gray-dark) 49%, var(--pixel-gray-dark) 51%, transparent 51%),
-    linear-gradient(180deg, transparent 49%, var(--pixel-gray-dark) 49%, var(--pixel-gray-dark) 51%, transparent 51%);
+  background-image: linear-gradient(
+      90deg,
+      transparent 49%,
+      var(--pixel-gray-dark) 49%,
+      var(--pixel-gray-dark) 51%,
+      transparent 51%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 49%,
+      var(--pixel-gray-dark) 49%,
+      var(--pixel-gray-dark) 51%,
+      transparent 51%
+    );
   background-size: 40px 40px;
 }
 
@@ -220,7 +231,8 @@
 }
 
 /* Buttons */
-.primary-btn, .secondary-btn {
+.primary-btn,
+.secondary-btn {
   display: flex;
   align-items: center;
   gap: var(--pixel-space-sm);
@@ -552,66 +564,67 @@
   .landing-container {
     padding: 0 var(--pixel-space-lg);
   }
-  
+
   .landing-nav {
     flex-direction: column;
     gap: var(--pixel-space-lg);
     padding: var(--pixel-space-lg) 0;
   }
-  
+
   .nav-logo {
     justify-content: center;
   }
-  
+
   .nav-logo-text {
     font-size: 1.3rem;
   }
-  
+
   .auth-nav-buttons {
     justify-content: center;
   }
-  
+
   .nav-btn {
     padding: var(--pixel-space-md) var(--pixel-space-lg);
     font-size: 0.9rem;
   }
-  
+
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .hero-icon {
     font-size: 3rem;
   }
-  
+
   .hero-actions {
     flex-direction: column;
     align-items: center;
   }
-  
-  .primary-btn, .secondary-btn {
+
+  .primary-btn,
+  .secondary-btn {
     width: 100%;
     max-width: 300px;
     justify-content: center;
   }
-  
+
   .hero-cta {
     margin-top: var(--pixel-space-lg);
     padding: var(--pixel-space-lg);
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .pin-types-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .quickstart-steps {
     grid-template-columns: 1fr;
   }
-  
+
   .section-title {
     font-size: 2rem;
   }
@@ -621,11 +634,11 @@
   .hero-title {
     font-size: 2rem;
   }
-  
+
   .feature-card {
     padding: var(--pixel-space-lg);
   }
-  
+
   .features-grid {
     gap: var(--pixel-space-lg);
   }

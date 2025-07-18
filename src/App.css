@@ -9,28 +9,28 @@
   --pixel-gray-medium: #333333;
   --pixel-gray-light: #666666;
   --pixel-gray-lighter: #999999;
-  
+
   /* Background colors */
   --pixel-bg-primary: #000000;
   --pixel-bg-secondary: #1a1a1a;
   --pixel-bg-tertiary: #333333;
   --pixel-bg-overlay: rgba(0, 0, 0, 0.9);
-  
+
   /* Text colors */
   --pixel-text-primary: #ffffff;
   --pixel-text-secondary: #cccccc;
   --pixel-text-muted: #999999;
   --pixel-text-inverse: #000000;
-  
+
   /* Border colors */
   --pixel-border-primary: #ffffff;
   --pixel-border-secondary: #666666;
   --pixel-border-dark: #333333;
-  
+
   /* Pixelated, sharp styling */
-  --pixel-radius: 0px;        /* No rounded corners - pure pixels */
-  --pixel-radius-small: 1px;  /* Minimal for necessary cases */
-  
+  --pixel-radius: 0px; /* No rounded corners - pure pixels */
+  --pixel-radius-small: 1px; /* Minimal for necessary cases */
+
   /* Harsh, stark spacing */
   --pixel-space-xs: 4px;
   --pixel-space-sm: 8px;
@@ -38,16 +38,16 @@
   --pixel-space-lg: 24px;
   --pixel-space-xl: 32px;
   --pixel-space-xxl: 48px;
-  
+
   /* Sharp, harsh shadows */
   --pixel-shadow-sharp: 2px 2px 0px #000000;
   --pixel-shadow-harsh: 4px 4px 0px #000000;
   --pixel-shadow-brutal: 6px 6px 0px #000000;
-  
+
   /* No smooth transitions - instant, harsh changes */
   --pixel-transition: none;
   --pixel-transition-fast: all 0.05s steps(1, end);
-  
+
   /* Pixelated fonts */
   --pixel-font-primary: "Courier New", monospace;
   --pixel-font-secondary: "Consolas", "Monaco", monospace;
@@ -70,9 +70,20 @@ body {
   margin: 0;
   min-height: 100vh;
   /* Harsh pixel grid background */
-  background-image: 
-    linear-gradient(90deg, transparent 49%, var(--pixel-gray-dark) 49%, var(--pixel-gray-dark) 51%, transparent 51%),
-    linear-gradient(180deg, transparent 49%, var(--pixel-gray-dark) 49%, var(--pixel-gray-dark) 51%, transparent 51%);
+  background-image: linear-gradient(
+      90deg,
+      transparent 49%,
+      var(--pixel-gray-dark) 49%,
+      var(--pixel-gray-dark) 51%,
+      transparent 51%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 49%,
+      var(--pixel-gray-dark) 49%,
+      var(--pixel-gray-dark) 51%,
+      transparent 51%
+    );
   background-size: 20px 20px;
 }
 
@@ -82,7 +93,12 @@ body {
 }
 
 /* Global typography styles */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--pixel-font-primary);
   font-weight: bold;
   color: var(--pixel-text-primary);
@@ -125,7 +141,9 @@ button:active {
 }
 
 /* Input base styles */
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: var(--pixel-font-primary);
   background: var(--pixel-bg-secondary);
   border: 2px solid var(--pixel-border-secondary);
@@ -135,7 +153,9 @@ input, textarea, select {
   transition: var(--pixel-transition-fast);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--pixel-border-primary);
   background: var(--pixel-bg-tertiary);

@@ -38,9 +38,7 @@ const PinToolbar: React.FC<PinToolbarProps> = ({
   const filteredPinTypes = filterPinTypes(pinCategory, pinSearch);
 
   return (
-    <div
-      className={`ci-pin-toolbar ${showPinPanel ? "panel-open" : ""}`}
-    >
+    <div className={`ci-pin-toolbar ${showPinPanel ? "panel-open" : ""}`}>
       {/* Mode Toggle Buttons */}
       <div className="ci-mode-section">
         <button

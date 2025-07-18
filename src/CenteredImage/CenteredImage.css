@@ -10,8 +10,11 @@
   font-family: var(--pixel-font-primary);
   overflow: hidden;
   /* Pixel grid pattern */
-  background-image: 
-    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+  background-image: linear-gradient(
+      90deg,
+      var(--pixel-gray-dark) 1px,
+      transparent 1px
+    ),
     linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 40px 40px;
 }
@@ -30,8 +33,11 @@
   box-shadow: var(--pixel-shadow-sharp);
   font-family: var(--pixel-font-primary);
   /* Pixel texture */
-  background-image: 
-    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+  background-image: linear-gradient(
+      90deg,
+      var(--pixel-gray-dark) 1px,
+      transparent 1px
+    ),
     linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 8px 8px;
   min-height: 48px;
@@ -216,8 +222,11 @@
   position: relative;
   box-shadow: var(--pixel-shadow-brutal);
   /* Pixel grid pattern */
-  background-image: 
-    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+  background-image: linear-gradient(
+      90deg,
+      var(--pixel-gray-dark) 1px,
+      transparent 1px
+    ),
     linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 8px 8px;
 }
@@ -310,8 +319,11 @@
   box-shadow: var(--pixel-shadow-harsh);
   font-family: var(--pixel-font-primary);
   /* Pixel texture */
-  background-image: 
-    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+  background-image: linear-gradient(
+      90deg,
+      var(--pixel-gray-dark) 1px,
+      transparent 1px
+    ),
     linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
   background-size: 8px 8px;
   max-height: 60px;
@@ -686,36 +698,36 @@
     flex-direction: column;
     gap: var(--pixel-space-md);
   }
-  
+
   .ci-map-name {
     font-size: 1.2rem;
     text-align: center;
   }
-  
+
   .ci-pin-toolbar {
     padding: var(--pixel-space-sm) var(--pixel-space-md);
     gap: var(--pixel-space-sm);
   }
-  
+
   .ci-mode-section {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .ci-mode-btn {
     padding: var(--pixel-space-xs) var(--pixel-space-sm);
     font-size: 0.8rem;
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
-  
+
   .ci-zoom-controls {
     bottom: var(--pixel-space-md);
     right: var(--pixel-space-md);
   }
-  
+
   .ci-zoom-btn {
     width: 36px;
     height: 36px;
@@ -727,22 +739,22 @@
   .ci-map-name {
     font-size: 1rem;
   }
-  
+
   .ci-back-btn {
     padding: var(--pixel-space-sm) var(--pixel-space-md);
     font-size: 0.9rem;
   }
-  
+
   .ci-pin-toolbar {
     flex-direction: column;
     align-items: stretch;
     gap: var(--pixel-space-xs);
   }
-  
+
   .ci-pin-grid {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
-  
+
   .ci-zoom-controls {
     flex-direction: row;
     bottom: var(--pixel-space-sm);

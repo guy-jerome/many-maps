@@ -435,7 +435,9 @@ const SideBar: React.FC<SideBarProps> = ({
   // Mobile-friendly button styling
   const getButtonStyle = (baseStyle: React.CSSProperties = {}) => ({
     ...baseStyle,
-    padding: isMobile ? "var(--pixel-space-md) var(--pixel-space-lg)" : "var(--pixel-space-sm) var(--pixel-space-md)",
+    padding: isMobile
+      ? "var(--pixel-space-md) var(--pixel-space-lg)"
+      : "var(--pixel-space-sm) var(--pixel-space-md)",
     fontSize: isMobile ? "16px" : "14px",
     minHeight: isMobile ? "44px" : "auto", // Touch target size
     cursor: "pointer",
@@ -558,7 +560,12 @@ const SideBar: React.FC<SideBarProps> = ({
           {!isCollapsed && (
             <>
               {/* Pin Search Section */}
-              <div style={{ marginTop: "var(--pixel-space-md)", color: "var(--pixel-text-primary)" }}>
+              <div
+                style={{
+                  marginTop: "var(--pixel-space-md)",
+                  color: "var(--pixel-text-primary)",
+                }}
+              >
                 <div
                   style={{
                     display: "flex",
@@ -567,7 +574,16 @@ const SideBar: React.FC<SideBarProps> = ({
                     marginBottom: "var(--pixel-space-sm)",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontFamily: "var(--pixel-font-primary)", textTransform: "uppercase", letterSpacing: "1px" }}>Pin Search</h3>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontFamily: "var(--pixel-font-primary)",
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    Pin Search
+                  </h3>
                   <button
                     onClick={() => setShowPinSearch(!showPinSearch)}
                     style={{
