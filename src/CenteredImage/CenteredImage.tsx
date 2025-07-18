@@ -1,7 +1,7 @@
 // filepath: /home/ajroberts/src/map-aid/src/CenteredImage/CenteredImage.tsx
 // src/CenteredImage/CenteredImage.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Map from "ol/Map";
 import VectorSource from "ol/source/Vector";
 import VectorLayer from "ol/layer/Vector";
@@ -23,7 +23,6 @@ import { usePinDragInteraction } from "./hooks";
 import "./CenteredImage.css";
 
 const CenteredImage: React.FC = () => {
-  const navigate = useNavigate();
   const { mapId } = useParams<{ mapId: string }>();
 
   // Map refs and state
@@ -211,15 +210,9 @@ const CenteredImage: React.FC = () => {
         setEditDesc={setEditDesc}
         setMetaSaving={setMetaSaving}
         setDescOpen={setDescOpen}
+        isWikiOpen={isWikiOpen}
+        wikiWidth={wikiWidth}
       />
-
-      <button
-        className="ci-back-btn"
-        style={isWikiOpen ? { left: `${wikiWidth + 50}px` } : {}}
-        onClick={() => navigate("/gallery")}
-      >
-        ← Back to Maps
-      </button>
 
       <PinToolbar
         isAdding={isAdding}
@@ -235,8 +228,6 @@ const CenteredImage: React.FC = () => {
         onPinCategoryChange={setPinCategory}
         pinSearch={pinSearch}
         onPinSearchChange={setPinSearch}
-        isWikiOpen={isWikiOpen}
-        wikiWidth={wikiWidth}
       />
 
       <div ref={mapRef} className="ci-map" />

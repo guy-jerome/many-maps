@@ -17,8 +17,6 @@ interface PinToolbarProps {
   onPinCategoryChange: (category: string) => void;
   pinSearch: string;
   onPinSearchChange: (search: string) => void;
-  isWikiOpen?: boolean;
-  wikiWidth?: number;
 }
 
 const PinToolbar: React.FC<PinToolbarProps> = ({
@@ -35,8 +33,6 @@ const PinToolbar: React.FC<PinToolbarProps> = ({
   onPinCategoryChange,
   pinSearch,
   onPinSearchChange,
-  isWikiOpen = false,
-  wikiWidth = 0,
 }) => {
   const pinCounts = calculatePinCounts(pins);
   const filteredPinTypes = filterPinTypes(pinCategory, pinSearch);
@@ -44,7 +40,6 @@ const PinToolbar: React.FC<PinToolbarProps> = ({
   return (
     <div
       className={`ci-pin-toolbar ${showPinPanel ? "panel-open" : ""}`}
-      style={isWikiOpen ? { left: `${wikiWidth + 20}px` } : {}}
     >
       {/* Mode Toggle Buttons */}
       <div className="ci-mode-section">

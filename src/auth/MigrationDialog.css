@@ -1,11 +1,11 @@
-/* src/auth/MigrationDialog.css */
+/* src/auth/MigrationDialog.css - Stark Black & White Pixel Design */
 .migration-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--pixel-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,94 +13,132 @@
 }
 
 .migration-dialog {
-  background: #1a1d23;
-  color: #f3f3f3;
-  padding: 32px;
-  border-radius: 12px;
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
+  padding: var(--pixel-space-xxl);
+  border-radius: var(--pixel-radius);
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--pixel-shadow-brutal);
+  border: 4px solid var(--pixel-border-primary);
+  font-family: var(--pixel-font-primary);
+  /* Pixel grid pattern */
+  background-image: 
+    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+    linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
+  background-size: 8px 8px;
 }
 
 .migration-dialog h3 {
-  margin-bottom: 20px;
-  color: #f3f3f3;
+  margin-bottom: var(--pixel-space-xl);
+  color: var(--pixel-text-primary);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: bold;
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-content {
-  margin-bottom: 24px;
+  margin-bottom: var(--pixel-space-xl);
 }
 
 .migration-content p {
-  margin-bottom: 16px;
+  margin-bottom: var(--pixel-space-lg);
   line-height: 1.5;
-  color: #d0d0d0;
+  color: var(--pixel-text-secondary);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
+  text-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-content ul {
-  margin-left: 20px;
-  margin-bottom: 16px;
+  margin-left: var(--pixel-space-xl);
+  margin-bottom: var(--pixel-space-lg);
 }
 
 .migration-content li {
-  margin-bottom: 8px;
-  color: #d0d0d0;
+  margin-bottom: var(--pixel-space-sm);
+  color: var(--pixel-text-secondary);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
+  text-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-success {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: var(--pixel-bg-tertiary);
+  border: 2px solid var(--pixel-border-primary);
+  color: var(--pixel-text-primary);
+  padding: var(--pixel-space-lg);
+  border-radius: var(--pixel-radius);
+  margin-bottom: var(--pixel-space-xl);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-success p {
-  color: #155724;
-  margin-bottom: 12px;
+  color: var(--pixel-text-primary);
+  margin-bottom: var(--pixel-space-md);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .migration-success ul {
-  color: #155724;
+  color: var(--pixel-text-primary);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .migration-error {
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: var(--pixel-bg-secondary);
+  border: 2px solid var(--pixel-border-primary);
+  color: var(--pixel-text-primary);
+  padding: var(--pixel-space-lg);
+  border-radius: var(--pixel-radius);
+  margin-bottom: var(--pixel-space-xl);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-error p {
-  color: #721c24;
-  margin-bottom: 12px;
+  color: var(--pixel-text-primary);
+  margin-bottom: var(--pixel-space-md);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .migration-error ul {
-  color: #721c24;
+  color: var(--pixel-text-primary);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .migration-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--pixel-space-md);
   justify-content: flex-end;
 }
 
 .migration-btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
+  padding: var(--pixel-space-md) var(--pixel-space-xl);
+  border: 4px solid var(--pixel-border-primary);
+  border-radius: var(--pixel-radius);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--pixel-transition-fast);
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: var(--pixel-shadow-sharp);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
 .migration-btn:disabled {
@@ -109,36 +147,45 @@
 }
 
 .migrate-btn {
-  background: linear-gradient(135deg, #3a7bd5 0%, #00d4ff 100%);
-  color: white;
+  background: var(--pixel-text-primary);
+  color: var(--pixel-text-inverse);
+  text-shadow: none;
 }
 
 .migrate-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
+  transform: translate(-3px, -3px);
+  box-shadow: var(--pixel-shadow-brutal);
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
 }
 
 .skip-btn {
-  background: #6c757d;
-  color: white;
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
 }
 
 .skip-btn:hover:not(:disabled) {
-  background: #5a6268;
+  background: var(--pixel-bg-tertiary);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-harsh);
 }
 
 .migration-btn:last-child {
-  background: #28a745;
-  color: white;
+  background: var(--pixel-text-primary);
+  color: var(--pixel-text-inverse);
+  text-shadow: none;
 }
 
 .migration-btn:last-child:hover {
-  background: #218838;
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
+  transform: translate(-3px, -3px);
+  box-shadow: var(--pixel-shadow-brutal);
 }
 
 @media (max-width: 768px) {
   .migration-dialog {
-    padding: 24px;
+    padding: var(--pixel-space-xl);
   }
   
   .migration-actions {

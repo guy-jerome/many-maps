@@ -1,4 +1,4 @@
-/* src/MapGallery/NewMapForm.css */
+/* src/MapGallery/NewMapForm.css - Stark Black & White Pixel Design */
 
 /* full‐screen semi-opaque backdrop */
 .mg-form-overlay {
@@ -7,82 +7,140 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--pixel-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
-/* the white dialog box */
+/* the dialog box with pixel styling */
 .mg-form {
-  background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  width: 320px;
+  background: var(--pixel-bg-primary);
+  padding: var(--pixel-space-xxl);
+  border-radius: var(--pixel-radius);
+  border: 4px solid var(--pixel-border-primary);
+  width: 400px;
   max-width: 90%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--pixel-shadow-brutal);
   display: flex;
   flex-direction: column;
+  font-family: var(--pixel-font-primary);
+  color: var(--pixel-text-primary);
+  /* Pixel grid pattern */
+  background-image: 
+    linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+    linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px);
+  background-size: 8px 8px;
 }
 
 /* labels stack their input below */
 .mg-form label {
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #333;
+  margin-bottom: var(--pixel-space-lg);
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--pixel-text-primary);
   display: flex;
   flex-direction: column;
+  text-shadow: var(--pixel-shadow-sharp);
+  font-family: var(--pixel-font-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* give the text inputs a bit of breathing room */
+/* give the text inputs pixel styling */
 .mg-form input[type="text"],
 .mg-form textarea,
 .mg-form input[type="file"] {
-  margin-top: 4px;
-  padding: 6px 8px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  margin-top: var(--pixel-space-sm);
+  padding: var(--pixel-space-md);
+  font-size: 1rem;
+  font-family: var(--pixel-font-primary);
+  border: 2px solid var(--pixel-border-secondary);
+  border-radius: var(--pixel-radius);
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  transition: var(--pixel-transition-fast);
+  font-weight: bold;
+  text-shadow: var(--pixel-shadow-sharp);
+  box-shadow: var(--pixel-shadow-sharp);
 }
 
-/* buttons row at the bottom, right-aligned */
+.mg-form input:focus,
+.mg-form textarea:focus {
+  outline: none;
+  border-color: var(--pixel-border-primary);
+  box-shadow: var(--pixel-shadow-harsh);
+  background: var(--pixel-bg-tertiary);
+  transform: translate(-1px, -1px);
+}
+
+/* buttons row at the bottom */
 .mg-form-buttons {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: var(--pixel-space-xl);
+  gap: var(--pixel-space-md);
 }
 
-/* small spacing between Cancel and Save */
+/* Pixel button styling */
 .mg-form-buttons button {
-  margin-left: 8px;
-  padding: 6px 12px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: none;
+  padding: var(--pixel-space-md) var(--pixel-space-xl);
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: var(--pixel-font-primary);
+  border-radius: var(--pixel-radius);
+  border: 4px solid var(--pixel-border-primary);
   cursor: pointer;
+  transition: var(--pixel-transition-fast);
+  text-shadow: var(--pixel-shadow-sharp);
+  box-shadow: var(--pixel-shadow-sharp);
+  background: var(--pixel-bg-secondary);
+  color: var(--pixel-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mg-form-buttons button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-harsh);
+  background: var(--pixel-bg-tertiary);
 }
 
 /* style the Save button distinctively */
 .mg-form-buttons button:last-child {
-  background-color: #0d6efd;
-  color: #fff;
+  background: var(--pixel-text-primary);
+  color: var(--pixel-text-inverse);
+  border-color: var(--pixel-border-primary);
+  text-shadow: none;
+}
+
+.mg-form-buttons button:last-child:hover {
+  background: var(--pixel-bg-primary);
+  color: var(--pixel-text-primary);
+  box-shadow: var(--pixel-shadow-brutal);
+  transform: translate(-3px, -3px);
 }
 
 /* checkbox styling */
 .mg-form-checkbox {
   flex-direction: row !important;
   align-items: center;
-  gap: 8px;
+  gap: var(--pixel-space-sm);
 }
 
 .mg-form-checkbox input[type="checkbox"] {
   margin: 0 !important;
   width: auto;
+  accent-color: var(--pixel-text-primary);
 }
 
 .mg-checkbox-label {
   font-size: 13px;
-  color: #555;
-  margin-left: 4px;
+  color: var(--pixel-text-secondary);
+  margin-left: var(--pixel-space-xs);
+  font-family: var(--pixel-font-primary);
+  font-weight: bold;
+  text-transform: uppercase;
+  text-shadow: var(--pixel-shadow-sharp);
 }

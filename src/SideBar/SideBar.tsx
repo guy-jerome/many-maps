@@ -41,7 +41,7 @@ const resizerStyle: React.CSSProperties = {
   bottom: 0,
   width: "5px",
   cursor: "col-resize",
-  backgroundColor: "#6c757d",
+  backgroundColor: "var(--pixel-border-secondary)",
   zIndex: 10,
   display: "block", // Will be hidden on mobile via inline style
 };
@@ -54,21 +54,30 @@ const headerContainerStyle: React.CSSProperties = {
 
 const headerStyle: React.CSSProperties = {
   margin: 0,
-  paddingBottom: "8px",
-  borderBottom: "1px solid #495057",
-  color: "#fff",
+  paddingBottom: "var(--pixel-space-sm)",
+  borderBottom: "3px solid var(--pixel-border-primary)",
+  color: "var(--pixel-text-primary)",
+  fontFamily: "var(--pixel-font-primary)",
+  textTransform: "uppercase",
+  letterSpacing: "2px",
+  textShadow: "var(--pixel-shadow-sharp)",
 };
 
 const infoStyle: React.CSSProperties = {
-  marginTop: "12px",
-  lineHeight: "1.5",
-  color: "#e9ecef",
+  marginTop: "var(--pixel-space-md)",
+  lineHeight: "1.4",
+  color: "var(--pixel-text-primary)",
+  fontFamily: "var(--pixel-font-primary)",
 };
 
 const emptyStyle: React.CSSProperties = {
-  marginTop: "16px",
-  fontStyle: "italic",
-  color: "#adb5bd",
+  marginTop: "var(--pixel-space-lg)",
+  fontStyle: "normal",
+  color: "var(--pixel-text-muted)",
+  fontFamily: "var(--pixel-font-primary)",
+  textTransform: "uppercase",
+  fontSize: "12px",
+  letterSpacing: "1px",
 };
 
 const SideBar: React.FC<SideBarProps> = ({
@@ -364,17 +373,24 @@ const SideBar: React.FC<SideBarProps> = ({
       top: 0,
       right: 0,
       height: "100%",
-      backgroundColor: "#343a40",
-      color: "#fff",
-      borderLeft: "1px solid #495057",
+      backgroundColor: "var(--pixel-bg-secondary)",
+      color: "var(--pixel-text-primary)",
+      borderLeft: "4px solid var(--pixel-border-primary)",
       boxSizing: "border-box" as const,
-      padding: "16px",
+      padding: "var(--pixel-space-lg)",
       display: "flex",
       flexDirection: "column" as const,
       maxHeight: isCollapsed ? `${headerHeight + 32}px` : "100%",
       overflowX: "hidden" as const,
       transition: "max-height 0.2s ease, transform 0.3s ease",
       zIndex: 2001, // Higher than wiki
+      fontFamily: "var(--pixel-font-primary)",
+      // Pixel grid pattern
+      backgroundImage: `
+        linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+        linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px)
+      `,
+      backgroundSize: "8px 8px",
     };
 
     if (isMobile) {
@@ -383,7 +399,7 @@ const SideBar: React.FC<SideBarProps> = ({
         width: "100%",
         maxWidth: "320px",
         transform: isSidebarOpen ? "translateX(0)" : "translateX(100%)",
-        boxShadow: isSidebarOpen ? "-2px 0 10px rgba(0,0,0,0.3)" : "none",
+        boxShadow: isSidebarOpen ? "var(--pixel-shadow-brutal)" : "none",
       };
     }
 
@@ -404,26 +420,35 @@ const SideBar: React.FC<SideBarProps> = ({
   const getInputStyle = (baseStyle: React.CSSProperties = {}) => ({
     ...baseStyle,
     fontSize: isMobile ? "16px" : "14px", // Prevent zoom on mobile
-    padding: isMobile ? "12px" : "8px",
-    borderRadius: "4px",
-    border: "1px solid #495057",
-    backgroundColor: "#495057",
-    color: "#fff",
+    padding: isMobile ? "var(--pixel-space-md)" : "var(--pixel-space-sm)",
+    borderRadius: "var(--pixel-radius)",
+    border: "3px solid var(--pixel-border-secondary)",
+    backgroundColor: "var(--pixel-bg-tertiary)",
+    color: "var(--pixel-text-primary)",
     width: "100%",
     boxSizing: "border-box" as const,
+    fontFamily: "var(--pixel-font-primary)",
+    transition: "var(--pixel-transition-fast)",
+    boxShadow: "var(--pixel-shadow-sharp)",
   });
 
   // Mobile-friendly button styling
   const getButtonStyle = (baseStyle: React.CSSProperties = {}) => ({
     ...baseStyle,
-    padding: isMobile ? "12px 16px" : "8px 12px",
+    padding: isMobile ? "var(--pixel-space-md) var(--pixel-space-lg)" : "var(--pixel-space-sm) var(--pixel-space-md)",
     fontSize: isMobile ? "16px" : "14px",
     minHeight: isMobile ? "44px" : "auto", // Touch target size
     cursor: "pointer",
-    borderRadius: "4px",
-    border: "1px solid #495057",
-    backgroundColor: "#495057",
-    color: "#fff",
+    borderRadius: "var(--pixel-radius)",
+    border: "3px solid var(--pixel-border-primary)",
+    backgroundColor: "var(--pixel-bg-secondary)",
+    color: "var(--pixel-text-primary)",
+    fontFamily: "var(--pixel-font-primary)",
+    fontWeight: "bold",
+    textTransform: "uppercase" as const,
+    letterSpacing: "1px",
+    transition: "var(--pixel-transition-fast)",
+    boxShadow: "var(--pixel-shadow-sharp)",
   });
 
   return (
@@ -434,20 +459,22 @@ const SideBar: React.FC<SideBarProps> = ({
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           style={{
             position: "fixed",
-            top: "20px",
-            right: "20px",
+            top: "var(--pixel-space-lg)",
+            right: "var(--pixel-space-lg)",
             zIndex: 2100,
-            background: "rgba(24, 28, 36, 0.95)",
-            border: "1px solid #495057",
-            borderRadius: "8px",
-            color: "#fff",
-            padding: "12px",
+            background: "var(--pixel-bg-secondary)",
+            border: "3px solid var(--pixel-border-primary)",
+            borderRadius: "var(--pixel-radius)",
+            color: "var(--pixel-text-primary)",
+            padding: "var(--pixel-space-md)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-            backdropFilter: "blur(10px)",
+            boxShadow: "var(--pixel-shadow-harsh)",
+            backdropFilter: "none",
+            fontFamily: "var(--pixel-font-primary)",
+            transition: "var(--pixel-transition-fast)",
           }}
           aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
@@ -464,7 +491,7 @@ const SideBar: React.FC<SideBarProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "var(--pixel-bg-overlay)",
             zIndex: 1999,
           }}
           onClick={() => setIsSidebarOpen(false)}
@@ -491,7 +518,7 @@ const SideBar: React.FC<SideBarProps> = ({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#fff",
+                    color: "var(--pixel-text-primary)",
                     cursor: "pointer",
                     padding: 0,
                     display: "flex",
@@ -514,7 +541,7 @@ const SideBar: React.FC<SideBarProps> = ({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#fff",
+                    color: "var(--pixel-text-primary)",
                     cursor: "pointer",
                     padding: 0,
                     display: "flex",
@@ -531,16 +558,16 @@ const SideBar: React.FC<SideBarProps> = ({
           {!isCollapsed && (
             <>
               {/* Pin Search Section */}
-              <div style={{ marginTop: "12px", color: "#e9ecef" }}>
+              <div style={{ marginTop: "var(--pixel-space-md)", color: "var(--pixel-text-primary)" }}>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: "8px",
+                    marginBottom: "var(--pixel-space-sm)",
                   }}
                 >
-                  <h3 style={{ margin: 0 }}>Pin Search</h3>
+                  <h3 style={{ margin: 0, fontFamily: "var(--pixel-font-primary)", textTransform: "uppercase", letterSpacing: "1px" }}>Pin Search</h3>
                   <button
                     onClick={() => setShowPinSearch(!showPinSearch)}
                     style={{

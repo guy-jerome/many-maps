@@ -1,70 +1,90 @@
-/* src/MapGallery/MapGallery.css */
+/* src/MapGallery/MapGallery.css - Old School D&D Theme */
+
 /* container */
 .mg-container {
-  padding: 24px;
+  padding: var(--dnd-space-xl);
   text-align: center;
-  background: #181c24;
-  color: #f3f3f3;
+  background: var(--dnd-bg-primary);
+  color: var(--dnd-text-primary);
+  min-height: 100vh;
+  font-family: var(--dnd-font-secondary);
+  /* Vintage D&D dungeon atmosphere */
+  background-image: 
+    radial-gradient(circle at 30% 20%, rgba(125, 91, 166, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgba(184, 134, 11, 0.08) 0%, transparent 40%);
 }
 
 /* back button */
 .mg-back-btn {
   display: inline-flex;
   align-items: center;
-  background: #232a34;
-  color: #f3f3f3;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 24px;
+  background: var(--dnd-bg-secondary);
+  color: var(--dnd-text-primary);
+  border: 3px solid var(--dnd-border-primary);
+  padding: var(--dnd-space-md) var(--dnd-space-xl);
+  font-size: 1.1rem;
+  font-weight: bold;
+  font-family: var(--dnd-font-secondary);
+  border-radius: var(--dnd-radius-sm);
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: var(--dnd-space-xl);
   margin-right: auto;
   margin-left: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: background 0.2s, color 0.2s, transform 0.1s;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  box-shadow: var(--dnd-shadow-medium);
+  transition: var(--dnd-transition);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
+
 .mg-back-btn:hover {
-  background: #3a7bd5;
-  color: #fff;
-  transform: translateY(-1px);
+  background: var(--dnd-bg-tertiary);
+  border-color: var(--dnd-border-highlight);
+  color: var(--dnd-text-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--dnd-shadow-heavy);
 }
+
 .mg-back-btn:active {
-  background: #0d6efd;
-  color: #fff;
+  background: var(--dnd-bg-accent);
   transform: translateY(0);
+  box-shadow: var(--dnd-shadow-light);
 }
 
 /* grid layout */
 .mg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--dnd-space-xl);
+  margin-top: var(--dnd-space-xl);
 }
 
 /* each card */
 .mg-card {
   position: relative;
   cursor: pointer;
-  border: 1px solid #2a3240;
-  border-radius: 10px;
+  border: 3px solid var(--dnd-border-primary);
+  border-radius: var(--dnd-radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
-  background: #222a36;
-  transition: box-shadow 0.2s, border 0.2s;
+  box-shadow: var(--dnd-shadow-medium);
+  background: var(--dnd-bg-secondary);
+  transition: var(--dnd-transition);
+  /* Old-school parchment texture */
+  background-image: 
+    linear-gradient(45deg, transparent 25%, rgba(74, 61, 42, 0.1) 25%, rgba(74, 61, 42, 0.1) 75%, transparent 75%),
+    linear-gradient(-45deg, transparent 25%, rgba(74, 61, 42, 0.1) 25%, rgba(74, 61, 42, 0.1) 75%, transparent 75%);
+  background-size: 8px 8px;
 }
+
 .mg-card:hover {
-  box-shadow: 0 4px 16px rgba(58, 123, 213, 0.25);
-  border: 1.5px solid #3a7bd5;
+  box-shadow: var(--dnd-shadow-heavy);
+  border-color: var(--dnd-color-treasure);
+  transform: translateY(-4px);
+  background: var(--dnd-bg-tertiary);
 }
 
 /* thumbnail */
 .mg-thumb {
   width: 100%;
-  height: 150px;
+  height: 180px;
   object-fit: cover;
   background: #232a34;
 }
