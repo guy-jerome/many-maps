@@ -8,6 +8,7 @@ import VectorLayer from "ol/layer/Vector";
 
 import PinFeature from "../PinFeature/PinFeature";
 import SideBar from "../SideBar/SideBar";
+import WikiSidebar from "../WikiSidebar/WikiSidebar";
 import PinToolbar from "./PinToolbar";
 import MapHeader from "./MapHeader";
 import LoadingSpinner from "./LoadingSpinner";
@@ -38,7 +39,9 @@ const CenteredImage: React.FC = () => {
   const [selectedPinLabel, setSelectedPinLabel] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedPinType, setSelectedPinType] = useState<PinType>(DND_PIN_TYPES[0]);
+  const [selectedPinType, setSelectedPinType] = useState<PinType>(
+    DND_PIN_TYPES[0]
+  );
   const [showPinPanel, setShowPinPanel] = useState(false);
   const [pinCategory, setPinCategory] = useState<string>("all");
   const [pinSearch, setPinSearch] = useState<string>("");
@@ -47,6 +50,9 @@ const CenteredImage: React.FC = () => {
   const [descOpen, setDescOpen] = useState(false);
   const [editingMeta, setEditingMeta] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
+
+  // Wiki sidebar state
+  const [isWikiOpen, setIsWikiOpen] = useState(false);
 
   // Use custom hooks for data and interactions
   const {
@@ -105,7 +111,7 @@ const CenteredImage: React.FC = () => {
 
     setMapInitialized(false);
     setSelectedPinLabel(null); // Reset selected pin when initializing map
-    
+
     const { map, vectorLayer } = initializeMap(
       mapRef,
       mapUrl,
@@ -116,7 +122,7 @@ const CenteredImage: React.FC = () => {
 
     mapObject.current = map;
     vectorLayerRef.current = vectorLayer;
-    
+
     // Small delay to ensure map is fully initialized
     setTimeout(() => {
       setMapInitialized(true);
@@ -167,6 +173,11 @@ const CenteredImage: React.FC = () => {
     setShowPinPanel(!showPinPanel);
   };
 
+  // Wiki sidebar handlers
+  const handleWikiToggle = () => {
+    setIsWikiOpen(!isWikiOpen);
+  };
+
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
@@ -178,7 +189,7 @@ const CenteredImage: React.FC = () => {
   return (
     <div className="ci-container">
       <LoadingSpinner loading={loading} />
-      
+
       <MapHeader
         mapId={mapId}
         mapName={mapName}
@@ -218,7 +229,7 @@ const CenteredImage: React.FC = () => {
       />
 
       <div ref={mapRef} className="ci-map" />
-      
+
       <SideBar
         selectedLabel={selectedPin}
         allPins={pins}
@@ -240,6 +251,15 @@ const CenteredImage: React.FC = () => {
           }))}
         />
       ))}
+
+      <WikiSidebar
+        mapId={mapId}
+        isOpen={isWikiOpen}
+        onToggle={handleWikiToggle}
+        pins={pins}
+        selectedPinLabel={selectedPinLabel}
+        onPinSelect={setSelectedPinLabel}
+      />
     </div>
   );
 };

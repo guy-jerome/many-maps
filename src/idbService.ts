@@ -16,6 +16,7 @@ export interface PinData {
   linkedMapId?: string;
   tags: string[];
   pinType: PinType; // Add pin type
+  linkedWikiSections?: string[]; // Array of wiki section IDs
 }
 
 export interface PinType {
@@ -23,7 +24,7 @@ export interface PinType {
   name: string;
   icon: string;
   color: string;
-  category: 'location' | 'encounter' | 'treasure' | 'npc' | 'hazard' | 'custom';
+  category: "location" | "encounter" | "treasure" | "npc" | "hazard" | "custom";
 }
 
 // New interface for user accounts
@@ -37,7 +38,7 @@ export interface User {
   profilePicture?: Blob;
 }
 
-// Update MapRecord to include user ownership
+// Update MapRecord to include user ownership and wiki
 export interface MapRecord {
   id: string;
   blob: Blob;
@@ -45,6 +46,7 @@ export interface MapRecord {
   name: string;
   description?: string;
   pins: PinData[];
+  wiki?: MapWiki; // Add wiki support
   userId?: string; // Add user ownership
   createdAt?: Date;
   isPublic?: boolean; // Allow maps to be public or private
@@ -67,15 +69,91 @@ export interface DungeonProject {
   isPublic?: boolean; // Allow dungeons to be public or private
 }
 
-// New interface for user accounts
-export interface User {
+// Wiki Section Interfaces
+export interface WikiSection {
   id: string;
-  username: string;
-  email: string;
-  passwordHash: string;
+  title: string;
+  content: string;
+  category: WikiCategory;
+  order: number;
+  tags?: string[];
+  linkedPinIds?: string[]; // Pin labels that reference this section
   createdAt: Date;
-  lastLoginAt?: Date;
-  profilePicture?: Blob;
+  lastModified: Date;
+}
+
+export interface WikiCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description?: string;
+}
+
+// Predefined wiki categories for D&D campaigns
+export const DEFAULT_WIKI_CATEGORIES: WikiCategory[] = [
+  {
+    id: "monsters",
+    name: "Monsters & Enemies",
+    icon: "👹",
+    color: "#DC143C",
+    description: "Creatures, enemies, and combat encounters",
+  },
+  {
+    id: "npcs",
+    name: "NPCs & Characters",
+    icon: "👤",
+    color: "#4682B4",
+    description: "Non-player characters and important figures",
+  },
+  {
+    id: "locations",
+    name: "Locations & Places",
+    icon: "🏰",
+    color: "#8B4513",
+    description: "Towns, dungeons, landmarks, and geographical features",
+  },
+  {
+    id: "treasure",
+    name: "Treasure & Items",
+    icon: "💎",
+    color: "#FFD700",
+    description: "Magic items, treasure, loot, and equipment",
+  },
+  {
+    id: "quests",
+    name: "Quests & Plot Hooks",
+    icon: "📜",
+    color: "#9370DB",
+    description: "Storylines, missions, and adventure hooks",
+  },
+  {
+    id: "lore",
+    name: "Lore & History",
+    icon: "📚",
+    color: "#2F4F4F",
+    description: "Background information, history, and world-building",
+  },
+  {
+    id: "tables",
+    name: "Random Tables",
+    icon: "🎲",
+    color: "#FF6347",
+    description: "Wandering monsters, random encounters, and lookup tables",
+  },
+  {
+    id: "mechanics",
+    name: "Rules & Mechanics",
+    icon: "⚙️",
+    color: "#708090",
+    description: "House rules, special mechanics, and custom content",
+  },
+];
+
+export interface MapWiki {
+  sections: WikiSection[];
+  categories: WikiCategory[];
+  lastModified: Date;
 }
 
 interface MapGalleryDB extends DBSchema {
@@ -113,8 +191,8 @@ async function getDB() {
       }
       if (oldVersion < 3 && !db.objectStoreNames.contains(USER_STORE)) {
         const userStore = db.createObjectStore(USER_STORE);
-        userStore.createIndex('username', 'username', { unique: true });
-        userStore.createIndex('email', 'email', { unique: true });
+        userStore.createIndex("username", "username", { unique: true });
+        userStore.createIndex("email", "email", { unique: true });
       }
     },
   });
@@ -140,7 +218,7 @@ export async function saveMap(
     thumb,
     userId,
     createdAt: new Date(),
-    isPublic
+    isPublic,
   };
   await db.put(STORE, mapRecord, id);
 }
@@ -245,7 +323,9 @@ export async function saveDungeonProject(project: DungeonProject) {
   await db.put(DUNGEON_STORE, project, project.id);
 }
 
-export async function getDungeonProject(id: string): Promise<DungeonProject | undefined> {
+export async function getDungeonProject(
+  id: string
+): Promise<DungeonProject | undefined> {
   const db = await getDB();
   return db.get(DUNGEON_STORE, id);
 }
@@ -253,7 +333,9 @@ export async function getDungeonProject(id: string): Promise<DungeonProject | un
 export async function getAllDungeonProjects(): Promise<DungeonProject[]> {
   const db = await getDB();
   const projects = await db.getAll(DUNGEON_STORE);
-  return projects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+  return projects.sort(
+    (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
+  );
 }
 
 export async function deleteDungeonProject(id: string) {
@@ -270,7 +352,9 @@ export async function exportDungeonToGallery(
 ) {
   // Save the dungeon as a regular map in the gallery
   // Use projectId as part of the map ID to maintain some connection
-  const mapId = projectId ? `dungeon-${projectId}` : `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const mapId = projectId
+    ? `dungeon-${projectId}`
+    : `dungeon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   await saveMap(mapId, mapBlob, mapName, mapDescription, [], userId);
   return mapId;
 }
@@ -281,23 +365,31 @@ export async function exportDungeonToGallery(
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function createUser(username: string, email: string, password: string): Promise<User | null> {
+export async function createUser(
+  username: string,
+  email: string,
+  password: string
+): Promise<User | null> {
   try {
     const db = await getDB();
-    
+
     // Check if username or email already exists
-    const existingByUsername = await db.getFromIndex(USER_STORE, 'username', username);
-    const existingByEmail = await db.getFromIndex(USER_STORE, 'email', email);
-    
+    const existingByUsername = await db.getFromIndex(
+      USER_STORE,
+      "username",
+      username
+    );
+    const existingByEmail = await db.getFromIndex(USER_STORE, "email", email);
+
     if (existingByUsername || existingByEmail) {
       return null; // User already exists
     }
-    
+
     const passwordHash = await hashPassword(password);
     const user: User = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -305,38 +397,41 @@ export async function createUser(username: string, email: string, password: stri
       email,
       passwordHash,
       createdAt: new Date(),
-      lastLoginAt: new Date()
+      lastLoginAt: new Date(),
     };
-    
+
     await db.put(USER_STORE, user, user.id);
     return user;
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error("Error creating user:", error);
     return null;
   }
 }
 
-export async function validateUser(username: string, password: string): Promise<User | null> {
+export async function validateUser(
+  username: string,
+  password: string
+): Promise<User | null> {
   try {
     const db = await getDB();
-    const user = await db.getFromIndex(USER_STORE, 'username', username);
-    
+    const user = await db.getFromIndex(USER_STORE, "username", username);
+
     if (!user) {
       return null;
     }
-    
+
     const passwordHash = await hashPassword(password);
     if (user.passwordHash !== passwordHash) {
       return null;
     }
-    
+
     // Update last login time
     user.lastLoginAt = new Date();
     await db.put(USER_STORE, user, user.id);
-    
+
     return user;
   } catch (error) {
-    console.error('Error validating user:', error);
+    console.error("Error validating user:", error);
     return null;
   }
 }
@@ -346,9 +441,11 @@ export async function getUserById(id: string): Promise<User | undefined> {
   return db.get(USER_STORE, id);
 }
 
-export async function getUserByUsername(username: string): Promise<User | undefined> {
+export async function getUserByUsername(
+  username: string
+): Promise<User | undefined> {
   const db = await getDB();
-  return db.getFromIndex(USER_STORE, 'username', username);
+  return db.getFromIndex(USER_STORE, "username", username);
 }
 
 export async function updateUser(user: User): Promise<void> {
@@ -361,25 +458,174 @@ export async function updateUser(user: User): Promise<void> {
 export async function getMapsForUser(userId: string): Promise<MapRecord[]> {
   const db = await getDB();
   const allMaps = await db.getAll(STORE);
-  return allMaps.filter(map => map.userId === userId);
+  return allMaps.filter((map) => map.userId === userId);
 }
 
 export async function getPublicMaps(): Promise<MapRecord[]> {
   const db = await getDB();
   const allMaps = await db.getAll(STORE);
-  return allMaps.filter(map => map.isPublic === true);
+  return allMaps.filter((map) => map.isPublic === true);
 }
 
 // ===== UPDATED DUNGEON FUNCTIONS WITH USER SUPPORT =====
 
-export async function getDungeonProjectsForUser(userId: string): Promise<DungeonProject[]> {
+export async function getDungeonProjectsForUser(
+  userId: string
+): Promise<DungeonProject[]> {
   const db = await getDB();
   const allProjects = await db.getAll(DUNGEON_STORE);
-  return allProjects.filter(project => project.userId === userId);
+  return allProjects.filter((project) => project.userId === userId);
 }
 
 export async function getPublicDungeonProjects(): Promise<DungeonProject[]> {
   const db = await getDB();
   const allProjects = await db.getAll(DUNGEON_STORE);
-  return allProjects.filter(project => project.isPublic === true);
+  return allProjects.filter((project) => project.isPublic === true);
+}
+
+// ===== WIKI FUNCTIONS =====
+
+export async function updateMapWiki(id: string, wiki: MapWiki) {
+  const db = await getDB();
+  const rec = await db.get(STORE, id);
+  if (!rec) throw new Error(`No map record found for id=${id}`);
+  rec.wiki = wiki;
+  await db.put(STORE, rec, id);
+}
+
+export async function getMapWiki(id: string): Promise<MapWiki | undefined> {
+  const rec = await getMapRecord(id);
+  return rec?.wiki;
+}
+
+export async function createWikiSection(
+  mapId: string,
+  title: string,
+  content: string,
+  category: WikiCategory,
+  tags?: string[],
+  linkedPinIds?: string[]
+): Promise<WikiSection> {
+  const wiki = await getMapWiki(mapId);
+  const sections = wiki?.sections || [];
+
+  const newSection: WikiSection = {
+    id: `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    title,
+    content,
+    category,
+    order: sections.length,
+    tags,
+    linkedPinIds,
+    createdAt: new Date(),
+    lastModified: new Date(),
+  };
+
+  const updatedWiki: MapWiki = {
+    sections: [...sections, newSection],
+    categories: wiki?.categories || DEFAULT_WIKI_CATEGORIES,
+    lastModified: new Date(),
+  };
+
+  await updateMapWiki(mapId, updatedWiki);
+  return newSection;
+}
+
+export async function updateWikiSection(
+  mapId: string,
+  sectionId: string,
+  updates: Partial<Omit<WikiSection, "id" | "createdAt">>
+): Promise<void> {
+  const wiki = await getMapWiki(mapId);
+  if (!wiki) throw new Error(`No wiki found for map ${mapId}`);
+
+  const updatedSections = wiki.sections.map((section) =>
+    section.id === sectionId
+      ? { ...section, ...updates, lastModified: new Date() }
+      : section
+  );
+
+  const updatedWiki: MapWiki = {
+    ...wiki,
+    sections: updatedSections,
+    lastModified: new Date(),
+  };
+
+  await updateMapWiki(mapId, updatedWiki);
+}
+
+export async function deleteWikiSection(
+  mapId: string,
+  sectionId: string
+): Promise<void> {
+  const wiki = await getMapWiki(mapId);
+  if (!wiki) return;
+
+  const updatedSections = wiki.sections.filter(
+    (section) => section.id !== sectionId
+  );
+
+  const updatedWiki: MapWiki = {
+    ...wiki,
+    sections: updatedSections,
+    lastModified: new Date(),
+  };
+
+  await updateMapWiki(mapId, updatedWiki);
+}
+
+export async function linkPinToWikiSection(
+  mapId: string,
+  pinLabel: string,
+  sectionId: string
+): Promise<void> {
+  const wiki = await getMapWiki(mapId);
+  if (!wiki) throw new Error(`No wiki found for map ${mapId}`);
+
+  const updatedSections = wiki.sections.map((section) =>
+    section.id === sectionId
+      ? {
+          ...section,
+          linkedPinIds: [...(section.linkedPinIds || []), pinLabel],
+          lastModified: new Date(),
+        }
+      : section
+  );
+
+  const updatedWiki: MapWiki = {
+    ...wiki,
+    sections: updatedSections,
+    lastModified: new Date(),
+  };
+
+  await updateMapWiki(mapId, updatedWiki);
+}
+
+export async function unlinkPinFromWikiSection(
+  mapId: string,
+  pinLabel: string,
+  sectionId: string
+): Promise<void> {
+  const wiki = await getMapWiki(mapId);
+  if (!wiki) return;
+
+  const updatedSections = wiki.sections.map((section) =>
+    section.id === sectionId
+      ? {
+          ...section,
+          linkedPinIds: (section.linkedPinIds || []).filter(
+            (id) => id !== pinLabel
+          ),
+          lastModified: new Date(),
+        }
+      : section
+  );
+
+  const updatedWiki: MapWiki = {
+    ...wiki,
+    sections: updatedSections,
+    lastModified: new Date(),
+  };
+
+  await updateMapWiki(mapId, updatedWiki);
 }
