@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronUp, Plus, Tag, Menu, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -122,8 +122,6 @@ const SideBar: React.FC<SideBarProps> = ({
   const [showPinInfo, setShowPinInfo] = useState(true);
 
   const [width, setWidth] = useState(300);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
 
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -143,7 +141,6 @@ const SideBar: React.FC<SideBarProps> = ({
         setIsSidebarOpen(false);
         // Don't force collapse - let user control it
       } else {
-        setIsCollapsed(false);
         setIsSidebarOpen(true);
       }
     };
@@ -219,13 +216,6 @@ const SideBar: React.FC<SideBarProps> = ({
       setIsEditing(false);
     }
   }, [selectedLabel]);
-
-  // Measure header height
-  useLayoutEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.clientHeight);
-    }
-  });
 
   // Resizing logic
   useEffect(() => {
@@ -380,11 +370,12 @@ const SideBar: React.FC<SideBarProps> = ({
       padding: "var(--pixel-space-lg)",
       display: "flex",
       flexDirection: "column" as const,
-      maxHeight: isCollapsed ? `${headerHeight + 32}px` : "100%",
+      maxHeight: "100%",
       overflowX: "hidden" as const,
-      transition: "max-height 0.2s ease, transform 0.3s ease",
+      transition: "transform 0.3s ease",
       zIndex: 2001, // Higher than wiki
       fontFamily: "var(--pixel-font-primary)",
+      boxShadow: "var(--pixel-shadow-brutal)",
       // Pixel grid pattern
       backgroundImage: `
         linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
@@ -399,7 +390,6 @@ const SideBar: React.FC<SideBarProps> = ({
         width: "100%",
         maxWidth: "320px",
         transform: isSidebarOpen ? "translateX(0)" : "translateX(100%)",
-        boxShadow: isSidebarOpen ? "var(--pixel-shadow-brutal)" : "none",
       };
     }
 
@@ -407,12 +397,14 @@ const SideBar: React.FC<SideBarProps> = ({
       return {
         ...baseStyle,
         width: Math.min(width, 280),
+        transform: "translateX(0)",
       };
     }
 
     return {
       ...baseStyle,
       width,
+      transform: "translateX(0)",
     };
   };
 
@@ -455,6 +447,48 @@ const SideBar: React.FC<SideBarProps> = ({
 
   return (
     <>
+      {/* Desktop Toggle Button - show when sidebar is closed */}
+      {!isMobile && !isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          style={{
+            position: "fixed",
+            top: "50%",
+            right: "var(--pixel-space-xl)",
+            transform: "translateY(-50%)",
+            background: "var(--pixel-bg-secondary)",
+            border: "3px solid var(--pixel-border-primary)",
+            borderRadius: "var(--pixel-radius)",
+            color: "var(--pixel-text-primary)",
+            padding: "var(--pixel-space-md) var(--pixel-space-sm)",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "var(--pixel-space-xs)",
+            fontSize: "0.8rem",
+            fontWeight: "bold",
+            fontFamily: "var(--pixel-font-primary)",
+            zIndex: 1999,
+            transition: "var(--pixel-transition-fast)",
+            writingMode: "vertical-rl",
+            textOrientation: "mixed",
+            textShadow: "var(--pixel-shadow-sharp)",
+            boxShadow: "var(--pixel-shadow-sharp)",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            backgroundImage: `
+              linear-gradient(90deg, var(--pixel-gray-dark) 1px, transparent 1px),
+              linear-gradient(var(--pixel-gray-dark) 1px, transparent 1px)
+            `,
+            backgroundSize: "8px 8px",
+          }}
+          title="Open Pin Details"
+        >
+          📍 Pin Details
+        </button>
+      )}
+
       {/* Mobile Toggle Button */}
       {isMobile && (
         <button
@@ -500,65 +534,42 @@ const SideBar: React.FC<SideBarProps> = ({
         />
       )}
 
-      <div ref={sidebarRef} style={getResponsiveStyle()}>
-        {/* Hide resizer on mobile */}
-        <div
-          style={{
-            ...resizerStyle,
-            display: isMobile ? "none" : "block",
-          }}
-          onMouseDown={handleMouseDown}
-        />
-        <div style={{ flex: 1, overflowY: "auto" }}>
+      {/* Sidebar - only render when open */}
+      {isSidebarOpen && (
+        <div ref={sidebarRef} style={getResponsiveStyle()}>
+          {/* Hide resizer on mobile */}
+          <div
+            style={{
+              ...resizerStyle,
+              display: isMobile ? "none" : "block",
+            }}
+            onMouseDown={handleMouseDown}
+          />
+          <div style={{ flex: 1, overflowY: "auto" }}>
           <div ref={headerRef} style={headerContainerStyle}>
             <h2 style={headerStyle}>Pin Details</h2>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              {/* Collapse/Expand button - only show on desktop */}
-              {!isMobile && (
-                <button
-                  onClick={() => setIsCollapsed((p) => !p)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--pixel-text-primary)",
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  aria-label={isCollapsed ? "Expand" : "Collapse"}
-                >
-                  {isCollapsed ? (
-                    <ChevronDown size={20} />
-                  ) : (
-                    <ChevronUp size={20} />
-                  )}
-                </button>
-              )}
-
-              {/* Close button - only show on mobile */}
-              {isMobile && (
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--pixel-text-primary)",
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  aria-label="Close sidebar"
-                >
-                  <X size={20} />
-                </button>
-              )}
+              {/* Close button */}
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--pixel-text-primary)",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label="Close sidebar"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
 
-          {!isCollapsed && (
-            <>
+          {/* Content always visible when sidebar is open */}
+          <>
               {/* Pin Search Section */}
               <div
                 style={{
@@ -1469,9 +1480,9 @@ const SideBar: React.FC<SideBarProps> = ({
                 <p style={emptyStyle}>Click a pin to see details</p>
               )}
             </>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
