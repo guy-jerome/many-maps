@@ -54,6 +54,10 @@ const CenteredImage: React.FC = () => {
   const [isWikiOpen, setIsWikiOpen] = useState(false);
   const [wikiWidth, setWikiWidth] = useState(350);
 
+  // Right sidebar (Pin Details) state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+
   // Use custom hooks for data and interactions
   const {
     mapUrl,
@@ -182,6 +186,15 @@ const CenteredImage: React.FC = () => {
     setWikiWidth(width);
   };
 
+  // Right sidebar handlers
+  const handleSidebarStateChange = (isOpen: boolean) => {
+    setIsSidebarOpen(isOpen);
+  };
+
+  const handleSidebarWidthChange = (width: number) => {
+    setSidebarWidth(width);
+  };
+
   const selectedPin = selectedPinLabel
     ? pins.find((p) => p.label === selectedPinLabel) || null
     : null;
@@ -212,6 +225,8 @@ const CenteredImage: React.FC = () => {
         setDescOpen={setDescOpen}
         isWikiOpen={isWikiOpen}
         wikiWidth={wikiWidth}
+        isSidebarOpen={isSidebarOpen}
+        sidebarWidth={sidebarWidth}
       />
 
       <PinToolbar
@@ -237,6 +252,8 @@ const CenteredImage: React.FC = () => {
         allPins={pins}
         onSelectPin={setSelectedPinLabel}
         onCenterPin={centerOnPin}
+        onSidebarStateChange={handleSidebarStateChange}
+        onSidebarWidthChange={handleSidebarWidthChange}
         updateInfo={updateInfo}
       />
 

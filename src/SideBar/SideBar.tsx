@@ -24,6 +24,8 @@ interface SideBarProps {
   allPins?: PinData[]; // Add all pins for search functionality
   onSelectPin?: (pinLabel: string) => void; // Callback to select a pin from search
   onCenterPin?: (pinLabel: string) => void; // Callback to center map on pin
+  onSidebarStateChange?: (isOpen: boolean) => void; // Callback when sidebar opens/closes
+  onSidebarWidthChange?: (width: number) => void; // Callback when sidebar width changes
   updateInfo: (
     label: string,
     newInfo: string,
@@ -85,6 +87,8 @@ const SideBar: React.FC<SideBarProps> = ({
   allPins = [],
   onSelectPin,
   onCenterPin,
+  onSidebarStateChange,
+  onSidebarWidthChange,
   updateInfo,
 }) => {
   const navigate = useNavigate();
@@ -239,6 +243,20 @@ const SideBar: React.FC<SideBarProps> = ({
   useEffect(() => {
     setCollapsedSections(extraSections.map(() => false));
   }, [extraSections, isEditing]);
+
+  // Notify parent when sidebar state changes
+  useEffect(() => {
+    if (onSidebarStateChange) {
+      onSidebarStateChange(isSidebarOpen);
+    }
+  }, [isSidebarOpen, onSidebarStateChange]);
+
+  // Notify parent when sidebar width changes
+  useEffect(() => {
+    if (onSidebarWidthChange && isSidebarOpen) {
+      onSidebarWidthChange(width);
+    }
+  }, [width, isSidebarOpen, onSidebarWidthChange]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     isResizing.current = true;
@@ -546,30 +564,32 @@ const SideBar: React.FC<SideBarProps> = ({
             onMouseDown={handleMouseDown}
           />
           <div style={{ flex: 1, overflowY: "auto" }}>
-          <div ref={headerRef} style={headerContainerStyle}>
-            <h2 style={headerStyle}>Pin Details</h2>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              {/* Close button */}
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--pixel-text-primary)",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                aria-label="Close sidebar"
+            <div ref={headerRef} style={headerContainerStyle}>
+              <h2 style={headerStyle}>Pin Details</h2>
+              <div
+                style={{ display: "flex", gap: "8px", alignItems: "center" }}
               >
-                <X size={20} />
-              </button>
+                {/* Close button */}
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--pixel-text-primary)",
+                    cursor: "pointer",
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label="Close sidebar"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Content always visible when sidebar is open */}
-          <>
+            {/* Content always visible when sidebar is open */}
+            <>
               {/* Pin Search Section */}
               <div
                 style={{

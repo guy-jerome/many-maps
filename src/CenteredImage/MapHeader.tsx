@@ -21,6 +21,8 @@ interface MapHeaderProps {
   setDescOpen: (open: boolean) => void;
   isWikiOpen?: boolean;
   wikiWidth?: number;
+  isSidebarOpen?: boolean;
+  sidebarWidth?: number;
 }
 
 const MapHeader: React.FC<MapHeaderProps> = ({
@@ -41,6 +43,8 @@ const MapHeader: React.FC<MapHeaderProps> = ({
   setDescOpen,
   isWikiOpen,
   wikiWidth,
+  isSidebarOpen,
+  sidebarWidth,
 }) => {
   const navigate = useNavigate();
 
@@ -54,8 +58,16 @@ const MapHeader: React.FC<MapHeaderProps> = ({
     setMetaSaving(false);
   };
 
-  // Calculate dynamic margin based on wiki state
-  const headerStyle = isWikiOpen ? { marginLeft: `${wikiWidth}px` } : {};
+  // Calculate dynamic margins based on sidebar states
+  const headerStyle: React.CSSProperties = {};
+
+  if (isWikiOpen && wikiWidth) {
+    headerStyle.marginLeft = `${wikiWidth}px`;
+  }
+
+  if (isSidebarOpen && sidebarWidth) {
+    headerStyle.marginRight = `${sidebarWidth}px`;
+  }
 
   return (
     <>
