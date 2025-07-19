@@ -528,41 +528,6 @@ function DungeonEditor() {
     // No longer need to create pattern images, patterns are drawn using Konva shapes
   }, [backgroundPattern, underlayerColor, patternOpacity]);
 
-  // Helper function to convert color to rgba for pattern rendering
-  const getPatternColor = (baseColor: string, opacity: number): string => {
-    try {
-      // Ensure the color starts with #
-      let color = baseColor.trim();
-      if (!color.startsWith("#")) {
-        color = `#${color}`;
-      }
-
-      // Handle short hex format (#RGB -> #RRGGBB)
-      if (color.length === 4) {
-        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
-      }
-
-      // Parse hex color to RGB
-      const hex = color.replace("#", "");
-      if (hex.length !== 6) {
-        console.warn("Invalid hex color:", baseColor, "using fallback");
-        return `rgba(68, 68, 68, ${Math.max(0, Math.min(1, opacity))})`; // fallback to #444
-      }
-
-      const r = parseInt(hex.substr(0, 2), 16);
-      const g = parseInt(hex.substr(2, 2), 16);
-      const b = parseInt(hex.substr(4, 2), 16);
-
-      // Ensure opacity is valid
-      const validOpacity = Math.max(0, Math.min(1, opacity));
-
-      return `rgba(${r}, ${g}, ${b}, ${validOpacity})`;
-    } catch (error) {
-      console.error("Error parsing color:", baseColor, error);
-      return `rgba(68, 68, 68, 0.5)`; // fallback
-    }
-  };
-
   // Helper to get contrasting pattern colors based on the stone color
   const getContrastingPatternColors = (stoneColor: string, opacity: number) => {
     try {
