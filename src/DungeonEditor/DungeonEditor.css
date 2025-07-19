@@ -4,8 +4,8 @@
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: var(--dnd-bg-primary);
-  font-family: var(--dnd-font-secondary);
+  background: var(--pixel-bg-primary);
+  font-family: var(--pixel-font-primary);
   /* Vintage D&D dungeon atmosphere */
   background-image: radial-gradient(
       circle at 20% 30%,
@@ -24,15 +24,15 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background: var(--dnd-bg-secondary);
-  padding: var(--dnd-space-md) var(--dnd-space-lg);
+  background: var(--pixel-bg-secondary);
+  padding: var(--pixel-space-md) var(--pixel-space-lg);
   min-height: 64px;
-  box-shadow: var(--dnd-shadow-heavy);
+  box-shadow: var(--pixel-shadow-harsh);
   z-index: 2;
   flex-wrap: wrap;
-  gap: var(--dnd-space-md);
+  gap: var(--pixel-space-md);
   flex-shrink: 0;
-  border-bottom: 3px solid var(--dnd-border-primary);
+  border-bottom: 3px solid var(--pixel-border-primary);
   /* Old-school dungeon stone texture */
   background-image: linear-gradient(
       45deg,
@@ -55,7 +55,7 @@
 .toolbar-section {
   display: flex;
   align-items: center;
-  gap: var(--dnd-space-md);
+  gap: var(--pixel-space-md);
 }
 
 .toolbar-left {

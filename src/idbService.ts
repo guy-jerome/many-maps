@@ -62,6 +62,8 @@ export interface DungeonProject {
   canvasHeight: number;
   gridSize: number;
   backgroundColor: string; // Background color for the canvas
+  backgroundPattern?: string; // Pattern overlay type (stone, brick, lines, etc.)
+  patternOpacity?: number; // Opacity of the pattern overlay
   underlayerColor: string; // Color for the stone layer
   lastModified: Date;
   thumbnail?: Blob; // Optional thumbnail

@@ -373,12 +373,17 @@ function DungeonEditor() {
   const [colorPickerMode, setColorPickerMode] = React.useState<
     "background" | "underlayer"
   >("background");
+  const [backgroundPattern, setBackgroundPattern] =
+    React.useState<string>("none");
+  const [patternOpacity, setPatternOpacity] = React.useState<number>(0.3);
   const [iconIndex, setIconIndex] = React.useState(0);
-  
+
   // Mobile-specific state
   const [isMobile, setIsMobile] = React.useState(false);
   const [isToolbarExpanded, setIsToolbarExpanded] = React.useState(false);
-  const [lastTouchDistance, setLastTouchDistance] = React.useState<number | null>(null);
+  const [lastTouchDistance, setLastTouchDistance] = React.useState<
+    number | null
+  >(null);
 
   // Shape color matches the stone/grid color (underlayerColor)
   const shapeColor = underlayerColor;
@@ -388,6 +393,243 @@ function DungeonEditor() {
   const [addMode, setAddMode] = React.useState(false); // false = carve mode, true = add mode
   const [thickness, setThickness] = React.useState(4);
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
+
+  // Pattern generation functions
+  const generatePatternSvg = (
+    patternType: string,
+    color: string,
+    opacity: number
+  ): string => {
+    switch (patternType) {
+      case "stone":
+        return `data:image/svg+xml,${encodeURIComponent(`
+          <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="stone" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                <rect width="40" height="40" fill="${color}"/>
+                <path d="M0,20 Q10,15 20,20 T40,20 L40,40 Q30,35 20,40 T0,40 Z" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }"/>
+                <path d="M10,0 Q20,5 30,0 Q35,10 30,20 Q20,15 10,20 Q5,10 10,0 Z" fill="${color}" fill-opacity="${
+          opacity + 0.1
+        }"/>
+                <circle cx="15" cy="25" r="2" fill="${color}" fill-opacity="${
+          opacity + 0.3
+        }"/>
+                <circle cx="25" cy="15" r="1.5" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#stone)"/>
+          </svg>
+        `)}`;
+
+      case "brick":
+        return `data:image/svg+xml,${encodeURIComponent(`
+          <svg width="32" height="16" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="brick" x="0" y="0" width="32" height="16" patternUnits="userSpaceOnUse">
+                <rect width="32" height="16" fill="${color}"/>
+                <rect x="1" y="1" width="14" height="6" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }" stroke="${color}" stroke-opacity="${
+          opacity + 0.3
+        }" stroke-width="0.5"/>
+                <rect x="17" y="1" width="14" height="6" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }" stroke="${color}" stroke-opacity="${
+          opacity + 0.3
+        }" stroke-width="0.5"/>
+                <rect x="9" y="9" width="14" height="6" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }" stroke="${color}" stroke-opacity="${
+          opacity + 0.3
+        }" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#brick)"/>
+          </svg>
+        `)}`;
+
+      case "lines":
+        return `data:image/svg+xml,${encodeURIComponent(`
+          <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="lines" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="${color}"/>
+                <line x1="0" y1="10" x2="20" y2="10" stroke="${color}" stroke-width="1" stroke-opacity="${
+          opacity + 0.3
+        }"/>
+                <line x1="10" y1="0" x2="10" y2="20" stroke="${color}" stroke-width="1" stroke-opacity="${
+          opacity + 0.3
+        }"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#lines)"/>
+          </svg>
+        `)}`;
+
+      case "diagonal":
+        return `data:image/svg+xml,${encodeURIComponent(`
+          <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="diagonal" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+                <rect width="16" height="16" fill="${color}"/>
+                <line x1="0" y1="0" x2="16" y2="16" stroke="${color}" stroke-width="1" stroke-opacity="${
+          opacity + 0.3
+        }"/>
+                <line x1="0" y1="16" x2="16" y2="0" stroke="${color}" stroke-width="1" stroke-opacity="${
+          opacity + 0.3
+        }"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#diagonal)"/>
+          </svg>
+        `)}`;
+
+      case "cobblestone":
+        return `data:image/svg+xml,${encodeURIComponent(`
+          <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="cobblestone" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+                <rect width="48" height="48" fill="${color}"/>
+                <circle cx="8" cy="8" r="6" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }"/>
+                <circle cx="24" cy="12" r="5" fill="${color}" fill-opacity="${
+          opacity + 0.15
+        }"/>
+                <circle cx="40" cy="8" r="6" fill="${color}" fill-opacity="${
+          opacity + 0.2
+        }"/>
+                <circle cx="16" cy="28" r="7" fill="${color}" fill-opacity="${
+          opacity + 0.25
+        }"/>
+                <circle cx="32" cy="32" r="5" fill="${color}" fill-opacity="${
+          opacity + 0.1
+        }"/>
+                <circle cx="8" cy="40" r="4" fill="${color}" fill-opacity="${
+          opacity + 0.15
+        }"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#cobblestone)"/>
+          </svg>
+        `)}`;
+
+      default:
+        return "";
+    }
+  };
+
+  // Pattern rendering is now handled directly in the render layer using Konva primitives
+  React.useEffect(() => {
+    // No longer need to create pattern images, patterns are drawn using Konva shapes
+  }, [backgroundPattern, underlayerColor, patternOpacity]);
+
+  // Helper function to convert color to rgba for pattern rendering
+  const getPatternColor = (baseColor: string, opacity: number): string => {
+    try {
+      // Ensure the color starts with #
+      let color = baseColor.trim();
+      if (!color.startsWith("#")) {
+        color = `#${color}`;
+      }
+
+      // Handle short hex format (#RGB -> #RRGGBB)
+      if (color.length === 4) {
+        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+      }
+
+      // Parse hex color to RGB
+      const hex = color.replace("#", "");
+      if (hex.length !== 6) {
+        console.warn("Invalid hex color:", baseColor, "using fallback");
+        return `rgba(68, 68, 68, ${Math.max(0, Math.min(1, opacity))})`; // fallback to #444
+      }
+
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+
+      // Ensure opacity is valid
+      const validOpacity = Math.max(0, Math.min(1, opacity));
+
+      return `rgba(${r}, ${g}, ${b}, ${validOpacity})`;
+    } catch (error) {
+      console.error("Error parsing color:", baseColor, error);
+      return `rgba(68, 68, 68, 0.5)`; // fallback
+    }
+  };
+
+  // Helper to get contrasting pattern colors based on the stone color
+  const getContrastingPatternColors = (stoneColor: string, opacity: number) => {
+    try {
+      // Parse stone color to RGB
+      let color = stoneColor.trim();
+      if (!color.startsWith("#")) {
+        color = `#${color}`;
+      }
+
+      if (color.length === 4) {
+        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+      }
+
+      const hex = color.replace("#", "");
+      if (hex.length !== 6) {
+        return {
+          patternColor: `rgba(255, 255, 255, ${opacity})`,
+          accentColor: `rgba(0, 0, 0, ${opacity * 0.8})`,
+        };
+      }
+
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+
+      // Calculate luminance to determine if stone is light or dark
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+      if (luminance > 0.5) {
+        // Stone is light, use darker contrasting colors
+        const darkR = Math.max(0, r - 80);
+        const darkG = Math.max(0, g - 80);
+        const darkB = Math.max(0, b - 80);
+        const veryDarkR = Math.max(0, r - 120);
+        const veryDarkG = Math.max(0, g - 120);
+        const veryDarkB = Math.max(0, b - 120);
+
+        return {
+          patternColor: `rgba(${darkR}, ${darkG}, ${darkB}, ${opacity})`,
+          accentColor: `rgba(${veryDarkR}, ${veryDarkG}, ${veryDarkB}, ${
+            opacity * 0.8
+          })`,
+        };
+      } else {
+        // Stone is dark, use lighter contrasting colors
+        const lightR = Math.min(255, r + 80);
+        const lightG = Math.min(255, g + 80);
+        const lightB = Math.min(255, b + 80);
+        const veryLightR = Math.min(255, r + 120);
+        const veryLightG = Math.min(255, g + 120);
+        const veryLightB = Math.min(255, b + 120);
+
+        return {
+          patternColor: `rgba(${lightR}, ${lightG}, ${lightB}, ${opacity})`,
+          accentColor: `rgba(${veryLightR}, ${veryLightG}, ${veryLightB}, ${
+            opacity * 0.8
+          })`,
+        };
+      }
+    } catch (error) {
+      console.error("Error calculating contrasting colors:", error);
+      return {
+        patternColor: `rgba(255, 255, 255, ${opacity})`,
+        accentColor: `rgba(128, 128, 128, ${opacity * 0.8})`,
+      };
+    }
+  };
   const [dragOffset, setDragOffset] = React.useState<{
     dx: number;
     dy: number;
@@ -512,11 +754,11 @@ function DungeonEditor() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Auto-collapse toolbar on mobile when tool is selected
@@ -525,7 +767,7 @@ function DungeonEditor() {
       const timer = setTimeout(() => {
         setIsToolbarExpanded(false);
       }, 2000); // Auto-collapse after 2 seconds for better UX
-      
+
       return () => clearTimeout(timer);
     }
   }, [tool, isMobile, isToolbarExpanded]);
@@ -548,7 +790,7 @@ function DungeonEditor() {
     const touch2 = touches[1];
     return Math.sqrt(
       Math.pow(touch2.clientX - touch1.clientX, 2) +
-      Math.pow(touch2.clientY - touch1.clientY, 2)
+        Math.pow(touch2.clientY - touch1.clientY, 2)
     );
   };
 
@@ -556,7 +798,7 @@ function DungeonEditor() {
   const loadSavedProjects = async () => {
     try {
       // Load user-specific projects if authenticated, otherwise load public projects
-      const projects = user 
+      const projects = user
         ? await getDungeonProjectsForUser(user.id)
         : await getPublicDungeonProjects();
       setSavedProjects(projects);
@@ -580,6 +822,8 @@ function DungeonEditor() {
         setCanvasHeight(project.canvasHeight || 768);
         setGridSize(project.gridSize || GRID_SIZE);
         setBackgroundColor(project.backgroundColor || "#f5ecd6");
+        setBackgroundPattern(project.backgroundPattern || "none");
+        setPatternOpacity(project.patternOpacity || 0.3);
         setUnderlayerColor(project.underlayerColor || "#222");
         setHistory([]); // Reset history when loading
         setFuture([]);
@@ -596,10 +840,12 @@ function DungeonEditor() {
   // Save current project
   const saveCurrentProject = async () => {
     if (!user) {
-      alert("You must be logged in to save projects. Please sign in or create an account.");
+      alert(
+        "You must be logged in to save projects. Please sign in or create an account."
+      );
       return;
     }
-    
+
     try {
       const id =
         currentProjectId ||
@@ -641,6 +887,8 @@ function DungeonEditor() {
         canvasHeight,
         gridSize,
         backgroundColor,
+        backgroundPattern,
+        patternOpacity,
         underlayerColor,
         lastModified: new Date(),
         thumbnail,
@@ -669,10 +917,12 @@ function DungeonEditor() {
   // Export to Map Gallery
   const exportToGallery = async () => {
     if (!user) {
-      alert("You must be logged in to export to gallery. Please sign in or create an account.");
+      alert(
+        "You must be logged in to export to gallery. Please sign in or create an account."
+      );
       return;
     }
-    
+
     try {
       if (stageRef.current) {
         const stage = stageRef.current;
@@ -1551,19 +1801,21 @@ function DungeonEditor() {
       setLastTouchDistance(getTouchDistance(e.evt.touches));
       return;
     }
-    
+
     // Prevent default for touch events to avoid scrolling
     if (e.evt.touches) {
       e.evt.preventDefault();
     }
-    
+
     if (
       e.evt.button === 1 ||
       (e.target === e.target.getStage() && tool === "select" && e.evt.ctrlKey)
     ) {
       isPanning.current = true;
-      const clientX = e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
-      const clientY = e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
+      const clientX =
+        e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
+      const clientY =
+        e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
       lastPan.current = { x: clientX, y: clientY };
       document.body.style.cursor = "grab";
     } else {
@@ -1583,15 +1835,17 @@ function DungeonEditor() {
       }
       return;
     }
-    
+
     // Prevent default for touch events to avoid scrolling
     if (e.evt.touches) {
       e.evt.preventDefault();
     }
-    
+
     if (isPanning.current) {
-      const clientX = e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
-      const clientY = e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
+      const clientX =
+        e.evt.clientX || (e.evt.touches && e.evt.touches[0].clientX);
+      const clientY =
+        e.evt.clientY || (e.evt.touches && e.evt.touches[0].clientY);
       const dx = clientX - lastPan.current.x;
       const dy = clientY - lastPan.current.y;
       setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
@@ -1603,7 +1857,7 @@ function DungeonEditor() {
   const handleStageMouseUp = () => {
     // Reset touch distance for pinch-to-zoom
     setLastTouchDistance(null);
-    
+
     if (isPanning.current) {
       isPanning.current = false;
       document.body.style.cursor = "";
@@ -1744,10 +1998,13 @@ function DungeonEditor() {
                 style={{
                   width: "100%",
                   marginTop: 4,
-                  padding: 4,
+                  padding: 8,
                   fontSize: 15,
                   boxSizing: "border-box",
                   color: "#333",
+                  backgroundColor: "#fff",
+                  border: "1px solid #ccc",
+                  borderRadius: 4,
                 }}
               />
             </label>
@@ -1881,6 +2138,7 @@ function DungeonEditor() {
                     border: "1px solid #ccc",
                     borderRadius: 4,
                     color: "#333",
+                    backgroundColor: "#fff",
                   }}
                   placeholder="Enter project name..."
                 />
@@ -1910,6 +2168,7 @@ function DungeonEditor() {
                     minHeight: 60,
                     resize: "vertical",
                     color: "#333",
+                    backgroundColor: "#fff",
                   }}
                   placeholder="Enter project description..."
                 />
@@ -2165,13 +2424,17 @@ function DungeonEditor() {
               flexDirection: "column",
               alignItems: "center",
               gap: 16,
+              minWidth: "320px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflowY: "auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: 0, color: "#333" }}>
               {colorPickerMode === "background"
                 ? "Canvas Background Color"
-                : "Stone & Grid Color"}
+                : "Stone Color & Pattern"}
             </h3>
 
             <SketchPicker
@@ -2189,6 +2452,153 @@ function DungeonEditor() {
               }}
               disableAlpha={true}
             />
+
+            {colorPickerMode === "underlayer" && (
+              <>
+                <div style={{ width: "100%", marginTop: 16 }}>
+                  <h4
+                    style={{ margin: "0 0 8px 0", color: "#333", fontSize: 14 }}
+                  >
+                    Stone Pattern
+                  </h4>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: "8px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    {[
+                      { value: "none", label: "Solid" },
+                      { value: "stone", label: "Stone" },
+                      { value: "brick", label: "Brick" },
+                      { value: "lines", label: "Grid" },
+                      { value: "diagonal", label: "Diagonal" },
+                      { value: "cobblestone", label: "Cobble" },
+                    ].map((pattern) => (
+                      <button
+                        key={pattern.value}
+                        onClick={() => setBackgroundPattern(pattern.value)}
+                        style={{
+                          padding: "8px 4px",
+                          border:
+                            backgroundPattern === pattern.value
+                              ? "2px solid #4CAF50"
+                              : "1px solid #ccc",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          background:
+                            backgroundPattern === pattern.value
+                              ? "#f0f8f0"
+                              : "#fff",
+                          fontSize: "12px",
+                          fontWeight:
+                            backgroundPattern === pattern.value
+                              ? "bold"
+                              : "normal",
+                          color:
+                            backgroundPattern === pattern.value
+                              ? "#4CAF50"
+                              : "#333",
+                        }}
+                      >
+                        {pattern.label}
+                      </button>
+                    ))}
+                  </div>
+                  <select
+                    value={backgroundPattern}
+                    onChange={(e) => setBackgroundPattern(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      fontSize: 14,
+                    }}
+                  >
+                    <option value="none">Solid Stone</option>
+                    <option value="stone">Stone Texture</option>
+                    <option value="brick">Brick Pattern</option>
+                    <option value="lines">Grid Lines</option>
+                    <option value="diagonal">Diagonal Lines</option>
+                    <option value="cobblestone">Cobblestone</option>
+                  </select>
+                </div>
+
+                {backgroundPattern !== "none" && (
+                  <div style={{ width: "100%", marginTop: 12 }}>
+                    <h4
+                      style={{
+                        margin: "0 0 8px 0",
+                        color: "#333",
+                        fontSize: 14,
+                      }}
+                    >
+                      Pattern Intensity: {Math.round(patternOpacity * 100)}%
+                    </h4>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      value={patternOpacity}
+                      onChange={(e) =>
+                        setPatternOpacity(parseFloat(e.target.value))
+                      }
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                )}
+
+                {backgroundPattern !== "none" && (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "60px",
+                      marginTop: 12,
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      background: underlayerColor,
+                      backgroundImage: generatePatternSvg(
+                        backgroundPattern,
+                        underlayerColor,
+                        patternOpacity
+                      ),
+                      backgroundSize:
+                        backgroundPattern === "stone"
+                          ? "40px 40px"
+                          : backgroundPattern === "brick"
+                          ? "32px 16px"
+                          : backgroundPattern === "lines"
+                          ? "20px 20px"
+                          : backgroundPattern === "diagonal"
+                          ? "16px 16px"
+                          : backgroundPattern === "cobblestone"
+                          ? "48px 48px"
+                          : "auto",
+                      position: "relative",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 4,
+                        right: 4,
+                        background: "rgba(255,255,255,0.8)",
+                        padding: "2px 6px",
+                        borderRadius: 3,
+                        fontSize: "10px",
+                        color: "#666",
+                      }}
+                    >
+                      Stone Preview
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
             <div style={{ display: "flex", gap: 8 }}>
               <button
@@ -2217,7 +2627,7 @@ function DungeonEditor() {
                   cursor: "pointer",
                 }}
               >
-                Stone
+                Stone & Patterns
               </button>
             </div>
 
@@ -2296,6 +2706,7 @@ function DungeonEditor() {
                     border: "1px solid #ccc",
                     borderRadius: 4,
                     color: "#333",
+                    backgroundColor: "#fff",
                   }}
                   placeholder="Enter map name..."
                 />
@@ -2325,6 +2736,7 @@ function DungeonEditor() {
                     minHeight: 60,
                     resize: "vertical",
                     color: "#333",
+                    backgroundColor: "#fff",
                   }}
                   placeholder="Describe your map for other users..."
                 />
@@ -2405,7 +2817,9 @@ function DungeonEditor() {
               <button
                 onClick={handleRedo}
                 disabled={future.length === 0}
-                className={future.length === 0 ? "btn-disabled" : "btn-secondary"}
+                className={
+                  future.length === 0 ? "btn-disabled" : "btn-secondary"
+                }
                 title="Redo"
               >
                 ↷
@@ -2435,196 +2849,198 @@ function DungeonEditor() {
           <div className="toolbar-section toolbar-center">
             {/* File Operations Group */}
             <div className="button-group">
-            <button
-              onClick={() => {
-                if (
-                  shapes.length > 0 &&
-                  confirm(
-                    "Starting a new project will clear your current work. Continue?"
-                  )
-                ) {
-                  setShapes([]);
-                  setHistory([]);
-                  setFuture([]);
-                  setCurrentProjectId(null);
-                  setCurrentProjectName("Untitled Dungeon");
-                  setProjectName("Untitled Dungeon");
-                  setProjectDescription("");
-                  navigate("/dungeon", { replace: true });
-                } else if (shapes.length === 0) {
-                  setCurrentProjectId(null);
-                  setCurrentProjectName("Untitled Dungeon");
-                  setProjectName("Untitled Dungeon");
-                  setProjectDescription("");
-                  navigate("/dungeon", { replace: true });
+              <button
+                onClick={() => {
+                  if (
+                    shapes.length > 0 &&
+                    confirm(
+                      "Starting a new project will clear your current work. Continue?"
+                    )
+                  ) {
+                    setShapes([]);
+                    setHistory([]);
+                    setFuture([]);
+                    setCurrentProjectId(null);
+                    setCurrentProjectName("Untitled Dungeon");
+                    setProjectName("Untitled Dungeon");
+                    setProjectDescription("");
+                    navigate("/dungeon", { replace: true });
+                  } else if (shapes.length === 0) {
+                    setCurrentProjectId(null);
+                    setCurrentProjectName("Untitled Dungeon");
+                    setProjectName("Untitled Dungeon");
+                    setProjectDescription("");
+                    navigate("/dungeon", { replace: true });
+                  }
+                }}
+                className="btn-secondary"
+                title="Start a new project"
+              >
+                📄 New
+              </button>
+
+              <button
+                onClick={() => {
+                  setProjectName(currentProjectName);
+                  setShowSaveProjectModal(true);
+                }}
+                className="btn-success"
+                title="Save Project"
+              >
+                💾 Save
+              </button>
+
+              <button
+                onClick={() => setShowLoadProjectModal(true)}
+                className="btn-primary"
+                title="Load Project"
+              >
+                📂 Load
+              </button>
+            </div>
+
+            {/* Edit Operations Group */}
+            <div className="button-group">
+              <button
+                onClick={handleUndo}
+                disabled={history.length === 0}
+                className={
+                  history.length === 0 ? "btn-disabled" : "btn-secondary"
                 }
-              }}
-              className="btn-secondary"
-              title="Start a new project"
-            >
-              📄 New
-            </button>
+                title="Undo (Ctrl+Z)"
+              >
+                ↶
+              </button>
 
-            <button
-              onClick={() => {
-                setProjectName(currentProjectName);
-                setShowSaveProjectModal(true);
-              }}
-              className="btn-success"
-              title="Save Project"
-            >
-              💾 Save
-            </button>
+              <button
+                onClick={handleRedo}
+                disabled={future.length === 0}
+                className={
+                  future.length === 0 ? "btn-disabled" : "btn-secondary"
+                }
+                title="Redo (Ctrl+Y)"
+              >
+                ↷
+              </button>
 
-            <button
-              onClick={() => setShowLoadProjectModal(true)}
-              className="btn-primary"
-              title="Load Project"
-            >
-              📂 Load
-            </button>
+              <button
+                onClick={handleCopy}
+                disabled={selectedIndex === null}
+                className={
+                  selectedIndex === null ? "btn-disabled" : "btn-secondary"
+                }
+                title="Copy (Ctrl+C)"
+              >
+                📋
+              </button>
+
+              <button
+                onClick={handlePaste}
+                disabled={!copiedShape}
+                className={!copiedShape ? "btn-disabled" : "btn-secondary"}
+                title="Paste (Ctrl+V)"
+              >
+                📄
+              </button>
+
+              <button
+                onClick={handleClearAll}
+                className="btn-danger"
+                title="Clear all shapes"
+              >
+                🗑️
+              </button>
+            </div>
+
+            {/* Drawing Mode Toggle */}
+            <div className="button-group">
+              <button
+                onClick={() => setAddMode((v) => !v)}
+                className={addMode ? "btn-active" : "btn-inactive"}
+                title={
+                  addMode ? "Switch to Carving Mode" : "Switch to Adding Mode"
+                }
+              >
+                {addMode ? "✏️ Adding" : "⛏️ Carving"}
+              </button>
+            </div>
+
+            {/* View Controls Group */}
+            <div className="button-group">
+              <button
+                onClick={() => setShowGrid((v) => !v)}
+                className={showGrid ? "btn-active" : "btn-inactive"}
+                title="Toggle Grid"
+              >
+                {showGrid ? "⬜" : "⬛"}
+              </button>
+
+              <button
+                onClick={() => setSnapTo((v) => !v)}
+                className={snapTo ? "btn-active" : "btn-inactive"}
+                title="Toggle Snap to Grid"
+              >
+                {snapTo ? "🧲" : "🎯"}
+              </button>
+            </div>
+
+            {/* Zoom Controls */}
+            <div className="zoom-controls">
+              <button
+                onClick={() => {
+                  const stage = stageRef.current;
+                  if (!stage) return;
+                  const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+                  const oldScale = zoom;
+                  const scaleBy = 1.1;
+                  let newZoom = Math.max(0.25, Math.min(4, zoom - 0.1));
+                  if (zoom > newZoom) newZoom = Math.max(0.25, zoom / scaleBy);
+                  else newZoom = Math.max(0.25, zoom - 0.1);
+                  const mousePointTo = {
+                    x: (center.x - pan.x) / oldScale,
+                    y: (center.y - pan.y) / oldScale,
+                  };
+                  const newPan = {
+                    x: center.x - mousePointTo.x * newZoom,
+                    y: center.y - mousePointTo.y * newZoom,
+                  };
+                  setZoom(newZoom);
+                  setPan(newPan);
+                }}
+                className="zoom-btn"
+                title="Zoom Out"
+              >
+                -
+              </button>
+              <span className="zoom-display">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={() => {
+                  const stage = stageRef.current;
+                  if (!stage) return;
+                  const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+                  const oldScale = zoom;
+                  const scaleBy = 1.1;
+                  let newZoom = Math.min(4, Math.max(0.25, zoom + 0.1));
+                  if (zoom < newZoom) newZoom = Math.min(4, zoom * scaleBy);
+                  else newZoom = Math.min(4, zoom + 0.1);
+                  const mousePointTo = {
+                    x: (center.x - pan.x) / oldScale,
+                    y: (center.y - pan.y) / oldScale,
+                  };
+                  const newPan = {
+                    x: center.x - mousePointTo.x * newZoom,
+                    y: center.y - mousePointTo.y * newZoom,
+                  };
+                  setZoom(newZoom);
+                  setPan(newPan);
+                }}
+                className="zoom-btn"
+                title="Zoom In"
+              >
+                +
+              </button>
+            </div>
           </div>
-
-          {/* Edit Operations Group */}
-          <div className="button-group">
-            <button
-              onClick={handleUndo}
-              disabled={history.length === 0}
-              className={
-                history.length === 0 ? "btn-disabled" : "btn-secondary"
-              }
-              title="Undo (Ctrl+Z)"
-            >
-              ↶
-            </button>
-
-            <button
-              onClick={handleRedo}
-              disabled={future.length === 0}
-              className={future.length === 0 ? "btn-disabled" : "btn-secondary"}
-              title="Redo (Ctrl+Y)"
-            >
-              ↷
-            </button>
-
-            <button
-              onClick={handleCopy}
-              disabled={selectedIndex === null}
-              className={
-                selectedIndex === null ? "btn-disabled" : "btn-secondary"
-              }
-              title="Copy (Ctrl+C)"
-            >
-              📋
-            </button>
-
-            <button
-              onClick={handlePaste}
-              disabled={!copiedShape}
-              className={!copiedShape ? "btn-disabled" : "btn-secondary"}
-              title="Paste (Ctrl+V)"
-            >
-              📄
-            </button>
-
-            <button
-              onClick={handleClearAll}
-              className="btn-danger"
-              title="Clear all shapes"
-            >
-              🗑️
-            </button>
-          </div>
-
-          {/* Drawing Mode Toggle */}
-          <div className="button-group">
-            <button
-              onClick={() => setAddMode((v) => !v)}
-              className={addMode ? "btn-active" : "btn-inactive"}
-              title={
-                addMode ? "Switch to Carving Mode" : "Switch to Adding Mode"
-              }
-            >
-              {addMode ? "✏️ Adding" : "⛏️ Carving"}
-            </button>
-          </div>
-
-          {/* View Controls Group */}
-          <div className="button-group">
-            <button
-              onClick={() => setShowGrid((v) => !v)}
-              className={showGrid ? "btn-active" : "btn-inactive"}
-              title="Toggle Grid"
-            >
-              {showGrid ? "⬜" : "⬛"}
-            </button>
-
-            <button
-              onClick={() => setSnapTo((v) => !v)}
-              className={snapTo ? "btn-active" : "btn-inactive"}
-              title="Toggle Snap to Grid"
-            >
-              {snapTo ? "🧲" : "🎯"}
-            </button>
-          </div>
-
-          {/* Zoom Controls */}
-          <div className="zoom-controls">
-            <button
-              onClick={() => {
-                const stage = stageRef.current;
-                if (!stage) return;
-                const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
-                const oldScale = zoom;
-                const scaleBy = 1.1;
-                let newZoom = Math.max(0.25, Math.min(4, zoom - 0.1));
-                if (zoom > newZoom) newZoom = Math.max(0.25, zoom / scaleBy);
-                else newZoom = Math.max(0.25, zoom - 0.1);
-                const mousePointTo = {
-                  x: (center.x - pan.x) / oldScale,
-                  y: (center.y - pan.y) / oldScale,
-                };
-                const newPan = {
-                  x: center.x - mousePointTo.x * newZoom,
-                  y: center.y - mousePointTo.y * newZoom,
-                };
-                setZoom(newZoom);
-                setPan(newPan);
-              }}
-              className="zoom-btn"
-              title="Zoom Out"
-            >
-              -
-            </button>
-            <span className="zoom-display">{Math.round(zoom * 100)}%</span>
-            <button
-              onClick={() => {
-                const stage = stageRef.current;
-                if (!stage) return;
-                const center = { x: canvasWidth / 2, y: canvasHeight / 2 };
-                const oldScale = zoom;
-                const scaleBy = 1.1;
-                let newZoom = Math.min(4, Math.max(0.25, zoom + 0.1));
-                if (zoom < newZoom) newZoom = Math.min(4, zoom * scaleBy);
-                else newZoom = Math.min(4, zoom + 0.1);
-                const mousePointTo = {
-                  x: (center.x - pan.x) / oldScale,
-                  y: (center.y - pan.y) / oldScale,
-                };
-                const newPan = {
-                  x: center.x - mousePointTo.x * newZoom,
-                  y: center.y - mousePointTo.y * newZoom,
-                };
-                setZoom(newZoom);
-                setPan(newPan);
-              }}
-              className="zoom-btn"
-              title="Zoom In"
-            >
-              +
-            </button>
-          </div>
-        </div>
         )}
 
         {/* Right section - Export actions and overflow menu */}
@@ -2723,7 +3139,9 @@ function DungeonEditor() {
       </div>
       <div className="dungeon-editor-main" style={{ display: "flex" }}>
         <div
-          className={`dungeon-toolbar ${isMobile ? (isToolbarExpanded ? 'expanded' : 'collapsed') : ''}`}
+          className={`dungeon-toolbar ${
+            isMobile ? (isToolbarExpanded ? "expanded" : "collapsed") : ""
+          }`}
           style={{
             flexDirection: "column",
             alignItems: "center",
@@ -2763,7 +3181,7 @@ function DungeonEditor() {
               onClick={() => setIsToolbarExpanded(!isToolbarExpanded)}
               title="Toggle Toolbar"
             >
-              {isToolbarExpanded ? '×' : '☰'}
+              {isToolbarExpanded ? "×" : "☰"}
               {/* Current tool indicator when collapsed */}
               {!isToolbarExpanded && (
                 <div
@@ -2784,12 +3202,12 @@ function DungeonEditor() {
                   }}
                   title={`Current tool: ${tool}`}
                 >
-                  {TOOL_LIST.find(t => t.name === tool)?.icon || '•'}
+                  {TOOL_LIST.find((t) => t.name === tool)?.icon || "•"}
                 </div>
               )}
             </button>
           )}
-          
+
           {/* Only show toolbar content if not mobile or if expanded */}
           {(!isMobile || isToolbarExpanded) && (
             <>
@@ -2807,191 +3225,196 @@ function DungeonEditor() {
                   Tap tool to select
                 </div>
               )}
-              
+
               {/* Color picker at the very top */}
               <button
-            style={{
-              background:
-                colorPickerMode === "background"
-                  ? backgroundColor
-                  : underlayerColor,
-              width: 36,
-              height: 36,
-              border: "2px solid #fff",
-              borderRadius: 4,
-              margin: 8,
-              cursor: "pointer",
-            }}
-            title={
-              colorPickerMode === "background"
-                ? "Background Color"
-                : "Underlayer Color"
-            }
-            onClick={() => setShowColorPicker((v) => !v)}
-          >
-            🎨
-          </button>
-
-          {/* Color mode toggle buttons */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: 4,
-              margin: "0 8px 8px 8px",
-            }}
-          >
-            <button
-              onClick={() => setColorPickerMode("background")}
-              style={{
-                padding: "4px 8px",
-                fontSize: 12,
-                background: colorPickerMode === "background" ? "#444" : "#666",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-              title="Background Color Mode"
-            >
-              Canvas
-            </button>
-            <button
-              onClick={() => setColorPickerMode("underlayer")}
-              style={{
-                padding: "4px 8px",
-                fontSize: 12,
-                background: colorPickerMode === "underlayer" ? "#444" : "#666",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-              title="Stone/Grid Color Mode"
-            >
-              Stone
-            </button>
-          </div>
-
-          {/* Double wide tool grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 48px)",
-              gap: 8,
-              margin: 8,
-            }}
-          >
-            {TOOL_LIST.map((t) => (
-              <button
-                key={t.name}
-                className={tool === t.name ? "active" : ""}
-                onClick={() => handleMobileToolSelect(t.name as ToolName)}
                 style={{
-                  fontSize: 24,
-                  background: tool === t.name ? "#444" : "#222",
-                  color: "#fff",
-                  border: "none",
+                  background:
+                    colorPickerMode === "background"
+                      ? backgroundColor
+                      : underlayerColor,
+                  width: 36,
+                  height: 36,
+                  border: "2px solid #fff",
                   borderRadius: 4,
+                  margin: 8,
                   cursor: "pointer",
-                  width: 48,
-                  height: 48,
                 }}
-                title={t.name}
+                title={
+                  colorPickerMode === "background"
+                    ? "Background Color"
+                    : "Underlayer Color"
+                }
+                onClick={() => setShowColorPicker((v) => !v)}
               >
-                {t.icon}
+                🎨
               </button>
-            ))}
-          </div>
 
-          {/* Icon selector panel - shown when icon tool is selected */}
-          {tool === "icon" && (
-            <div style={{ margin: "8px 8px 16px 8px" }}>
-              {/* Current selection indicator - outside scrollable area */}
+              {/* Color mode toggle buttons */}
               <div
                 style={{
-                  marginBottom: 8,
-                  padding: "4px 8px",
-                  background: "#222",
-                  borderRadius: 4,
-                  fontSize: 12,
-                  color: "#ccc",
-                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 4,
+                  margin: "0 8px 8px 8px",
                 }}
               >
-                Selected: {ICONS[iconIndex].name.replace(/_/g, " ")}
+                <button
+                  onClick={() => setColorPickerMode("background")}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: 12,
+                    background:
+                      colorPickerMode === "background" ? "#444" : "#666",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                  }}
+                  title="Background Color Mode"
+                >
+                  Canvas
+                </button>
+                <button
+                  onClick={() => setColorPickerMode("underlayer")}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: 12,
+                    background:
+                      colorPickerMode === "underlayer" ? "#444" : "#666",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                  }}
+                  title="Stone/Grid Color Mode"
+                >
+                  Stone
+                </button>
               </div>
 
-              {/* Scrollable icon grid */}
+              {/* Double wide tool grid */}
               <div
-                className="icon-panel"
                 style={{
-                  background: "#333",
-                  borderRadius: 6,
-                  padding: 8,
-                  maxHeight: "300px",
-                  overflowY: "auto",
-                  overflowX: "hidden",
-                  width: "100%",
-                  boxSizing: "border-box",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 48px)",
+                  gap: 8,
+                  margin: 8,
                 }}
               >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: 4,
-                    justifyContent: "center",
-                  }}
-                >
-                  {ICONS.map((ic, idx) => (
-                    <button
-                      key={ic.name}
+                {TOOL_LIST.map((t) => (
+                  <button
+                    key={t.name}
+                    className={tool === t.name ? "active" : ""}
+                    onClick={() => handleMobileToolSelect(t.name as ToolName)}
+                    style={{
+                      fontSize: 24,
+                      background: tool === t.name ? "#444" : "#222",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      width: 48,
+                      height: 48,
+                    }}
+                    title={t.name}
+                  >
+                    {t.icon}
+                  </button>
+                ))}
+              </div>
+
+              {/* Icon selector panel - shown when icon tool is selected */}
+              {tool === "icon" && (
+                <div style={{ margin: "8px 8px 16px 8px" }}>
+                  {/* Current selection indicator - outside scrollable area */}
+                  <div
+                    style={{
+                      marginBottom: 8,
+                      padding: "4px 8px",
+                      background: "#222",
+                      borderRadius: 4,
+                      fontSize: 12,
+                      color: "#ccc",
+                      textAlign: "center",
+                    }}
+                  >
+                    Selected: {ICONS[iconIndex].name.replace(/_/g, " ")}
+                  </div>
+
+                  {/* Scrollable icon grid */}
+                  <div
+                    className="icon-panel"
+                    style={{
+                      background: "#333",
+                      borderRadius: 6,
+                      padding: 8,
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div
                       style={{
-                        fontSize: 18,
-                        background: iconIndex === idx ? "#666" : "#444",
-                        color: "#fff",
-                        border:
-                          iconIndex === idx
-                            ? "2px solid #888"
-                            : "1px solid #555",
-                        borderRadius: 4,
-                        cursor: "pointer",
-                        width: "100%",
-                        height: 32,
-                        display: "flex",
-                        alignItems: "center",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 4,
                         justifyContent: "center",
-                        transition: "all 0.2s ease",
-                        minWidth: 0,
-                      }}
-                      onClick={() => setIconIndex(idx)}
-                      title={ic.name.replace(/_/g, " ")}
-                      onMouseEnter={(e) => {
-                        if (iconIndex !== idx) {
-                          e.currentTarget.style.background = "#555";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (iconIndex !== idx) {
-                          e.currentTarget.style.background = "#444";
-                        }
                       }}
                     >
-                      {ic.icon}
-                    </button>
-                  ))}
+                      {ICONS.map((ic, idx) => (
+                        <button
+                          key={ic.name}
+                          style={{
+                            fontSize: 18,
+                            background: iconIndex === idx ? "#666" : "#444",
+                            color: "#fff",
+                            border:
+                              iconIndex === idx
+                                ? "2px solid #888"
+                                : "1px solid #555",
+                            borderRadius: 4,
+                            cursor: "pointer",
+                            width: "100%",
+                            height: 32,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                            minWidth: 0,
+                          }}
+                          onClick={() => setIconIndex(idx)}
+                          title={ic.name.replace(/_/g, " ")}
+                          onMouseEnter={(e) => {
+                            if (iconIndex !== idx) {
+                              e.currentTarget.style.background = "#555";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (iconIndex !== idx) {
+                              e.currentTarget.style.background = "#444";
+                            }
+                          }}
+                        >
+                          {ic.icon}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
             </>
           )}
         </div>
-        <div className="canvas-container" style={{
-          paddingLeft: isMobile ? (isToolbarExpanded ? 120 : 56) : 0,
-          transition: "padding-left 0.3s ease"
-        }}>
+        <div
+          className="canvas-container"
+          style={{
+            paddingLeft: isMobile ? (isToolbarExpanded ? 120 : 56) : 0,
+            transition: "padding-left 0.3s ease",
+          }}
+        >
           <Stage
             ref={stageRef}
             width={canvasWidth}
@@ -3001,7 +3424,10 @@ function DungeonEditor() {
             x={pan.x}
             y={pan.y}
             className="dungeon-canvas"
-            style={{ background: backgroundColor, border: "1px solid #ccc" }}
+            style={{
+              background: backgroundColor,
+              border: "1px solid #ccc",
+            }}
             onWheel={handleWheel}
             onMouseDown={handleStageMouseDown}
             onMouseMove={handleStageMouseMove}
@@ -3012,6 +3438,7 @@ function DungeonEditor() {
           >
             {/* Underground + Mask Layer: always show background, existing shapes always carve */}
             <Layer id="underground-mask-layer">
+              {/* Base stone color */}
               <KonvaRect
                 x={0}
                 y={0}
@@ -3020,6 +3447,257 @@ function DungeonEditor() {
                 fill={underlayerColor}
                 listening={false}
               />
+
+              {/* Pattern overlay if selected */}
+              {backgroundPattern !== "none" &&
+                (() => {
+                  console.log(
+                    "Rendering pattern:",
+                    backgroundPattern,
+                    "with color:",
+                    underlayerColor,
+                    "opacity:",
+                    patternOpacity
+                  );
+                  const patternElements = [];
+                  // Use contrasting colors based on the stone color for better visibility
+                  const { patternColor, accentColor } =
+                    getContrastingPatternColors(
+                      underlayerColor,
+                      Math.max(0.3, patternOpacity)
+                    );
+                  console.log(
+                    "Pattern colors - patternColor:",
+                    patternColor,
+                    "accentColor:",
+                    accentColor
+                  );
+
+                  switch (backgroundPattern) {
+                    case "stone":
+                      // Create stone texture with irregular shapes
+                      for (let x = 0; x < canvasWidth; x += 40) {
+                        for (let y = 0; y < canvasHeight; y += 40) {
+                          patternElements.push(
+                            <KonvaLine
+                              key={`stone-${x}-${y}-1`}
+                              points={[
+                                x,
+                                y + 20,
+                                x + 10,
+                                y + 15,
+                                x + 20,
+                                y + 20,
+                                x + 30,
+                                y + 18,
+                                x + 40,
+                                y + 20,
+                                x + 40,
+                                y + 40,
+                                x + 30,
+                                y + 35,
+                                x + 20,
+                                y + 40,
+                                x + 10,
+                                y + 38,
+                                x,
+                                y + 40,
+                              ]}
+                              closed
+                              fill={accentColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`stone-${x}-${y}-dot1`}
+                              x={x + 15}
+                              y={y + 25}
+                              radius={2}
+                              fill={patternColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`stone-${x}-${y}-dot2`}
+                              x={x + 25}
+                              y={y + 15}
+                              radius={1.5}
+                              fill={patternColor}
+                              listening={false}
+                            />
+                          );
+                        }
+                      }
+                      break;
+
+                    case "brick":
+                      // Create brick pattern
+                      for (let y = 0; y < canvasHeight; y += 16) {
+                        const offset = (Math.floor(y / 16) % 2) * 16;
+                        for (
+                          let x = -16 + offset;
+                          x < canvasWidth + 16;
+                          x += 32
+                        ) {
+                          // Brick rectangle
+                          patternElements.push(
+                            <KonvaRect
+                              key={`brick-${x}-${y}`}
+                              x={x + 1}
+                              y={y + 1}
+                              width={14}
+                              height={6}
+                              fill={accentColor}
+                              stroke={patternColor}
+                              strokeWidth={0.5}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaRect
+                              key={`brick2-${x}-${y}`}
+                              x={x + 17}
+                              y={y + 1}
+                              width={14}
+                              height={6}
+                              fill={accentColor}
+                              stroke={patternColor}
+                              strokeWidth={0.5}
+                              listening={false}
+                            />
+                          );
+                        }
+                      }
+                      break;
+
+                    case "lines":
+                      // Grid lines
+                      for (let x = 0; x <= canvasWidth; x += 20) {
+                        patternElements.push(
+                          <KonvaLine
+                            key={`vline-${x}`}
+                            points={[x, 0, x, canvasHeight]}
+                            stroke={accentColor}
+                            strokeWidth={1}
+                            listening={false}
+                          />
+                        );
+                      }
+                      for (let y = 0; y <= canvasHeight; y += 20) {
+                        patternElements.push(
+                          <KonvaLine
+                            key={`hline-${y}`}
+                            points={[0, y, canvasWidth, y]}
+                            stroke={accentColor}
+                            strokeWidth={1}
+                            listening={false}
+                          />
+                        );
+                      }
+                      break;
+
+                    case "diagonal":
+                      // Diagonal lines
+                      for (let x = -canvasHeight; x < canvasWidth; x += 16) {
+                        patternElements.push(
+                          <KonvaLine
+                            key={`diag1-${x}`}
+                            points={[x, 0, x + canvasHeight, canvasHeight]}
+                            stroke={accentColor}
+                            strokeWidth={1}
+                            listening={false}
+                          />
+                        );
+                        patternElements.push(
+                          <KonvaLine
+                            key={`diag2-${x}`}
+                            points={[x, canvasHeight, x + canvasHeight, 0]}
+                            stroke={accentColor}
+                            strokeWidth={1}
+                            listening={false}
+                          />
+                        );
+                      }
+                      break;
+
+                    case "cobblestone":
+                      // Cobblestone circles
+                      for (let x = 0; x < canvasWidth; x += 48) {
+                        for (let y = 0; y < canvasHeight; y += 48) {
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-1`}
+                              x={x + 8}
+                              y={y + 8}
+                              radius={6}
+                              fill={accentColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-2`}
+                              x={x + 24}
+                              y={y + 12}
+                              radius={5}
+                              fill={patternColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-3`}
+                              x={x + 40}
+                              y={y + 8}
+                              radius={6}
+                              fill={accentColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-4`}
+                              x={x + 16}
+                              y={y + 28}
+                              radius={7}
+                              fill={
+                                getContrastingPatternColors(
+                                  underlayerColor,
+                                  Math.max(0.2, patternOpacity * 0.6)
+                                ).patternColor
+                              }
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-5`}
+                              x={x + 32}
+                              y={y + 32}
+                              radius={5}
+                              fill={patternColor}
+                              listening={false}
+                            />
+                          );
+                          patternElements.push(
+                            <KonvaCircle
+                              key={`cobble-${x}-${y}-6`}
+                              x={x + 8}
+                              y={y + 40}
+                              radius={4}
+                              fill={accentColor}
+                              listening={false}
+                            />
+                          );
+                        }
+                      }
+                      break;
+                  }
+
+                  return patternElements;
+                })()}
               {shapes.map((shape, i) => {
                 // Only carve-out shapes (not icons/text) - use their original drawing mode
                 if (shape.tool === "icon" || shape.tool === "text") return null;
